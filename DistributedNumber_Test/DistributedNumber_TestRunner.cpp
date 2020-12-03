@@ -41,6 +41,7 @@
 
 // include all test classes
 #include "CartesianCoordinate_Test.cpp"
+#include "Distribution_Test.cpp"
 
 int main( int argc, char* argv[] )
 {
@@ -51,6 +52,7 @@ int main( int argc, char* argv[] )
     
     // declare all tests
     CCartesianCoordinate_Test CartesianCoordinate_Test;
+    CDistribution_Test Distribution_Test;
 
     // Create the event manager and test controller
     CPPUNIT_NS::TestResult controller;
@@ -84,6 +86,21 @@ int main( int argc, char* argv[] )
                     "CartesianCoordinate: functions",
                     &CCartesianCoordinate_Test::CheckFunctions,
                     &CartesianCoordinate_Test
+                    )
+                  );
+    /////////////////////////////////////////////////
+    //// add all tests of Distribution_Test
+    /////////////////////////////////////////////////
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistributionBuildUp",
+                    &CDistribution_Test::DistributionBuildUp,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistributionCalculations",
+                    &CDistribution_Test::DistributionCalculations,
+                    &Distribution_Test
                     )
                   );
  

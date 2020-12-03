@@ -61,3 +61,25 @@ CProbabilityDensityDistribution::CProbabilityDensityDistribution(const CDistribu
 {
 
 }
+void CProbabilityDensityDistribution::_Normalize()
+{
+    // do not normalize again ... only once
+    if(bNormalized)
+        return;
+    
+    dfAbsIntegral = AbsIntegral();
+    
+    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++)
+        iel->second /= dfAbsIntegral;
+    
+    // remember we have been normalized
+    bNormalized = true;
+    
+}
+void CProbabilityDensityDistribution::_Init()
+{
+    dfAbsIntegral = 0;
+    bNormalized = false;
+    CDistribution::_Init();
+}
+

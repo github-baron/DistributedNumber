@@ -15,43 +15,19 @@ DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o
  /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.o
  ../FloatingMeasure/build/CMake/include/DigFloat/DigFloat.h
- ../FloatingMeasure/build/CMake/include/FloatingMeasure/FloatingMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/BaseMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/ComplexMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/MeasureOperator.h
- ../FloatingMeasure/build/CMake/include/Measure/PreMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/SimpleMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
  ../FloatingMeasure/build/CMake/include/Utils/Utils.h
- /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
  /home/michae/projects/DistributedNumber/DistributedNumber/DistributedNumber.cpp
  /home/michae/projects/DistributedNumber/DistributedNumber/DistributedNumber.h
  /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
  /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/Distribution.cpp.o
  ../FloatingMeasure/build/CMake/include/DigFloat/DigFloat.h
- ../FloatingMeasure/build/CMake/include/FloatingMeasure/FloatingMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/BaseMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/ComplexMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/MeasureOperator.h
- ../FloatingMeasure/build/CMake/include/Measure/PreMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/SimpleMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
  ../FloatingMeasure/build/CMake/include/Utils/Utils.h
- /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
  /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.cpp
  /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/ProbabilityDensityDistribution.cpp.o
  ../FloatingMeasure/build/CMake/include/DigFloat/DigFloat.h
- ../FloatingMeasure/build/CMake/include/FloatingMeasure/FloatingMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/BaseMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/ComplexMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/MeasureOperator.h
- ../FloatingMeasure/build/CMake/include/Measure/PreMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/SimpleMeasure.h
- ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
  ../FloatingMeasure/build/CMake/include/Utils/Utils.h
- /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
  /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
  /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.cpp
  /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h

@@ -84,6 +84,36 @@ public:
      * @param other TODO
      */
     CProbabilityDensityDistribution(const CDistribution& other);
+    
+       /**
+     * @brief adds new distribution element if distribution is not already normalized (see ::_Normalize).
+     *        In case of adding the last element the surrounding elements will be set to zero (... if not done)
+     *        and the whole distribution will be normalized (see ::_Normalize).
+     *
+     * @param variable CDigFloat& distribution variable
+     * @param value CDigFloat&
+     * @param bLastElement bool if set --> ::_Normalize is called and no further element can be added
+     * @return bool
+     */
+    bool Add(const CDigFloat& variable, const CDigFloat value, bool bLastElement = false); 
+  
+protected:    
+    /**
+     * @brief normalize: divides by norm (integral over the distribution) 
+     *
+     * @param other CDistribution&
+     * @return bool
+     */
+    void _Normalize();  
+    /**
+     * @brief initializes member
+     *
+     */
+    void _Init();
+    
+    
+    bool bNormalized;
+    CDigFloat dfAbsIntegral;
 
 };
 

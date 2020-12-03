@@ -11,6 +11,8 @@ DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_T
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Utils.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/CartesianCoordinate.h
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/Distribution.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber_Test/CartesianCoordinate_Test.cpp
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber_Test/DistributedNumber_TestRunner.cpp
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber_Test/Distribution_Test.cpp
 

@@ -70,6 +70,10 @@ ostream
 FloatingMeasure/FloatingMeasure.h
 -
 
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+DigFloat/DigFloat.h
+/home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
+
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
 ../DistributedNumber/CartesianCoordinate.h
 /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
@@ -103,4 +107,10 @@ cppunit/extensions/HelperMacros.h
 -
 CartesianCoordinate_Test.cpp
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
+Distribution_Test.cpp
+/home/michae/projects/DistributedNumber/DistributedNumber_Test/Distribution_Test.cpp
+
+/home/michae/projects/DistributedNumber/DistributedNumber_Test/Distribution_Test.cpp
+../DistributedNumber/Distribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
 
