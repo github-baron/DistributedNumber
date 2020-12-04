@@ -32,7 +32,7 @@
 #include "Distribution.h"
 
 /**
- * @todo write docs
+ * @brief This class represents a probability density distribution.
  */
 class CProbabilityDensityDistribution :  CDistribution
 {

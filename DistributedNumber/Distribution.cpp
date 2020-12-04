@@ -61,6 +61,69 @@ bool CDistribution::operator!=(const CDistribution& other) const
     return mDistribution == other.mDistribution;
 }
 
+    ///////////////////////////////////
+    // binary operators
+    /////////////////////////////////// 
+CDistribution & CDistribution::operator*=(const CDigFloat& Value)
+{
+    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
+        iel->second*=Value; 
+    return *this;
+}
+CDistribution & CDistribution::operator/=(const CDigFloat& Value)
+{
+    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
+        iel->second/=Value; 
+    return *this;
+}
+
+CDistribution & CDistribution::operator+=(const CDigFloat& Value)
+{
+    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
+        iel->second+=Value; 
+    return *this;
+}
+CDistribution & CDistribution::operator-=(const CDigFloat& Value)
+{
+    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
+        iel->second-=Value; 
+    return *this;
+}
+
+///////////////////////////////////
+// function on all distribution variables
+///////////////////////////////////    
+void CDistribution::Shift(const CDigFloat& shift)
+{
+    // generate map to copy from
+    M_DFDF ShiftedDistribution;
+    for(auto iel: mDistribution)
+        ShiftedDistribution[CDigFloat(shift)+iel.first] = iel.second;
+    
+    // copy
+    mDistribution.clear();
+    for(auto iel: ShiftedDistribution)
+        mDistribution[iel.first] = iel.second;
+    
+    // clear temporary map
+    ShiftedDistribution.clear();    
+}
+
+void CDistribution::Scale(const CDigFloat& scale)
+{
+    // generate map to copy from
+    M_DFDF ShiftedDistribution;
+    for(auto iel: mDistribution)
+        ShiftedDistribution[CDigFloat(scale)*iel.first] = iel.second;
+    
+    // copy
+    mDistribution.clear();
+    for(auto iel: ShiftedDistribution)
+        mDistribution[iel.first] = iel.second;
+    
+    // clear temporary map
+    ShiftedDistribution.clear();   
+}
 ////////////////////////////////////////
 // functions
 ////////////////////////////////////////

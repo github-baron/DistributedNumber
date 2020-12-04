@@ -98,6 +98,18 @@ int main( int argc, char* argv[] )
                     )
                   );
     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistributionOperations",
+                    &CDistribution_Test::DistributionOperations,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistributionFunctionOnVariable",
+                    &CDistribution_Test::DistributionFunctionOnVariable,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
                     "Distribution: DistributionCalculations",
                     &CDistribution_Test::DistributionCalculations,
                     &Distribution_Test

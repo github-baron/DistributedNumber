@@ -35,8 +35,8 @@ typedef    pair<CDigFloat,CDigFloat> P_DFDF;
 
 
 /**
- * @brief This class represents a "quasi continous" distribution defined by discrete  \anchor def-distri-point points which are tuples consisting of a variable 
- * and its positive distribution value. The "quasi continuity" is achieved by linearly interpolating between the points of the distribution.
+ * @brief This class represents a "quasi continous" distribution defined by discrete  \anchor def-distri-point points which are tuples consisting of the \anchor def-distri-variable distribution variable 
+ * and its positive \anchor def-distri-value distribution value. The \anchor def-quasi-continuity "quasi continuity" is achieved by linearly interpolating between the points of the distribution.
  * This class offers:
  * - adding points to the distribution
  * - "quasi conitinously" ...
@@ -45,6 +45,11 @@ typedef    pair<CDigFloat,CDigFloat> P_DFDF;
  *    - ... calculating intervalls for a given coverage
  */
 
+
+/**
+ * @todo moving from 1d to nd distribution: replace the representation (CDigFloat) of the \ref def-distri-variable "distribution variable" by CCartesianCoordinates. This will mean
+ * a lot of work keeping the \ref def-quasi-continuity "quasi continuity" (e.g. see function ::DistriValue: generally interpolating values for a nd distribution is much more sophisticated).
+ */
 
 class CDistribution 
 {
@@ -71,7 +76,7 @@ public:
     ~CDistribution();
     
     ///////////////////////////////////
-    // operators
+    // assingment operators
     ///////////////////////////////////
     /**
      * Assignment operator
@@ -81,6 +86,9 @@ public:
      */
     CDistribution& operator=(const CDistribution& other);
 
+    ///////////////////////////////////
+    // comparison operators
+    ///////////////////////////////////
     /**
      * @brief equality operator
      *
@@ -97,6 +105,42 @@ public:
      */
     bool operator!=(const CDistribution& other) const;
     
+    ///////////////////////////////////
+    // binary operators
+    ///////////////////////////////////
+    /**
+     * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat factor
+     */
+    CDistribution& operator*=(const CDigFloat& Value);
+
+    /**
+     * @brief division assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat divisor
+     */
+    CDistribution& operator/=(const CDigFloat& Value);
+    
+    /**
+     * @brief summation assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat summand
+     */
+    CDistribution& operator+=(const CDigFloat& Value);
+    
+    /**
+     * @brief subtraction assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat subtrahend
+     */
+    CDistribution& operator-=(const CDigFloat& Value);
+    
+    ///////////////////////////////////
+    // function on all distribution variables
+    ///////////////////////////////////    
+    void Shift(const CDigFloat& shift);
+    void Scale(const CDigFloat& scale);
     
     ///////////////////////////////////
     // functions
@@ -218,6 +262,15 @@ protected:
      */
     CDigFloat _IntegralOfTwoPoints(const CDigFloat& x1, const CDigFloat& y1, const CDigFloat& x2, const CDigFloat& y2 , const int &nthOrder =0);
     
+    /**
+     * @brief calculates the value of the n'th order weighed primitve integral over a linear function f (x) = slope * x + offset, i.e. Integral ( x^n*f(x)). This function is neede for all integral calculations done within this class. (see ::AbsIntegral, ::CoverageFromTo, ::CoverageIntervall)
+     *
+     * @param[in] x CDigFloat the value to calculate the primitve integral for
+     * @param[in] slope, CDigFloat the slope of the integrated and weighed linear function
+     * @param[in] offset CDigFloat the offset of the integrated and weighed linear function
+     * @param[in] nthOrder int the order of the weighing of the linear function
+     * @return CDigFloat the value of the primitive integral at x
+     */
     CDigFloat _nthOrderWeightedPrimitiveIntegral(const CDigFloat& x,const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder);
     /**
      * @brief initializes member

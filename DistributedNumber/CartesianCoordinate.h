@@ -32,6 +32,7 @@
 
 /**
  * @brief This generic class represents cartesian coordinates
+ * 
  */
 
 class
