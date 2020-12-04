@@ -112,6 +112,7 @@ public:
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
      * @param[in] Value CDigFloat factor
+     * @return CDistribution
      */
     CDistribution& operator*=(const CDigFloat& Value);
 
@@ -119,6 +120,7 @@ public:
      * @brief division assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
      * @param[in] Value CDigFloat divisor
+     * @return CDistribution
      */
     CDistribution& operator/=(const CDigFloat& Value);
     
@@ -126,6 +128,7 @@ public:
      * @brief summation assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
      * @param[in] Value CDigFloat summand
+     * @return CDistribution
      */
     CDistribution& operator+=(const CDigFloat& Value);
     
@@ -133,13 +136,24 @@ public:
      * @brief subtraction assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
      * @param[in] Value CDigFloat subtrahend
+     * @return CDistribution
      */
     CDistribution& operator-=(const CDigFloat& Value);
     
     ///////////////////////////////////
     // function on all distribution variables
     ///////////////////////////////////    
-    void Shift(const CDigFloat& shift);
+   /**
+     * @brief shift is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat shift added on all variables of distribution
+     */
+   void Shift(const CDigFloat& shift);
+   /**
+     * @brief scale is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat scale is multiplies all variables of distribution
+     */
     void Scale(const CDigFloat& scale);
     
     ///////////////////////////////////

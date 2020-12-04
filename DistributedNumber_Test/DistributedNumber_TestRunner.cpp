@@ -42,6 +42,7 @@
 // include all test classes
 #include "CartesianCoordinate_Test.cpp"
 #include "Distribution_Test.cpp"
+#include "ProbabilityDensityDistribution_Test.cpp"
 
 int main( int argc, char* argv[] )
 {
@@ -53,6 +54,7 @@ int main( int argc, char* argv[] )
     // declare all tests
     CCartesianCoordinate_Test CartesianCoordinate_Test;
     CDistribution_Test Distribution_Test;
+    CProbabilityDensityDistribution_Test ProbabilityDensityDistribution_Test;
 
     // Create the event manager and test controller
     CPPUNIT_NS::TestResult controller;
@@ -116,6 +118,15 @@ int main( int argc, char* argv[] )
                     )
                   );
  
+    /////////////////////////////////////////////////
+    //// add all tests of CProbabilityDensityDistribution_Test
+    /////////////////////////////////////////////////
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Normalize",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Normalize,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
 
 
     try

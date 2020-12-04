@@ -32,11 +32,21 @@
 #include "Distribution.h"
 
 /**
- * @brief This class represents a probability density distribution.
+ * @brief This class represents a probability density distribution. 
+ * It offers :
+ * - handling of probability:
+ *     - adding non-probability \ref def-distri-value "values" is possible (e.g. countings of the occurrence of a variable)
+ *     - normalization will be done when needed (e.g. query for a distribution value will return a probability density value)
+ *     - the query for 
+ * -
  */
 class CProbabilityDensityDistribution :  CDistribution
 {
 public:
+    
+    ////////////////////////////////////////////
+    // construction / destruction
+    ////////////////////////////////////////////
     /**
      * Default constructor
      */
@@ -45,47 +55,166 @@ public:
     /**
      * Copy constructor
      *
-     * @param other TODO
+     * @param other CProbabilityDensityDistribution
      */
     CProbabilityDensityDistribution(const CProbabilityDensityDistribution& other);
+
+    /**
+     * Copy constructor
+     *
+     * @param other CDistribution
+     */
+    CProbabilityDensityDistribution(const CDistribution& other);
 
     /**
      * Destructor
      */
     ~CProbabilityDensityDistribution();
 
+    ////////////////////////////////////////////
+    // assignment operator
+    ////////////////////////////////////////////
     /**
-     * Assignment operator
+     * @brief Assignment operator
      *
-     * @param other TODO
-     * @return TODO
+     * @param other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
      */
     CProbabilityDensityDistribution& operator=(const CProbabilityDensityDistribution& other);
 
     /**
-     * @todo write docs
+     * @brief Assignment operator
      *
-     * @param other TODO
-     * @return TODO
+     * @param other CDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator=(const CDistribution& other);
+    
+    ////////////////////////////////////////////
+    // binary operator
+    ////////////////////////////////////////////
+   ///////////////////////////////////
+    // binary operators
+    ///////////////////////////////////
+    /**
+     * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat factor
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator*=(const CDigFloat& Value);
+
+    /**
+     * @brief division assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat divisor
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator/=(const CDigFloat& Value);
+    
+    /**
+     * @brief summation assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat summand
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator+=(const CDigFloat& Value);
+    
+    /**
+     * @brief subtraction assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     *
+     * @param[in] Value CDigFloat subtrahend
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator-=(const CDigFloat& Value);
+    
+    ///////////////////////////////////
+    // function on all distribution variables
+    ///////////////////////////////////    
+   /**
+     * @brief shift is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat shift added on all variables of distribution
+     */
+   void Shift(const CDigFloat& shift);
+   /**
+     * @brief scale is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat scale is multiplies all variables of distribution
+     */
+    void Scale(const CDigFloat& scale);
+
+    ////////////////////////////////////////////
+    // comparison operator
+    ////////////////////////////////////////////
+    /**
+     * @brief equality operator
+     *
+     * @param other CProbabilityDensityDistribution
+     * @return bool
      */
     bool operator==(const CProbabilityDensityDistribution& other) const;
 
     /**
-     * @todo write docs
+     * @todo inequality operator
      *
-     * @param other TODO
-     * @return TODO
+     * @param other CProbabilityDensityDistribution
+     * @return bool
      */
     bool operator!=(const CProbabilityDensityDistribution& other) const;
-
-    /**
-     * Copy constructor
-     *
-     * @param other TODO
-     */
-    CProbabilityDensityDistribution(const CDistribution& other);
     
-       /**
+    ////////////////////////////////////////////
+    // functions
+    ////////////////////////////////////////////   
+     /**
+     * @brief returns (interpolated) value at the given variable and takes care that the distribution
+     * is normalized: if not this will be done
+     *
+     * @param[in] variable CDigFloat variable to interpolate (linearily) the corresponding distribution value
+     * @return CDigFloat the corresponding distribution value
+     */
+    CDigFloat DistriValue(const CDigFloat& variable);     
+    
+   /**
+     * @brief returns the distribution \ref def-distri-point "points" around the given variable
+     *
+     * @param[in] variable CDigFloat& variable to search surrounding \ref def-distri-point "points" for
+     * @param[out] VariableLeft M_DFDF::iterator& iterator for left \ref def-distri-point "point" (see ::M_DFDF)
+     * @param[out] VariableRight M_DFDF::iterator& iterator for right \ref def-distri-point "point" (see ::M_DFDF)
+     */
+    void GetIntervall(const CDigFloat& variable, M_DFDF::const_iterator& VariableLeft, M_DFDF::const_iterator& VariableRight);   
+    
+    /**
+     * @brief returns (interpolated) integral of the distribution between the user given limits
+     *
+     * @param[in] variableLeft CDigFloat for left limit of integral
+     * @param[in] variableRight CDigFloat for right limit of integral
+     * @param[in] nthOrder int for weighing the integral calculation with variable<SUP>+nthOrder</SUP> 
+     * @return CDigFloat as
+     */
+    CDigFloat AbsIntegral(const CDigFloat& variableLeft, const CDigFloat& variableRight, int nthOrder = 0);     
+    
+    /**
+     * @brief resets distribution 
+     *
+     */
+    void  Reset();  
+    
+    /**
+     * @brief calculates the integral of the absolute value of this distribution
+     *
+     * @return CDigFloat
+     */
+    CDigFloat AbsIntegral(const int& nthOrder =0);
+        
+    /**
+     * @brief calculates the nthOrder mean variable weighted by distribution values
+     *
+     * @return CDigFloat nthOrder mean variable
+     */
+    CDigFloat Mean( int nthOrder = 1 );
+   
+    /**
      * @brief adds new distribution element if distribution is not already normalized (see ::_Normalize).
      *        In case of adding the last element the surrounding elements will be set to zero (... if not done)
      *        and the whole distribution will be normalized (see ::_Normalize).
@@ -104,13 +233,19 @@ protected:
      * @param other CDistribution&
      * @return bool
      */
-    void _Normalize();  
+    void _Normalize();     
+    /**
+     * @brief revert normalizatiion: multiplies by norm (integral over the distribution) 
+     *
+     * @param other CDistribution&
+     * @return bool
+     */
+    void _DeNormalize();  
     /**
      * @brief initializes member
      *
      */
-    void _Init();
-    
+    void _Init();    
     
     bool bNormalized;
     CDigFloat dfAbsIntegral;

@@ -74,6 +74,10 @@ FloatingMeasure/FloatingMeasure.h
 DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
 
+/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
+Distribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
 ../DistributedNumber/CartesianCoordinate.h
 /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
@@ -109,8 +113,14 @@ CartesianCoordinate_Test.cpp
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
 Distribution_Test.cpp
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/Distribution_Test.cpp
+ProbabilityDensityDistribution_Test.cpp
+/home/michae/projects/DistributedNumber/DistributedNumber_Test/ProbabilityDensityDistribution_Test.cpp
 
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/Distribution_Test.cpp
 ../DistributedNumber/Distribution.h
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+
+/home/michae/projects/DistributedNumber/DistributedNumber_Test/ProbabilityDensityDistribution_Test.cpp
+../DistributedNumber/ProbabilityDensityDistribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
 
