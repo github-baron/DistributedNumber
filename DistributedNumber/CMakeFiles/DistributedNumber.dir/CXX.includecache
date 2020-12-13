@@ -30,15 +30,13 @@ assert.h
 ostream
 -
 
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.cpp
+Distribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+iostream
+-
+
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
 DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
-
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.cpp
-ProbabilityDensityDistribution.h
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
-
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
-Distribution.h
-/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
 

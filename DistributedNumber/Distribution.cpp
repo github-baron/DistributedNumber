@@ -217,26 +217,49 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
 
 CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFloat& variableRight, int nthOrder /*= 0*/)
 {
-    M_DFDF::const_iterator iminLeft, imaxLeft, iminRight, imaxRight;
-    GetIntervall(variableLeft, iminLeft, imaxLeft);
-    GetIntervall(variableRight, iminRight, imaxRight);
     
-    // check for outside value left
+    // must be in order: left <= right
+    assert(variableLeft <= variableRight);
+    
+    
+    // init variable for result
+    CDigFloat dfIntegral(0);    
+    
+    // check for being within limits otherwise return 0
+    if(variableLeft > prev(Distribution().end())->first || variableRight < Distribution().begin()->first)
+        return dfIntegral;
+    
+    // in case of equality --> return zero, too 
+    if( variableLeft == variableRight)
+        return dfIntegral;
+    
+    // correct exceeding limits --> set to edges
     CDigFloat variableLeftCorr = variableLeft;
-    if(iminLeft == imaxLeft)
-        variableLeftCorr = iminLeft->first;
-    
-    // check for outside value left: < begin()
     CDigFloat variableRightCorr = variableRight;
-    if(iminRight == imaxRight && imaxRight == mDistribution.end())
-        variableRightCorr = prev(mDistribution.end())->first;
+    if( variableLeft <= Distribution().begin()->first)
+        variableLeftCorr = Distribution().begin()->first;
+    if( variableRight >= prev(Distribution().end())->first)
+        variableRightCorr = prev(Distribution().end())->first;
+    
+    M_DFDF::const_iterator iminLeft, imaxLeft, iminRight, imaxRight;
+    GetIntervall(variableLeftCorr, iminLeft, imaxLeft);
+    GetIntervall(variableRightCorr, iminRight, imaxRight);
+
+// this is unnecessary now: all checks done before    
+//     check for outside value left
+//     if(iminLeft == imaxLeft)
+//         variableLeftCorr = iminLeft->first;
+//     
+//     check for outside value left: < begin()
+//     if(iminRight == imaxRight && imaxRight == mDistribution.end())
+//         variableRightCorr = prev(mDistribution.end())->first;
     
     // DEBUG
-//     cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
-//     cout << "left intervall: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
-//     cout << "right intervall: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
-//     cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
-//     cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
+     cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
+    cout << "left intervall: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
+    cout << "right intervall: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
+    cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
+    cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
     
     // check for same intervall to avoid double calculations
     // in this case no calculation is done for 
@@ -245,10 +268,7 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     bool bSameIntervall = (imaxLeft->first == imaxRight->first);
     
     // set the limit for the left integral:
-    CDigFloat dfLeftIntegralMax = min(imaxLeft->first.RawValue(), variableRightCorr.RawValue());
-    
-    // init variable for result
-    CDigFloat dfIntegral(0);    
+    CDigFloat dfLeftIntegralMax = min(imaxLeft->first, variableRightCorr);
     
     // calculate the integral of complete elements: only if the
     // variable arguments of this function are NOT in the same intervall
@@ -283,10 +303,10 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
 
 bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDigFloat& dfFrom, CDigFloat& dfTo, bool bReverse, int nthOrder)
 {
+    // init the output variable with the corresponding starting point depending on the direction
     CDigFloat dfStart = dfFrom;
     dfTo = bReverse ? mDistribution.begin()->first : prev(mDistribution.end())->first;
- /*   cout << "CoverageFromTo(" << dfCoveragePercent.RawPrint(10) << ", " << dfFrom.RawPrint(10) << ", " << dfTo.RawPrint(10) << ", " << bReverse << ", " << nthOrder << "):" << endl;
- */   
+ 
     // the sign of the intervall controls the direction
     CDigFloat dfIntervall = CDigFloat(dfTo) - dfFrom;
     
@@ -297,11 +317,6 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
     dfTargetCoverage.ResetError();
     dfActualCoverage.ResetError();
     
-    // DEBUG:
-//     cout << "dfTargetCoverage: " << dfTargetCoverage.RawPrint(10) << endl;
-//     cout << "dfActualCoverage: " << dfActualCoverage.RawPrint(10) << endl;
-//     cout << "dfIntervall: " << dfIntervall.RawPrint(10) << endl;
-    
     // give up if the dfActualCoverage (this is max right now) is less than the dfTargetCoverage
     if(dfActualCoverage < dfTargetCoverage)
         return false;
@@ -310,12 +325,12 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
     // break condition: do until the intervall for the binary search is
     // less than the error of the demanded limit
     CDigFloat dfToOld = dfTo+1.;
-//     while( dfActualCoverage != dfTargetCoverage  )
-    while( dfToOld != dfTo )
-//     while( fabs(dfIntervall.RawValue()) > dfTo.RawError()/100.  )
+    int count = 0;
+    while( dfActualCoverage != dfTargetCoverage && count < MaxBinarySearchIterations() )
     {
+        count++;
         // remember old value
-        dfToOld = dfTo;
+        dfToOld = dfTo.RawValue();
         
         // halfen intervall
         dfIntervall /= 2.;
@@ -331,21 +346,15 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
             
         }   // endelse(dfActualCoverage < dfTargetCoverage)
         
+        // the error might accumulate and the break condition might be true earlier due to the accumulated errors
+        dfTo.ResetError();
+        
         // calculate the actual coverage: take raw value is the same as
         // handing over CDigFloat and then to call ResetError()
         dfActualCoverage = AbsIntegral(bReverse ? dfTo.RawValue() : dfFrom.RawValue() ,bReverse ? dfFrom.RawValue() : dfTo.RawValue(), nthOrder).RawValue();
       
     
     }   // endwhile( dfActualCoverage != dfTargetCoverage)
-        //DEBUG
-//         cout << "dfActualCoverage: " << dfActualCoverage.RawPrint(50) << endl;
-//         cout << "dfTargetCoverage: " << dfTargetCoverage.RawPrint(50) << endl;
-//         cout << "dfIntervall: " << dfIntervall.RawPrint(50) << endl;
-//         cout << "dfToOld: " << dfToOld.RawPrint(50) << endl;
-//         cout << "dfTo: " << dfTo.RawPrint(50) << endl;
-//      
-//     cout << "returning dfTo" << dfTo.RawPrint(50) << endl;
-    
     
     return true;
 }
@@ -363,53 +372,6 @@ bool CDistribution::CoverageIntervall(const CDigFloat& dfCoveragePercent, CDigFl
         return false;
     if( ! CoverageFromTo(CDigFloat( dfCoveragePercent)/2.,dfMean, dfMax,false, nthOrder) )
         return false;
-    
-    return true;
-    
-    // init the output arguments with the mean
-    dfMin = dfMean;
-    dfMax = dfMean;
-    
-    // check coverage argument 
-    if( dfCoveragePercent < 0  || dfCoveragePercent > 100)
-        return false;
-    
-    // get the target value of the integral for this order and given coverage 
-    CDigFloat dfTargetCoverage = AbsIntegral(nthOrder) * dfCoveragePercent / 100.;
-    
-    // do a binary search for the given covery
-    CDigFloat dfActualCoverage = 0;
-    CDigFloat dfIntervall = max(dfMean.RawValue() - mDistribution.begin()->first.RawValue(), prev(mDistribution.end())->first.RawValue() - dfMean.RawValue());
-    assert(dfIntervall.RawValue() > 0);
-    dfMin = dfMean - dfIntervall;
-    dfMax = dfMean + dfIntervall;
-
-    dfActualCoverage = AbsIntegral(dfMin, dfMax,nthOrder);
-
-    while( dfActualCoverage != dfTargetCoverage && dfIntervall > 0 )
-    {
-        
-        dfIntervall /= 2.;
-        if(dfActualCoverage > dfTargetCoverage )
-        {            
-            dfMin += dfIntervall;
-            dfMax -= dfIntervall;
-            
-        }   // endif(dfActualCoverage > dfTargetCoverage )
-        else
-        {
-            dfMin -= dfIntervall;
-            dfMax += dfIntervall;
-        }
-        dfActualCoverage = AbsIntegral(dfMin, dfMax,nthOrder);
-        
-        // DEBUG
-//         cout << "dfActualCoverage: " << dfActualCoverage.RawPrint(10) << endl;
-//         cout << "dfIntervall: " << dfIntervall.RawPrint(10) << endl;
-//         cout << "dfMin: " << dfMin.RawPrint(10) << endl;
-//         cout << "dfMax: " << dfMax.RawPrint(10) << endl;
-        
-    }   // endwhile( dfActualCoverage != dfTargetCoverage && dfIntervall > 0)    
     
     return true;
     
@@ -460,8 +422,7 @@ CDigFloat CDistribution::_IntegralConsecutiveElements(const M_DFDF::const_iterat
 
 CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFloat& y1, const CDigFloat& x2, const CDigFloat& y2, const int &nthOrder /*=0*/)
 {
-    // use in order:
-    assert(x2>=x1);
+    cout << "_IntegralOfTwoPoints( x1= " << x1.RawPrint(30) << ", x2= " << x2.RawPrint(30) << ")" << endl;
     
     CDigFloat dfIntegral = 0; 
   
@@ -472,6 +433,8 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
     //           where b = y1 + a*(-x1)
     if(x1!=x2)
     {
+        // use in order:
+        assert(x2>=x1);
         CDigFloat a = (CDigFloat(y1)-y2)/(CDigFloat(x1)-x2);
         CDigFloat b = CDigFloat(y1) - a * x1;
         
@@ -501,6 +464,7 @@ CDigFloat CDistribution::_nthOrderWeightedPrimitiveIntegral(const CDigFloat& x, 
 void CDistribution::_Init()
 {
     mDistribution.clear();
+    MaxBinarySearchIterations(MAX_BINARY_SEARCH_ITERATIONS);
 }
 
 

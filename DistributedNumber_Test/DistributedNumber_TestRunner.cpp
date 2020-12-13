@@ -112,6 +112,12 @@ int main( int argc, char* argv[] )
                     )
                   );
     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: Coverage",
+                    &CDistribution_Test::Distribution_Coverage,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
                     "Distribution: DistributionCalculations",
                     &CDistribution_Test::DistributionCalculations,
                     &Distribution_Test
@@ -124,6 +130,18 @@ int main( int argc, char* argv[] )
     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
                     "ProbabilityDensityDistribution: Normalize",
                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Normalize,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Coverage",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Coverage,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Operators",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Operators,
                     &ProbabilityDensityDistribution_Test
                     )
                   );

@@ -45,7 +45,7 @@ public:
      *
      * @param other CDistributedNumber&
      */
-    CDistributedNumber(const CDistributedNumber& other);
+    CUncertainFloatingMeasure(const CDistributedNumber& other);
 
     /**
      * Destructor

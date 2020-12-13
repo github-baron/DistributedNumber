@@ -32,7 +32,6 @@ CDistributedNumber::CDistributedNumber()
 
 CDistributedNumber::CDistributedNumber(const CDistributedNumber& other)
 {
-
 }
 
 CDistributedNumber::~CDistributedNumber()

@@ -28,11 +28,19 @@
 
 // includes
 #include "ProbabilityDensityDistribution.h"
-
 /**
- * @todo write docs
+ * \mainpage
+ * DistributedNumber is a class API for calculation with uncertain numbers. The numbers are described by a probability density distribution. This class 
+ * API is meant to support the calculation of uncertain numbers and the corresponding propagation of the probability density distribution caused by these 
+ * calculations. Application may be measurement uncertainty calculations for determination of the quality of your measurement chain.
+/**
+ * @brief This class offers the handling
  */
-class CDistributedNumber
+class 
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+CDistributedNumber : public CProbabilityDensityDistribution
 {
 public:
     /**

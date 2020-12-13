@@ -29,9 +29,14 @@
 // includes 
 #include "DigFloat/DigFloat.h"
 
+// macros
+#define     MAX_BINARY_SEARCH_ITERATIONS 120
+
 // typedef
 typedef    map<CDigFloat,CDigFloat> M_DFDF;
 typedef    pair<CDigFloat,CDigFloat> P_DFDF;
+
+
 
 
 /**
@@ -51,7 +56,11 @@ typedef    pair<CDigFloat,CDigFloat> P_DFDF;
  * a lot of work keeping the \ref def-quasi-continuity "quasi continuity" (e.g. see function ::DistriValue: generally interpolating values for a nd distribution is much more sophisticated).
  */
 
-class CDistribution 
+class 
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+CDistribution 
 {
 public:
     
@@ -183,7 +192,14 @@ public:
      * @param[in] variable CDigFloat variable to interpolate (linearily) the corresponding distribution value
      * @return CDigFloat the corresponding distribution value
      */
-    CDigFloat DistriValue(const CDigFloat& variable);     
+    CDigFloat DistriValue(const CDigFloat& variable);        
+    
+    /**
+     * @brief returns the complete variable range
+     *
+     * @return CDigFloat the variable range
+     */
+    CDigFloat VariableRange(){ return CDigFloat(prev(Distribution().end())->first) - Distribution().begin()->first;}     
     
     /**
      * @brief returns (interpolated) integral of the distribution between the user given limits
@@ -252,6 +268,8 @@ public:
      */
     bool CoverageIntervall(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder = 0);
     
+    bool OutOfBounds(const CDigFloat& variable) {return variable < Distribution().begin()->first || variable > prev(Distribution().end())->first; }
+    
     /**
      * @brief returns string of all element pairs with given precision
      *
@@ -259,8 +277,22 @@ public:
      * @return string
      */
     string Print(int nPrecision);
-
     
+    ///////////////////////////////
+    // getter / setter
+    //////////////////////////////
+   /**
+     * @brief returns the maximal number used for binary search: is used for ::CoverageFromTo
+     * 
+     * @return unsigned int
+     */
+    unsigned int MaxBinarySearchIterations() { return uiMaxBinarySearchIterations;}
+   /**
+     * @brief sets the maximal number used for binary search: is used for ::CoverageFromTo
+     * @param uiIterations unsigned int maximal number of iterations
+     */
+    void MaxBinarySearchIterations(const unsigned int& uiIterations) { uiMaxBinarySearchIterations = uiIterations;}
+
 protected:    
     
     /**
@@ -291,8 +323,11 @@ protected:
      *
      */
     void _Init();
+    /////////////////////////////////////////
+    // protected member
+    //////////////////////////////////////
     
-    
+    unsigned int uiMaxBinarySearchIterations;    
     M_DFDF mDistribution;
 };
 

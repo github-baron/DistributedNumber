@@ -353,6 +353,8 @@ public:
         ///////////////////////////////////
         CDigFloat dfMin, dfMax, dfMaxOld, dfMinOld;
 //         cout << endl << endl;
+        // check for iterations max. 50
+        d1.MaxBinarySearchIterations(50);
         for( int iorder = 0; iorder < 3; iorder++)
         {
             dfMaxOld = 0;
@@ -391,6 +393,33 @@ public:
         }   // endfor( int iorder = 0; iorder < 2; iorder++)
 
     }
+       void Distribution_Coverage()
+    {
+        CDistribution pd1;
+        
+        // normalization after adding the last element
+        pd1.Add(-2,0);
+        pd1.Add(-1,3);
+        pd1.Add(0,0);
+        pd1.Add(1,3);
+        pd1.Add(2,0);
+        CDigFloat min,max;
+        
+        pd1.CoverageFromTo(50.,pd1.Distribution().begin()->first,max);
+        CPPUNIT_ASSERT_MESSAGE( "max should be 0: " + max.RawPrint(30) , max == 0) ; 
+        
+        pd1.CoverageFromTo(50.,prev(pd1.Distribution().end())->first,max, true);
+        CPPUNIT_ASSERT_MESSAGE( "max should be 0: " + max.RawPrint(30) , max == 0) ; 
+        
+        pd1.CoverageIntervall(50.,min,max);
+        CPPUNIT_ASSERT_MESSAGE( "min should be -1: " + min.RawPrint(30), min == -1) ;
+        CPPUNIT_ASSERT_MESSAGE( "max should be 1: " + max.RawPrint(30) + "\n1: " + CDigFloat(1.).RawPrint(30), max == 1) ; 
+        
+        
+        
+        
+    }
+    
     
  
 };

@@ -37,7 +37,7 @@
 
 class
 #ifdef _WIN32
-DistributedNumberDLL_API
+_WIN_DLL_API
 #endif
 CCartesianCoordinate : public vector<CDigFloat>
 {

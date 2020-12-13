@@ -25,11 +25,6 @@
  * 
  */
 
-#ifndef CPROBABILITYDENSITYDISTRIBUTION_H
-#define CPROBABILITYDENSITYDISTRIBUTION_H
-
-// includes
-#include "Distribution.h"
 
 /**
  * @brief This class represents a probability density distribution. 
@@ -40,7 +35,31 @@
  *     - the query for 
  * -
  */
-class CProbabilityDensityDistribution :  CDistribution
+
+#ifndef CPROBABILITYDENSITYDISTRIBUTION_H
+#define CPROBABILITYDENSITYDISTRIBUTION_H
+
+// includes
+#include "Distribution.h"
+
+// enums
+enum class ProbDistOp
+{
+    pdoUnknown = -1,
+    pdoPlus,
+    pdoFirst = pdoPlus,
+    pdoMinus,
+    pdoMult,
+    pdoDiv,
+    pdoLast
+};
+
+class 
+
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+CProbabilityDensityDistribution : public CDistribution
 {
 public:
     
@@ -90,12 +109,38 @@ public:
      */
     CProbabilityDensityDistribution& operator=(const CDistribution& other);
     
-    ////////////////////////////////////////////
-    // binary operator
-    ////////////////////////////////////////////
-   ///////////////////////////////////
-    // binary operators
     ///////////////////////////////////
+    // arithmetic operators
+    ///////////////////////////////////
+    /**
+     * @brief summation assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator += (CProbabilityDensityDistribution& other);
+    /**
+     * @brief summation operator: calls ::operator+= 
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution operator + (CProbabilityDensityDistribution& other);
+
+    /**
+     * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator *= (CProbabilityDensityDistribution& other);
+    /**
+     * @brief multiplication operator: calls ::operator*= 
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution operator * (CProbabilityDensityDistribution& other);
     /**
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
@@ -213,6 +258,13 @@ public:
      * @return CDigFloat nthOrder mean variable
      */
     CDigFloat Mean( int nthOrder = 1 );
+        
+    /**
+     * @brief returns the actual integral (0th order) of the distribution
+     *
+     * @return CDigFloat 0th order integral
+     */
+    CDigFloat OrigIntegral();
    
     /**
      * @brief adds new distribution element if distribution is not already normalized (see ::_Normalize).
@@ -246,6 +298,41 @@ protected:
      *
      */
     void _Init();    
+    /**
+     * @brief returns the integration limits for calculating the probability (i.e. integral) around the variable defined by iel
+     * 
+     * @param[in] iel M_DFDF::iterator defining the variable (iel->first) for which to find the corresponding integration limits 
+     * @param[out] IntegralLowerLimit CDigFloat lower limit of the integral (half way to previous \ref def-distri-point "distribution point"
+     * @param[out] IntegralUpperLimit CDigFloat upper limit of the integral (half way to next \ref def-distri-point "distribution point"
+     *
+     */
+    void _GetIntegralLimits4DistriIterator(const M_DFDF::const_iterator& iel, const M_DFDF& DistriMap, CDigFloat& IntegralLowerLimit, CDigFloat&  IntegralUpperLimit);
+    
+    /**
+     * @brief returns the minimal distance between consecutive variables of a distribution
+     * 
+     * @param[in] Distri M_DFDF distribution to search for the minimal distance
+     *
+     */     
+    CDigFloat _GetMinVariableDifference(const M_DFDF& Distri);
+    
+    /**
+     * @brief returns the distribution to a corresponding operation between two variables
+     * 
+     * @return CProbabilityDensityDistribution resulting from corresponding operation
+     *
+     */     
+    CProbabilityDensityDistribution& _GeneralOperatorsFunction(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+ 
+    
+    /**
+     * @brief returns the distribution to a corresponding operation between two variables applying a convolution algorhithm
+     * 
+     * @return CProbabilityDensityDistribution resulting from corresponding operation
+     */     
+    CProbabilityDensityDistribution& _Convolution4GeneralOperators(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+ 
+    void _GetRangeFromDistributionOperation(const M_DFDF& other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd);
     
     bool bNormalized;
     CDigFloat dfAbsIntegral;
