@@ -148,6 +148,41 @@ public:
         d2.Add(1.05,1);
         d3 = d1*d2;
         cout << endl << d3.Print(10) << endl;
+        
+        // clear and reset to simple distribution
+//         d1.Reset(); d2.Reset();
+//         d1.Add(-3,1); // --> (-3, 0.5)
+//         d1.Add(-1,1); // --> (-1, 0.5)
+//         d2.Add(1,1);  // --> (+1, 0.5)
+//         d2.Add(3,1);  // --> (+3, 0.5)
+        
+        
+        
+        
+        d3 = d1/d2;
+        cout << endl << d3.Print(10) << endl;
+      
+        d3 = d2/d1;
+        cout << endl << d3.Print(10) << endl;
+        
+        d1.Shift(2);
+        
+        d3=d2*d1;
+        cout << endl << d3.Print(10) << endl;
+        
+        d1.Shift(-1);
+        
+        d3=d2*d1;
+        cout << endl << d3.Print(10) << endl;
+        
+        d1.Shift(-0.0001);
+        
+        d3=d2*d1;
+        cout << endl << d3.Print(10) << endl;
+        
+        d1.Shift(2*0.0001);
+        d3=d2/d1;
+        cout << endl << d3.Print(10) << endl;
       
         
 //       CPPUNIT_ASSERT_MESSAGE("el must be (-2,0.06666666667) but is : " + d3.DistriValue(-2).RawPrint(3) + "\n distri1:\n " + d1.Print(10)+ "\n distri2:\n " + d2.Print(10)+ "\n distri:\n " + d3.Print(10) + "\n integral:\n " + d3.OrigIntegral().RawPrint(10), d3.DistriValue(-2)== 0.066666666666666);

@@ -245,21 +245,12 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     GetIntervall(variableLeftCorr, iminLeft, imaxLeft);
     GetIntervall(variableRightCorr, iminRight, imaxRight);
 
-// this is unnecessary now: all checks done before    
-//     check for outside value left
-//     if(iminLeft == imaxLeft)
-//         variableLeftCorr = iminLeft->first;
-//     
-//     check for outside value left: < begin()
-//     if(iminRight == imaxRight && imaxRight == mDistribution.end())
-//         variableRightCorr = prev(mDistribution.end())->first;
-    
     // DEBUG
-     cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
-    cout << "left intervall: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
-    cout << "right intervall: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
-    cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
-    cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
+//      cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
+//     cout << "left intervall: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
+//     cout << "right intervall: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
+//     cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
+//     cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
     
     // check for same intervall to avoid double calculations
     // in this case no calculation is done for 
@@ -422,7 +413,7 @@ CDigFloat CDistribution::_IntegralConsecutiveElements(const M_DFDF::const_iterat
 
 CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFloat& y1, const CDigFloat& x2, const CDigFloat& y2, const int &nthOrder /*=0*/)
 {
-    cout << "_IntegralOfTwoPoints( x1= " << x1.RawPrint(30) << ", x2= " << x2.RawPrint(30) << ")" << endl;
+//     cout << "_IntegralOfTwoPoints( x1= " << x1.RawPrint(30) << ", x2= " << x2.RawPrint(30) << ")" << endl;
     
     CDigFloat dfIntegral = 0; 
   

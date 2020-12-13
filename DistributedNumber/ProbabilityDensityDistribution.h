@@ -140,6 +140,21 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
+    CProbabilityDensityDistribution operator / (CProbabilityDensityDistribution& other);
+
+    /**
+     * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator /= (CProbabilityDensityDistribution& other);
+    /**
+     * @brief multiplication operator: calls ::operator*= 
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
     CProbabilityDensityDistribution operator * (CProbabilityDensityDistribution& other);
     /**
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
