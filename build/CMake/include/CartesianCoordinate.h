@@ -32,11 +32,12 @@
 
 /**
  * @brief This generic class represents cartesian coordinates
+ * 
  */
 
 class
 #ifdef _WIN32
-DistributedNumberDLL_API
+_WIN_DLL_API
 #endif
 CCartesianCoordinate : public vector<CDigFloat>
 {
@@ -69,19 +70,52 @@ public:
     ~CCartesianCoordinate();
     
     ///////////////////////////////////
-    // operators
+    // assignment operators 
+    ///////////////////////////////////
+    
+    
+    ///////////////////////////////////
+    // arithmetic operators 
     ///////////////////////////////////
   
     /**
-     * Assignment operator
+     * assignment multiplication with a #CDigFloat
      *
-     * @param other CCartesianCoordinate&
+     * @param other CDigFloat&
      * @return CCartesianCoordinate&
      */
-    CCartesianCoordinate& operator=(const CCartesianCoordinate& other);
+    CCartesianCoordinate& operator*=(const CDigFloat& other);
+  
+    /**
+     * multiplication with a #CDigFloat
+     *
+     * @param other CDigFloat&
+     * @return CCartesianCoordinate
+     */
+    CCartesianCoordinate operator*(const CDigFloat& other);
+  
+    /**
+     * assignment division with a #CDigFloat
+     *
+     * @param other CDigFloat&
+     * @return CCartesianCoordinate&
+     */
+    CCartesianCoordinate& operator/=(const CDigFloat& other);
+  
+    /**
+     * division with a #CDigFloat
+     *
+     * @param other CDigFloat&
+     * @return CCartesianCoordinate
+     */
+    CCartesianCoordinate operator/(const CDigFloat& other);
+    
+    ///////////////////////////////////
+    // comparison operators 
+    ///////////////////////////////////
 
     /**
-     * @brief comparison operator : compares ::Coordinates with other
+     * @brief equality operator : compares ::Coordinates with other
      *
      * @param other CCartesianCoordinate&
      * @return CCartesianCoordinate&
@@ -131,16 +165,42 @@ public:
     
     
     ///////////////////////////////////
-    // functions
+    // functions for calculations
     ///////////////////////////////////
     
     /**
-     * @brief get number of dimensions: 
+     * @brief distance: calculates root mean square of all coordinates --> distance to origin
      *
-     * @return size_t
+     * @return CDigFloat
+     */
+    CDigFloat Distance();
+    
+    
+    ///////////////////////////////////
+    // functions for output
+    ///////////////////////////////////
+    /**
+     * @brief sets precision of all coordinates
+     * 
+     * @param UserPrecision: int, defining the precision
+     */
+    void Precision(const int UserPrecision) { for(auto icoord= begin(); icoord != end(); icoord++) icoord->Precision(UserPrecision);}
+    
+    /**
+     * @brief activates and deactivates precision for all coordinates
+     * 
+     * @param UserPrecisionActive: bool,
+     */
+    void PrecisionActive( const bool UserPrecisionActive) {for(auto icoord= begin(); icoord != end(); icoord++) icoord->PrecisionActive(UserPrecisionActive);}
+    
+    /**
+     * @brief Print: prints all coordinates
      *
-    inline size_t size(){return Coordinates.size();}
-    */
+     * @return String
+     */
+    string Print(bool bWithError = false);
+    
+    
 protected:
 
     //vector<CDigFloat> Coordinates;

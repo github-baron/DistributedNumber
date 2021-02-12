@@ -41,6 +41,22 @@
 
 // includes
 #include "Distribution.h"
+#include <iostream>
+
+// typedefs
+typedef pair<CDigFloat,CDigFloat> PairDFType;
+typedef pair< PairDFType, PairDFType >SubIntLimitsType;
+typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
+//  { (targetValue,{ ((minthis,maxthis),(minother,maxother)) }) }
+// e.g. [1].second[0].first.first: first integration limit of this distribution for the first sub integration step and the second target value
+// e.g. [1].second[0].second.first: first integration limit of other distribution for the first sub integration step and the second target value
+// no. of target values : PDD_DEFAULT_INTEGRATION_STEPS
+// no. of integration limits for this and other: PDD_DEFAULT_SUBINTEGRATION_STEPS
+typedef vector< pair<CDigFloat, VectorSubIntLimitsType > > ConvolutionPlanType;
+
+// macros
+#define PDD_DEFAULT_INTEGRATION_STEPS 50
+#define PDD_DEFAULT_SUBINTEGRATION_STEPS 10
 
 // enums
 enum class ProbDistOp
@@ -126,6 +142,21 @@ public:
      * @return CProbabilityDensityDistribution
      */
     CProbabilityDensityDistribution operator + (CProbabilityDensityDistribution& other);
+    
+    /**
+     * @brief subtraction assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution& operator -= (CProbabilityDensityDistribution& other);
+    /**
+     * @brief subtraction operator: calls ::operator-= 
+     *
+     * @param[in] other CProbabilityDensityDistribution
+     * @return CProbabilityDensityDistribution
+     */
+    CProbabilityDensityDistribution operator - (CProbabilityDensityDistribution& other);
 
     /**
      * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
@@ -140,8 +171,7 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator / (CProbabilityDensityDistribution& other);
-
+    CProbabilityDensityDistribution operator * (CProbabilityDensityDistribution& other);
     /**
      * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values". The resulting distribution has n*m elements when (*this).size() = n and other.size() = m
      *
@@ -150,12 +180,13 @@ public:
      */
     CProbabilityDensityDistribution& operator /= (CProbabilityDensityDistribution& other);
     /**
-     * @brief multiplication operator: calls ::operator*= 
+     * @brief division operator: calls ::operator/= 
      *
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator * (CProbabilityDensityDistribution& other);
+    CProbabilityDensityDistribution operator / (CProbabilityDensityDistribution& other);
+
     /**
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
      *
@@ -292,22 +323,29 @@ public:
      * @return bool
      */
     bool Add(const CDigFloat& variable, const CDigFloat value, bool bLastElement = false); 
-  
-protected:    
     /**
      * @brief normalize: divides by norm (integral over the distribution) 
      *
      * @param other CDistribution&
      * @return bool
      */
-    void _Normalize();     
+    void Normalize();     
     /**
      * @brief revert normalizatiion: multiplies by norm (integral over the distribution) 
      *
      * @param other CDistribution&
      * @return bool
      */
-    void _DeNormalize();  
+    void DeNormalize(); 
+    
+    ////////////////////////////////////////////
+    // getter / setter
+    ////////////////////////////////////////////   
+    void IntegrationSteps(int nSteps) { m_nIntegrationSteps = nSteps;}
+    int IntegrationSteps() const { return m_nIntegrationSteps;}
+    void SubIntegrationSteps(int nSteps) { m_nSubIntegrationSteps = nSteps;}
+    int SubIntegrationSteps() const { return m_nSubIntegrationSteps;}
+protected:     
     /**
      * @brief initializes member
      *
@@ -346,11 +384,107 @@ protected:
      * @return CProbabilityDensityDistribution resulting from corresponding operation
      */     
     CProbabilityDensityDistribution& _Convolution4GeneralOperators(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
- 
-    void _GetRangeFromDistributionOperation(const M_DFDF& other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd);
+    CProbabilityDensityDistribution& _Convolution4GeneralOperatorsNew(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
     
-    bool bNormalized;
+    /**
+     * @brief returns the distribution range for a convolution with this distri and the other 
+     * 
+     * @param[in] other M_DFDF distribution
+     * @param[in] Operation ProbDistOp the convolution operation (e.g. sum , subtration, ..)
+     * @param[out] TargetRangeStart CDigFloat start variable of convolution result
+     * @param[out] TargetRangeEnd CDigFloat end variable of convolution result
+     * 
+     */     
+    void _GetRangeFromDistributionOperation(CProbabilityDensityDistribution& other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd);
+    
+     /**
+     * @brief returns plans for scanning distribution for a convolution operation: step width depends on 
+     * 
+     * @param[in] other CProbabilityDensityDistribution distribution to convolved with this distribution
+     * @param[in] Operation ProbDistOp the convolution operation (e.g. sum , subtration, ..)
+     * @param[out] planThis M_DFDF plan for scanning / stepping this distribution
+     * @param[out] planOther M_DFDF plan for scanning / stepping the other distribution
+     * 
+     */     
+   vector<CDigFloat> _GetIntegrationIntervallLimits4Convolution(CDigFloat dfDistriStart, CDigFloat dfDistriEnd);
+   
+   void _SetConvolutionPlan(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+   void _SetSubIntegrationIntervalls4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   void _SetSubIntegrationIntervalls4TargetValue4Addition(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   void _SetSubIntegrationIntervalls4TargetValue4Subtraction(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   
+    /**
+     * @brief calculates the sub integration intervalls needed for multiplication of two random variables (see CProbabilityDensityDistribution::operator*) for a specified resulting random value (called target value)
+     * 
+     * @param[in] dfActTargetValue CDigFloat target value to find sub integration intervalls for
+     * @param[in] Other CProbabilityDensityDistribution the distribution which this distri is multiplied with
+     * @param[out] SubIntervalls4TargetValue VectorSubIntLimitsType keeps the sub integration intervalls (see CProbabilityDensityDistribution::SubIntegrationSteps) for this distri and Other needed to calculate the total probability for dfActTargetValue
+     * 
+     */     
+   void _SetSubIntegrationIntervalls4TargetValue4Multiplication(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   
+    /**
+     * @brief calculates the total limits of the sub integration intervalls needed for multiplication of two random variables (see CProbabilityDensityDistribution::operator*) for a specified negative resulting random value (called target value).This function is called by CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4Multiplication.
+     * 
+     * @param[in] dfActTargetValue CDigFloat target value to find sub integration intervalls for
+     * @param[in] One CProbabilityDensityDistribution the distribution which Other distri is multiplied with
+     * @param[in] Other CProbabilityDensityDistribution the distribution which One distri is multiplied with
+     * @param[out] pdtOneLimits PairDFType keeps total integration limits (min, max.) of One distri
+     * @param[out] pdtOtherLimits PairDFType keeps total integration limits (min, max.) of Other distri
+     * 
+     */     
+   void _GetSubIntegrationTotalIntervall4NegativeTargetValue4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+    /**
+     * @brief calculates the total limits of the sub integration intervalls needed for multiplication of positive ranges of two random variables (see CProbabilityDensityDistribution::operator*) for a specified positive resulting random value (called target value). This function is called by CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4Multiplication.
+     * 
+     * @param[in] dfActTargetValue CDigFloat positive target value to find sub integration intervalls for
+     * @param[in] One CProbabilityDensityDistribution the distribution which Other distri is multiplied with
+     * @param[in] Other CProbabilityDensityDistribution the distribution which One distri is multiplied with
+     * @param[out] pdtOneLimits PairDFType keeps total integration limits (min, max.) of One distri
+     * @param[out] pdtOtherLimits PairDFType keeps total integration limits (min, max.) of Other distri
+     * 
+     */     
+   void _GetSubIntegrationTotalIntervall4PositiveTargetValuePositiveVariables4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);   
+   
+    /**
+     * @brief calculates the total limits of the sub integration intervalls needed for multiplication of negative ranges of two random variables (see CProbabilityDensityDistribution::operator*) for a specified positive resulting random value (called target value).This function is called by CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4Multiplication.
+     * 
+     * @param[in] dfActTargetValue CDigFloat positive target value to find sub integration intervalls for
+     * @param[in] One CProbabilityDensityDistribution the distribution which Other distri is multiplied with
+     * @param[in] Other CProbabilityDensityDistribution the distribution which One distri is multiplied with
+     * @param[out] pdtOneLimits PairDFType keeps total integration limits (min, max.) of One distri
+     * @param[out] pdtOtherLimits PairDFType keeps total integration limits (min, max.) of Other distri
+     * 
+     */     
+   void _GetSubIntegrationTotalIntervall4PositiveTargetValueNegativeVariables4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+   
+   void _SetSubIntegrationIntervalls4TargetValue4Division(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   void _GetSubIntegrationTotalIntervall4PositiveTargetValuePositiveVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+   
+   void _GetSubIntegrationTotalIntervall4PositiveTargetValueNegativeVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+   void _GetSubIntegrationTotalIntervall4NegativeTargetValuePosNegVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+   
+   void _GetSubIntegrationTotalIntervall4NegativeTargetValueNegPosVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits);
+   
+   
+   
+   void _InitIntegrationLimits(PairDFType& pdtLimits);
+   
+   
+   ////////////////////////////////////////////////////////
+   // member variables
+   ////////////////////////////////////////////////////////
+    
+    bool bNormalized; 
     CDigFloat dfAbsIntegral;
+    int m_nIntegrationSteps;
+    int m_nSubIntegrationSteps;
+    ConvolutionPlanType m_ConvolutionPlan;
 
 };
 

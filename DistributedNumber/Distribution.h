@@ -115,7 +115,7 @@ public:
     bool operator!=(const CDistribution& other) const;
     
     ///////////////////////////////////
-    // binary operators
+    // arithmetic operators
     ///////////////////////////////////
     /**
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
@@ -148,6 +148,37 @@ public:
      * @return CDistribution
      */
     CDistribution& operator-=(const CDigFloat& Value);
+    
+    ///////////////////////////////////
+    // getter 
+    ///////////////////////////////////    
+    /**
+     * @brief return the first valid iterator of the distribution
+     * 
+     * @return M_DFDF:const_iterator
+     */
+    inline M_DFDF::const_iterator front() { return Distribution().begin();}  
+    /**
+     * @brief return the last valid iterator of the distribution
+     * 
+     * @return M_DFDF:const_iterator
+     */
+    inline M_DFDF::const_iterator back() { return prev(Distribution().end());}
+    
+    /**
+     * @brief return the first variable of the distribution
+     * 
+     * @return CDigFloat
+     */
+    inline CDigFloat firstVariable() { return front()->first;}  
+    /**
+     * @brief return the last  varibale of the distribution
+     * 
+     * @return CDigFloat
+     */
+    inline CDigFloat lastVariable() { return back()->first;}
+    
+    
     
     ///////////////////////////////////
     // function on all distribution variables
@@ -230,6 +261,20 @@ public:
      * @return CDigFloat
      */
     CDigFloat AbsIntegral(const int& nthOrder =0);
+        
+    /**
+     * @brief calculates minimal \ref def-distri-value "distribution value"
+     *
+     * @return CDigFloat minimal distribution value
+     */
+    CDigFloat Min();
+    
+    /**
+     * @brief calculates maximal \ref def-distri-value "distribution value"
+     *
+     * @return CDigFloat maximal distribution value
+     */
+    CDigFloat Max();
         
     /**
      * @brief calculates the nthOrder mean variable weighted by distribution values

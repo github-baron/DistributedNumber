@@ -77,6 +77,8 @@ DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
 Distribution.h
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+iostream
+-
 
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
 ../DistributedNumber/CartesianCoordinate.h

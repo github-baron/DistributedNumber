@@ -183,6 +183,33 @@ public:
         d1.Shift(2*0.0001);
         d3=d2/d1;
         cout << endl << d3.Print(10) << endl;
+        
+        // check the gaussian distri
+        d1.Reset();
+        d2.Reset();
+        CDigFloat width1 = 2, width2=1.4;
+        CDigFloat expFactor = 4*log(2)/log(10.);
+        int nPoints = 100;
+        CDigFloat step = 4. * 2. / nPoints;
+        for( int ipt=1; ipt <= nPoints/2.; ipt++)
+        {
+            CDigFloat X = step*ipt;
+            d1.Add(X*-1.,exp(X*X*expFactor*-1 / width1));
+            d2.Add(X*-1.,exp(X*X*expFactor*-1 / width2));
+            d1.Add(X,exp(X*X*expFactor*-1  / width1));
+            d2.Add(X,exp(X*X*expFactor*-1  / width2));
+        }
+        
+        d1.Shift(-10);
+        d2.Shift(+0.2466);
+        cout << endl << d1.Print(10) << endl;
+        cout << endl << d2.Print(10) << endl;
+      
+        
+        d3= d1*d2;
+        cout << endl << d3.Print(10) << endl;
+        d3= d2*d1;
+        cout << endl << d3.Print(10) << endl;
       
         
 //       CPPUNIT_ASSERT_MESSAGE("el must be (-2,0.06666666667) but is : " + d3.DistriValue(-2).RawPrint(3) + "\n distri1:\n " + d1.Print(10)+ "\n distri2:\n " + d2.Print(10)+ "\n distri:\n " + d3.Print(10) + "\n integral:\n " + d3.OrigIntegral().RawPrint(10), d3.DistriValue(-2)== 0.066666666666666);

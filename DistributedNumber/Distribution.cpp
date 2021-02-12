@@ -112,17 +112,17 @@ void CDistribution::Shift(const CDigFloat& shift)
 void CDistribution::Scale(const CDigFloat& scale)
 {
     // generate map to copy from
-    M_DFDF ShiftedDistribution;
+    M_DFDF ScaledDistribution;
     for(auto iel: mDistribution)
-        ShiftedDistribution[CDigFloat(scale)*iel.first] = iel.second;
+        ScaledDistribution[CDigFloat(scale)*iel.first] = iel.second;
     
     // copy
     mDistribution.clear();
-    for(auto iel: ShiftedDistribution)
+    for(auto iel: ScaledDistribution)
         mDistribution[iel.first] = iel.second;
     
     // clear temporary map
-    ShiftedDistribution.clear();   
+    ScaledDistribution.clear();   
 }
 ////////////////////////////////////////
 // functions
@@ -219,8 +219,7 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
 {
     
     // must be in order: left <= right
-    assert(variableLeft <= variableRight);
-    
+    assert(variableLeft <= variableRight);    
     
     // init variable for result
     CDigFloat dfIntegral(0);    
@@ -282,6 +281,24 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
 //  cout << "Integral (3): " << dfIntegral.RawPrint(10) << endl;
     return dfIntegral;
 }
+CDigFloat CDistribution::Min()
+{
+    CDigFloat dfMin = front()->second;
+    for(auto iel: Distribution())
+        if(iel.second < dfMin)
+            dfMin = iel.second;
+    return dfMin;
+}
+
+CDigFloat CDistribution::Max()
+{
+    CDigFloat dfMax = front()->second;
+    for(auto iel: Distribution())
+        if(iel.second > dfMax)
+            dfMax = iel.second;
+    return dfMax;
+}
+
 
  CDigFloat CDistribution::Median(int nthOrder)
 {
