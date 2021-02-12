@@ -350,24 +350,7 @@ protected:
      * @brief initializes member
      *
      */
-    void _Init();    
-    /**
-     * @brief returns the integration limits for calculating the probability (i.e. integral) around the variable defined by iel
-     * 
-     * @param[in] iel M_DFDF::iterator defining the variable (iel->first) for which to find the corresponding integration limits 
-     * @param[out] IntegralLowerLimit CDigFloat lower limit of the integral (half way to previous \ref def-distri-point "distribution point"
-     * @param[out] IntegralUpperLimit CDigFloat upper limit of the integral (half way to next \ref def-distri-point "distribution point"
-     *
-     */
-    void _GetIntegralLimits4DistriIterator(const M_DFDF::const_iterator& iel, const M_DFDF& DistriMap, CDigFloat& IntegralLowerLimit, CDigFloat&  IntegralUpperLimit);
-    
-    /**
-     * @brief returns the minimal distance between consecutive variables of a distribution
-     * 
-     * @param[in] Distri M_DFDF distribution to search for the minimal distance
-     *
-     */     
-    CDigFloat _GetMinVariableDifference(const M_DFDF& Distri);
+    void _Init();   
     
     /**
      * @brief returns the distribution to a corresponding operation between two variables
@@ -376,15 +359,6 @@ protected:
      *
      */     
     CProbabilityDensityDistribution& _GeneralOperatorsFunction(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
- 
-    
-    /**
-     * @brief returns the distribution to a corresponding operation between two variables applying a convolution algorhithm
-     * 
-     * @return CProbabilityDensityDistribution resulting from corresponding operation
-     */     
-    CProbabilityDensityDistribution& _Convolution4GeneralOperators(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
-    CProbabilityDensityDistribution& _Convolution4GeneralOperatorsNew(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
     
     /**
      * @brief returns the distribution range for a convolution with this distri and the other 
@@ -396,17 +370,6 @@ protected:
      * 
      */     
     void _GetRangeFromDistributionOperation(CProbabilityDensityDistribution& other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd);
-    
-     /**
-     * @brief returns plans for scanning distribution for a convolution operation: step width depends on 
-     * 
-     * @param[in] other CProbabilityDensityDistribution distribution to convolved with this distribution
-     * @param[in] Operation ProbDistOp the convolution operation (e.g. sum , subtration, ..)
-     * @param[out] planThis M_DFDF plan for scanning / stepping this distribution
-     * @param[out] planOther M_DFDF plan for scanning / stepping the other distribution
-     * 
-     */     
-   vector<CDigFloat> _GetIntegrationIntervallLimits4Convolution(CDigFloat dfDistriStart, CDigFloat dfDistriEnd);
    
    void _SetConvolutionPlan(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
    void _SetSubIntegrationIntervalls4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
