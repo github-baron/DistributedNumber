@@ -371,8 +371,27 @@ protected:
      */     
     void _GetRangeFromDistributionOperation(CProbabilityDensityDistribution& other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd);
    
-   void _SetConvolutionPlan(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
-   void _SetSubIntegrationIntervalls4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
+   /**
+     * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan which keeps the integration path for an arithmetic operation for all target values of 
+     *   the resulting distribution
+     * 
+     * @param[in] Other CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
+     * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
+     * 
+     */     
+   void _SetConvolutionPlan(CProbabilityDensityDistribution& Other, const ProbDistOp Operation);
+   
+   /**
+     * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan for a single target value
+     * 
+     * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
+     * @param[in] dfActTargetValue CDigFloat given target value to derive integration intervalls fors
+     * @param[in] Other CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
+     * @param[out] SubIntervalls4TargetValue VectorSubIntLimitsType keeps pairwise integration intervalls for this distri and other distri
+     * for a given target value
+     * 
+     */      
+   void _SetSubIntegrationIntervalls4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
    void _SetSubIntegrationIntervalls4TargetValue4Addition(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
    void _SetSubIntegrationIntervalls4TargetValue4Subtraction(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervalls4TargetValue);
    

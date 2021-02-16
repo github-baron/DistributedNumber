@@ -353,7 +353,7 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDis
     CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
     
     // DEBUG
-    cout << "target intervall: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
+//     cout << "target intervall: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
     
     // clear the plan first
     m_ConvolutionPlan.clear();
@@ -410,10 +410,10 @@ void CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4A
     
     
     // DEBUG
-    cout << endl << "_SetSubIntegrationIntervalls4TargetValue4Addition:" << endl;
-    cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-    cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-    cout << "Other-range: [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ]" << endl;
+//     cout << endl << "_SetSubIntegrationIntervalls4TargetValue4Addition:" << endl;
+//     cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
+//     cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
+//     cout << "Other-range: [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ]" << endl;
 
     // invalidate result as initialization
     _InitIntegrationLimits(pdtThisLimits);
@@ -437,11 +437,11 @@ void CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4A
             
 
     // DEBUG
-    cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-    cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-    cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-    cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-    cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
+//     cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
+//     cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
+//     cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
+//     cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
+//     cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
     
     // is calculation not possible ? --> leave 
     if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin )
@@ -456,8 +456,8 @@ void CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4A
     pdtThisLimits.second = dfActTargetValue -  pdtOtherLimits.first;
     
     // DEBUG
-    cout << "X-Limits: [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
-    cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
+//     cout << "X-Limits: [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
+//     cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
 
         
     // check for x (this distri) being within range
@@ -465,19 +465,19 @@ void CProbabilityDensityDistribution::_SetSubIntegrationIntervalls4TargetValue4A
         return;
         
     // add only if everything is ok
-    cout << "this: first < second : " << string((pdtThisLimits.first < pdtThisLimits.second) ? "less" : " ge") << endl;
-    cout << "other: first < second : " << string((pdtOtherLimits.first < pdtOtherLimits.second) ? "less" : "ge") << endl;
+//     cout << "this: first < second : " << string((pdtThisLimits.first < pdtThisLimits.second) ? "less" : " ge") << endl;
+//     cout << "other: first < second : " << string((pdtOtherLimits.first < pdtOtherLimits.second) ? "less" : "ge") << endl;
     // add only valid results
     if((pdtThisLimits.first >= pdtThisLimits.second) || (pdtOtherLimits.first >= pdtOtherLimits.second))
     {
         //DEBUG
-        cout << "zero intervall or inverted order" << endl; 
+//         cout << "zero intervall or inverted order" << endl; 
         return;
     }
 
     SubTotalIntervallRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-    cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-    cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
+//     cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
+//     cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
     
         // now derive for all elements (total integration intervalls) of SubTotalIntervallRanges4TargetValue (max. 2)
     // the SubIntegrationSteps sub integration intervalls and add them to SubIntervalls4TargetValue
