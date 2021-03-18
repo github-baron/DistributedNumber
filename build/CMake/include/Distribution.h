@@ -33,8 +33,8 @@
 #define     MAX_BINARY_SEARCH_ITERATIONS 120
 
 // typedef
-typedef    map<CDigFloat,CDigFloat> M_DFDF;
-typedef    pair<CDigFloat,CDigFloat> P_DFDF;
+typedef    map<CDigFloat,CDigFloat> MapDFDFType;
+typedef    pair<CDigFloat,CDigFloat> PairDFType;
 
 
 
@@ -47,13 +47,13 @@ typedef    pair<CDigFloat,CDigFloat> P_DFDF;
  * - "quasi conitinously" ...
  *    - ... interpolating distribution values for any given variable
  *    - ... calculating any n'th order weighted integral of this distribution
- *    - ... calculating intervalls for a given coverage
+ *    - ... calculating intervals for a given coverage
  */
 
 
 /**
  * @todo moving from 1d to nd distribution: replace the representation (CDigFloat) of the \ref def-distri-variable "distribution variable" by CCartesianCoordinates. This will mean
- * a lot of work keeping the \ref def-quasi-continuity "quasi continuity" (e.g. see function ::DistriValue: generally interpolating values for a nd distribution is much more sophisticated).
+ * a lot of work keeping the \ref def-quasi-continuity "quasi continuity" (e.g. see function CDistribution::DistriValue: generally interpolating values for a nd distribution is much more sophisticated).
  */
 
 class 
@@ -155,15 +155,15 @@ public:
     /**
      * @brief return the first valid iterator of the distribution
      * 
-     * @return M_DFDF:const_iterator
+     * @return MapDFDFType:const_iterator
      */
-    inline M_DFDF::const_iterator front() { return Distribution().begin();}  
+    inline MapDFDFType::const_iterator front() { return Distribution().begin();}  
     /**
      * @brief return the last valid iterator of the distribution
      * 
-     * @return M_DFDF:const_iterator
+     * @return MapDFDFType:const_iterator
      */
-    inline M_DFDF::const_iterator back() { return prev(Distribution().end());}
+    inline MapDFDFType::const_iterator back() { return prev(Distribution().end());}
     
     /**
      * @brief return the first variable of the distribution
@@ -212,10 +212,10 @@ public:
      * @brief returns the distribution \ref def-distri-point "points" around the given variable
      *
      * @param[in] variable CDigFloat& variable to search surrounding \ref def-distri-point "points" for
-     * @param[out] VariableLeft M_DFDF::iterator& iterator for left \ref def-distri-point "point" (see ::M_DFDF)
-     * @param[out] VariableRight M_DFDF::iterator& iterator for right \ref def-distri-point "point" (see ::M_DFDF)
+     * @param[out] VariableLeft MapDFDFType::iterator& iterator for left \ref def-distri-point "point" (see ::MapDFDFType)
+     * @param[out] VariableRight MapDFDFType::iterator& iterator for right \ref def-distri-point "point" (see ::MapDFDFType)
      */
-    void GetIntervall(const CDigFloat& variable, M_DFDF::const_iterator& VariableLeft, M_DFDF::const_iterator& VariableRight);     
+    void GetInterval(const CDigFloat& variable, MapDFDFType::const_iterator& VariableLeft, MapDFDFType::const_iterator& VariableRight);     
     
     /**
      * @brief returns (interpolated) value at the given variable
@@ -230,7 +230,26 @@ public:
      *
      * @return CDigFloat the variable range
      */
-    CDigFloat VariableRange(){ return CDigFloat(prev(Distribution().end())->first) - Distribution().begin()->first;}     
+    CDigFloat VariableRange(){ return CDigFloat(prev(Distribution().end())->first) - Distribution().begin()->first;}  
+    
+    /**
+     * @brief returns the offset of the linear function defined by the distribution \ref def-distri-point "points" 
+     * around the given variable
+     *
+     * @param[in] variable CDigFloat& variable to search surrounding \ref def-distri-point "points" for
+     * @return the linear offset
+     */
+    CDigFloat LinearOffset(const CDigFloat& Variable);      
+    
+    /**
+     * @brief returns the slope of the linear function defined by the distribution \ref def-distri-point "points" 
+     * around the given variable
+     * 
+     * @param[in] variable CDigFloat& variable to search surrounding \ref def-distri-point "points" for
+     * @return the linear slope
+     */
+    CDigFloat LinearSlope(const CDigFloat& Variable);     
+     
     
     /**
      * @brief returns (interpolated) integral of the distribution between the user given limits
@@ -253,7 +272,7 @@ public:
      *
      * @return map<CDigFloat, CDigFloat> 
      */
-    const M_DFDF& Distribution(){return mDistribution;}   
+    const MapDFDFType& Distribution(){return mDistribution;}   
     
     /**
      * @brief calculates the integral of the absolute value of this distribution
@@ -291,11 +310,11 @@ public:
     CDigFloat Median( int nthOrder = 0 );
         
     /**
-     * @brief calculates the intervall for a given coverage (given in %) of the nthOrder integral. The coverage is places symmetrically around the corresponding nthOrder medial (see ::Median)
+     * @brief calculates the interval for a given coverage (given in %) of the nthOrder integral. The coverage is places symmetrically around the corresponding nthOrder medial (see ::Median)
      *
      * @param[in] dfCoveragePercent CDigFloat between 0 and 100 representing the coverage
-     * @param[in] dfStart CDigFloat for fixed starting point of the coverage intervall 
-     * @param[out] dfTo CDigFloat for end point (to be searched for) of the coverage intervall
+     * @param[in] dfStart CDigFloat for fixed starting point of the coverage interval 
+     * @param[out] dfTo CDigFloat for end point (to be searched for) of the coverage interval
      * @param[in] bReverse bool flag setting the search direction (false: dfFrom < dfTo)
      * @param[in] nthOrder int setting the order of the integral 
      * @return bool : false if fails (may happen if an impossible setting is supplied)
@@ -303,15 +322,15 @@ public:
     bool CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDigFloat& dfFrom, CDigFloat& dfTo, bool bReverse = false, int nthOrder = 0);
         
     /**
-     * @brief calculates the intervall for a given coverage (given in %) of the nthOrder integral. The coverage is places symmetrically around the corresponding nthOrder medial (see ::Median)
+     * @brief calculates the interval for a given coverage (given in %) of the nthOrder integral. The coverage is places symmetrically around the corresponding nthOrder medial (see ::Median)
      *
      * @param[in] dfCoveragePercent CDigFloat between 0 and 100 representing the coverage
-     * @param[out] dfMin CDigFloat for the minimal value of the coverage intervall
-     * @param[out] dfMax CDigFloat for the maximal value of the coverage intervall
+     * @param[out] dfMin CDigFloat for the minimal value of the coverage interval
+     * @param[out] dfMax CDigFloat for the maximal value of the coverage interval
      * @param[in] nthOrder int setting the order of the integral 
      * @return bool : false if fails (only when dfCoveragePercent > 100 or < 0)
      */
-    bool CoverageIntervall(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder = 0);
+    bool CoverageInterval(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder = 0);
     
     bool OutOfBounds(const CDigFloat& variable) {return variable < Distribution().begin()->first || variable > prev(Distribution().end())->first; }
     
@@ -343,9 +362,9 @@ protected:
     /**
      * @brief getting integral value of a distribution element (point (variable and value) and the next higher point)
      *
-     * @param[in] iel M_DFDF::const_iterator of given distribtuion point
+     * @param[in] iel MapDFDFType::const_iterator of given distribtuion point
      */
-    CDigFloat _IntegralConsecutiveElements(const M_DFDF::const_iterator& iel,const int& nthOrder =0);   
+    CDigFloat _IntegralConsecutiveElements(const MapDFDFType::const_iterator& iel,const int& nthOrder =0);   
     
     /**
      * @brief getting integral value of two distribution points (variable and value) assuming linear connection between these points
@@ -354,7 +373,7 @@ protected:
     CDigFloat _IntegralOfTwoPoints(const CDigFloat& x1, const CDigFloat& y1, const CDigFloat& x2, const CDigFloat& y2 , const int &nthOrder =0);
     
     /**
-     * @brief calculates the value of the n'th order weighed primitve integral over a linear function f (x) = slope * x + offset, i.e. Integral ( x^n*f(x)). This function is neede for all integral calculations done within this class. (see ::AbsIntegral, ::CoverageFromTo, ::CoverageIntervall)
+     * @brief calculates the value of the n'th order weighed primitve integral over a linear function f (x) = slope * x + offset, i.e. Integral ( x^n*f(x)). This function is neede for all integral calculations done within this class. (see ::AbsIntegral, ::CoverageFromTo, ::CoverageInterval)
      *
      * @param[in] x CDigFloat the value to calculate the primitve integral for
      * @param[in] slope, CDigFloat the slope of the integrated and weighed linear function
@@ -373,7 +392,7 @@ protected:
     //////////////////////////////////////
     
     unsigned int uiMaxBinarySearchIterations;    
-    M_DFDF mDistribution;
+    MapDFDFType mDistribution;
 };
 
 #endif // CDISTRIBUTION_H

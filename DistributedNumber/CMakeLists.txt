@@ -13,7 +13,6 @@ set(distributednumber_lib
     CartesianCoordinate.cpp
     Distribution.cpp
     ProbabilityDensityDistribution.cpp
-    DistributedNumber.cpp    
 )
 add_library(DistributedNumber SHARED ${distributednumber_lib})
 

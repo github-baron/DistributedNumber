@@ -145,6 +145,30 @@ int main( int argc, char* argv[] )
                     &ProbabilityDensityDistribution_Test
                     )
                   );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Generate constant distribution",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateConstant,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Generate triangle distribution",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateTriangle,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Generate normal distribution",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateNormal,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: statistical parameters of distributions",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_StatisticalParameters,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
 
 
     try

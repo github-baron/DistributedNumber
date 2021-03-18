@@ -198,33 +198,6 @@ CartesianCoordinate.cpp.s:
 	cd /home/michae/projects/DistributedNumber && $(MAKE) -f DistributedNumber/CMakeFiles/DistributedNumber.dir/build.make DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.s
 .PHONY : CartesianCoordinate.cpp.s
 
-DistributedNumber.o: DistributedNumber.cpp.o
-
-.PHONY : DistributedNumber.o
-
-# target to build an object file
-DistributedNumber.cpp.o:
-	cd /home/michae/projects/DistributedNumber && $(MAKE) -f DistributedNumber/CMakeFiles/DistributedNumber.dir/build.make DistributedNumber/CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.o
-.PHONY : DistributedNumber.cpp.o
-
-DistributedNumber.i: DistributedNumber.cpp.i
-
-.PHONY : DistributedNumber.i
-
-# target to preprocess a source file
-DistributedNumber.cpp.i:
-	cd /home/michae/projects/DistributedNumber && $(MAKE) -f DistributedNumber/CMakeFiles/DistributedNumber.dir/build.make DistributedNumber/CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.i
-.PHONY : DistributedNumber.cpp.i
-
-DistributedNumber.s: DistributedNumber.cpp.s
-
-.PHONY : DistributedNumber.s
-
-# target to generate assembly for a file
-DistributedNumber.cpp.s:
-	cd /home/michae/projects/DistributedNumber && $(MAKE) -f DistributedNumber/CMakeFiles/DistributedNumber.dir/build.make DistributedNumber/CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.s
-.PHONY : DistributedNumber.cpp.s
-
 Distribution.o: Distribution.cpp.o
 
 .PHONY : Distribution.o
@@ -295,9 +268,6 @@ help:
 	@echo "... CartesianCoordinate.o"
 	@echo "... CartesianCoordinate.i"
 	@echo "... CartesianCoordinate.s"
-	@echo "... DistributedNumber.o"
-	@echo "... DistributedNumber.i"
-	@echo "... DistributedNumber.s"
 	@echo "... Distribution.o"
 	@echo "... Distribution.i"
 	@echo "... Distribution.s"

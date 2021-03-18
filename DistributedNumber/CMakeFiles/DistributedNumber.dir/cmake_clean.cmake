@@ -2,7 +2,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o"
   "CMakeFiles/DistributedNumber.dir/Distribution.cpp.o"
   "CMakeFiles/DistributedNumber.dir/ProbabilityDensityDistribution.cpp.o"
-  "CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.o"
   "libDistributedNumber.pdb"
   "libDistributedNumber.so"
 )

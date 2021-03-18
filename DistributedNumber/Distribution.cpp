@@ -96,7 +96,7 @@ CDistribution & CDistribution::operator-=(const CDigFloat& Value)
 void CDistribution::Shift(const CDigFloat& shift)
 {
     // generate map to copy from
-    M_DFDF ShiftedDistribution;
+    MapDFDFType ShiftedDistribution;
     for(auto iel: mDistribution)
         ShiftedDistribution[CDigFloat(shift)+iel.first] = iel.second;
     
@@ -112,7 +112,7 @@ void CDistribution::Shift(const CDigFloat& shift)
 void CDistribution::Scale(const CDigFloat& scale)
 {
     // generate map to copy from
-    M_DFDF ScaledDistribution;
+    MapDFDFType ScaledDistribution;
     for(auto iel: mDistribution)
         ScaledDistribution[CDigFloat(scale)*iel.first] = iel.second;
     
@@ -138,10 +138,10 @@ bool CDistribution::Add(const CDigFloat& variable, const CDigFloat value)
     return true;
 }
 
-void CDistribution::GetIntervall(const CDigFloat& variable, M_DFDF::const_iterator& VariableLeft, M_DFDF::const_iterator& VariableRight)
+void CDistribution::GetInterval(const CDigFloat& variable, MapDFDFType::const_iterator& VariableLeft, MapDFDFType::const_iterator& VariableRight)
 {
     
-    int nIntervall = mDistribution.size()-1;    
+    int nInterval = mDistribution.size()-1;    
     VariableLeft = mDistribution.begin();
     
     
@@ -149,10 +149,10 @@ void CDistribution::GetIntervall(const CDigFloat& variable, M_DFDF::const_iterat
     VariableRight = VariableLeft;
     
     // if the map is of size zero: leave now
-    if(nIntervall < 0)
+    if(nInterval < 0)
         return;
     
-    advance( VariableRight ,nIntervall);
+    advance( VariableRight ,nInterval);
  
     // if variable is left outside ...
     if(variable < VariableLeft->first)
@@ -172,17 +172,17 @@ void CDistribution::GetIntervall(const CDigFloat& variable, M_DFDF::const_iterat
     }
     
     // now start binary search:
-    M_DFDF::const_iterator iact;
-    while( nIntervall > 1 )
+    MapDFDFType::const_iterator iact;
+    while( nInterval > 1 )
     {
-        // halfen the intervall
-        nIntervall = (nIntervall+1)/2;
+        // halfen the interval
+        nInterval = (nInterval+1)/2;
         
         // set actual value to new middle
         iact = VariableLeft;        
-        advance(iact, nIntervall);
+        advance(iact, nInterval);
         
-        // set new intervall limits
+        // set new interval limits
         if(variable <= iact->first)
             VariableRight = iact;
         else        
@@ -197,10 +197,10 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
     // init result with zero
     CDigFloat dfDistriValue(0);
     
-    M_DFDF::const_iterator imin, imax;
-    GetIntervall(variable, imin, imax);
+    MapDFDFType::const_iterator imin, imax;
+    GetInterval(variable, imin, imax);
     
-    // in case variable is left out of bounds: GetIntervall did not find a matching intervall --> imin = mDistribution.begin()
+    // in case variable is left out of bounds: GetInterval did not find a matching interval --> imin = mDistribution.begin()
     if(variable < imin->first)
         return dfDistriValue;
     
@@ -214,6 +214,25 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
     return dfDistriValue;
     
 }
+
+CDigFloat CDistribution::LinearOffset(const CDigFloat& Variable)
+{
+    MapDFDFType::const_iterator Left, Right;
+    GetInterval(Variable, Left, Right);
+    
+    return (Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first);
+    
+}
+
+CDigFloat CDistribution::LinearSlope(const CDigFloat& Variable)
+{
+    MapDFDFType::const_iterator Left, Right;
+    GetInterval(Variable, Left, Right);
+    
+    return (Right->second - Left->second) / (Right->first - Left->first);
+
+}
+
 
 CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFloat& variableRight, int nthOrder /*= 0*/)
 {
@@ -240,29 +259,29 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     if( variableRight >= prev(Distribution().end())->first)
         variableRightCorr = prev(Distribution().end())->first;
     
-    M_DFDF::const_iterator iminLeft, imaxLeft, iminRight, imaxRight;
-    GetIntervall(variableLeftCorr, iminLeft, imaxLeft);
-    GetIntervall(variableRightCorr, iminRight, imaxRight);
+    MapDFDFType::const_iterator iminLeft, imaxLeft, iminRight, imaxRight;
+    GetInterval(variableLeftCorr, iminLeft, imaxLeft);
+    GetInterval(variableRightCorr, iminRight, imaxRight);
 
     // DEBUG
 //      cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
-//     cout << "left intervall: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
-//     cout << "right intervall: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
+//     cout << "left interval: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
+//     cout << "right interval: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
 //     cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
 //     cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
     
-    // check for same intervall to avoid double calculations
+    // check for same interval to avoid double calculations
     // in this case no calculation is done for 
     // complete elements
     // right part
-    bool bSameIntervall = (imaxLeft->first == imaxRight->first);
+    bool bSameInterval = (imaxLeft->first == imaxRight->first);
     
     // set the limit for the left integral:
     CDigFloat dfLeftIntegralMax = min(imaxLeft->first, variableRightCorr);
     
     // calculate the integral of complete elements: only if the
-    // variable arguments of this function are NOT in the same intervall
-    if( !bSameIntervall )
+    // variable arguments of this function are NOT in the same interval
+    if( !bSameInterval )
         for(auto iel = imaxLeft; iel!=iminRight; iel++)
             dfIntegral += _IntegralConsecutiveElements(iel,nthOrder);
     
@@ -274,7 +293,7 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     // DEBUG    
 //  cout << "Integral (2): " << dfIntegral.RawPrint(10) << endl;
     // add the part on the right:
-    if(iminRight != mDistribution.end() && !bSameIntervall)
+    if(iminRight != mDistribution.end() && !bSameInterval)
         dfIntegral += _IntegralOfTwoPoints(iminRight->first, iminRight->second, variableRightCorr, DistriValue(variableRightCorr),nthOrder);
     
     // DEBUG    
@@ -315,8 +334,8 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
     CDigFloat dfStart = dfFrom;
     dfTo = bReverse ? mDistribution.begin()->first : prev(mDistribution.end())->first;
  
-    // the sign of the intervall controls the direction
-    CDigFloat dfIntervall = CDigFloat(dfTo) - dfFrom;
+    // the sign of the interval controls the direction
+    CDigFloat dfInterval = CDigFloat(dfTo) - dfFrom;
     
     CDigFloat dfTargetCoverage = AbsIntegral(nthOrder)* dfCoveragePercent/100.;
     CDigFloat dfActualCoverage = AbsIntegral(bReverse ? dfTo : dfFrom ,bReverse ? dfFrom : dfTo, nthOrder);
@@ -330,7 +349,7 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
         return false;
     
     // do a binary search shrinking the actual to the target coverage
-    // break condition: do until the intervall for the binary search is
+    // break condition: do until the interval for the binary search is
     // less than the error of the demanded limit
     CDigFloat dfToOld = dfTo+1.;
     int count = 0;
@@ -340,17 +359,17 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
         // remember old value
         dfToOld = dfTo.RawValue();
         
-        // halfen intervall
-        dfIntervall /= 2.;
+        // halfen interval
+        dfInterval /= 2.;
                 
         if(dfActualCoverage < dfTargetCoverage)
         {
-            dfTo += dfIntervall;
+            dfTo += dfInterval;
             
         }   // endif(dfActualCoverage < dfTargetCoverage)
         else
         {
-            dfTo -= dfIntervall;
+            dfTo -= dfInterval;
             
         }   // endelse(dfActualCoverage < dfTargetCoverage)
         
@@ -367,7 +386,7 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
     return true;
 }
 
-bool CDistribution::CoverageIntervall(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder)
+bool CDistribution::CoverageInterval(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder)
 {
     
     // at least the mean of first order ... zeroth order will always yield 1
@@ -375,7 +394,7 @@ bool CDistribution::CoverageIntervall(const CDigFloat& dfCoveragePercent, CDigFl
     assert(dfMean.RawValue() >= mDistribution.begin()->first.RawValue());
     assert(dfMean.RawValue() <= prev(mDistribution.end())->first.RawValue());
     
-    // simply calculate the CoverageFromTo intervalls for min and max from median
+    // simply calculate the CoverageFromTo intervals for min and max from median
     if( ! CoverageFromTo(CDigFloat( dfCoveragePercent)/2.,dfMean, dfMin,true, nthOrder) )
         return false;
     if( ! CoverageFromTo(CDigFloat( dfCoveragePercent)/2.,dfMean, dfMax,false, nthOrder) )
@@ -409,13 +428,13 @@ CDigFloat CDistribution::AbsIntegral(const int& nthOrder /*=0*/)
     return dfIntegral;
 }
 
-CDigFloat CDistribution::_IntegralConsecutiveElements(const M_DFDF::const_iterator& iel, const int& nthOrder /*=0*/)
+CDigFloat CDistribution::_IntegralConsecutiveElements(const MapDFDFType::const_iterator& iel, const int& nthOrder /*=0*/)
 {
     // init integral
     CDigFloat dfIntegral = 0;
     
     // set the next element
-    M_DFDF::const_iterator ielNext = iel;
+    MapDFDFType::const_iterator ielNext = iel;
     ielNext++;
     
     // if we are at the end --> return zero

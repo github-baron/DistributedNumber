@@ -5,7 +5,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.cpp" "/home/michae/projects/DistributedNumber/DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o"
-  "/home/michae/projects/DistributedNumber/DistributedNumber/DistributedNumber.cpp" "/home/michae/projects/DistributedNumber/DistributedNumber/CMakeFiles/DistributedNumber.dir/DistributedNumber.cpp.o"
   "/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.cpp" "/home/michae/projects/DistributedNumber/DistributedNumber/CMakeFiles/DistributedNumber.dir/Distribution.cpp.o"
   "/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.cpp" "/home/michae/projects/DistributedNumber/DistributedNumber/CMakeFiles/DistributedNumber.dir/ProbabilityDensityDistribution.cpp.o"
   )
@@ -13,7 +12,7 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "GIT_BRANCH=46eedfd37abac4e88925f13ecf95a6b4c5f1691e"
+  "GIT_BRANCH=92df710b7d09cc68ba3debb67797c8284506b017"
   )
 
 # The include file search paths:

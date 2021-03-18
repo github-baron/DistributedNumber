@@ -48,7 +48,7 @@ public:
         CPPUNIT_ASSERT_MESSAGE( "size of distribution should be 2 but is  " + to_string(d1.Distribution().size()) , d1.Distribution().size() == 2) ;
        
         // now check the single elements:
-        M_DFDF::const_iterator iel = d1.Distribution().begin();
+        MapDFDFType::const_iterator iel = d1.Distribution().begin();
         CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
         iel++;
         CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
@@ -56,7 +56,7 @@ public:
         // newly add an element in between
         d1.Add(0.3,6);
        
-        M_DFDF::const_iterator iel2 = d1.Distribution().begin(); 
+        MapDFDFType::const_iterator iel2 = d1.Distribution().begin(); 
         CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel2 ->first.RawPrint(30) + "\n" + iel2 ->second.RawPrint(30) , iel2 ->first == -1 && iel2 ->second == 3) ;
         iel2++;
         if(iel2 != d1.Distribution().end())
@@ -75,7 +75,7 @@ public:
         
         // operator *=:
         d1 *= 2;        
-        M_DFDF::const_iterator iel = d1.Distribution().begin();
+        MapDFDFType::const_iterator iel = d1.Distribution().begin();
         CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 6) ;
         iel++;
         CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 6) ;
@@ -111,7 +111,7 @@ public:
         
         // shifting back
         d1.Shift(-3);
-        M_DFDF::const_iterator iel = d1.Distribution().begin();
+        MapDFDFType::const_iterator iel = d1.Distribution().begin();
         CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -4 && iel->second == 3) ;
         iel++;
         CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -2 && iel->second == 3) ;
@@ -157,28 +157,28 @@ public:
         d1.Add(1,3);
         
         // get the neighbours of a variable -1.00001
-        M_DFDF::const_iterator min, max;
-        d1.GetIntervall(-1.0001,min,max);
+        MapDFDFType::const_iterator min, max;
+        d1.GetInterval(-1.0001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (-1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first ==  -1 && max->second == 3);
         
         // get the neighbours of a variable -1
-        d1.GetIntervall(-1,min,max);
+        d1.GetInterval(-1,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 1 && max->second == 3);
         
         // get the neighbours of a variable 0
-        d1.GetIntervall(0,min,max);
+        d1.GetInterval(0,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first ==  1 && max->second == 3);
         
         // get the neighbours of a variable 1
-        d1.GetIntervall(1,min,max);
+        d1.GetInterval(1,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 1 && max->second == 3);
         
         // get the neighbours of a variable 1.0000001
-        d1.GetIntervall(1.0000001,min,max);
+        d1.GetInterval(1.0000001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min and max are the end of the distribution", min == d1.Distribution().end() && max == d1.Distribution().end());
 
         // calculate the absolute integral
@@ -186,8 +186,8 @@ public:
         CPPUNIT_ASSERT_MESSAGE( "Integral should be 6 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 6) ;
               
         // check if binary search works
-        M_DFDF::const_iterator left,right;
-        d1.GetIntervall(0,left,right);
+        MapDFDFType::const_iterator left,right;
+        d1.GetInterval(0,left,right);
         CPPUNIT_ASSERT_MESSAGE( "left should be (-1,0.5) : \n" + left->first.RawPrint(30) + "\n" + left->second.RawPrint(30) ,left->first == -1 && left->second == 3) ;
         CPPUNIT_ASSERT_MESSAGE( "right should be (1,0.5) : \n" + right->first.RawPrint(30) + "\n" + right->second.RawPrint(30) ,right->first == 1 && right->second == 3) ;
         
@@ -201,37 +201,37 @@ public:
         d1.Add(0.3,6);
         
         // get the neighbours of a variable -1.00001
-        d1.GetIntervall(-1.0001,min,max);
+        d1.GetInterval(-1.0001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (-1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first ==  -1 && max->second == 3);
         
         // get the neighbours of a variable -1
-        d1.GetIntervall(-1,min,max);
+        d1.GetInterval(-1,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (0.3,6) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 0.3 && max->second == 6);
 
         // get the neighbours of a variable 0
-        d1.GetIntervall(0,min,max);
+        d1.GetInterval(0,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (0.3,6) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 0.3 && max->second == 6);
             
         // get the neighbours of a variable 0.3
-        d1.GetIntervall(0.3,min,max);
+        d1.GetInterval(0.3,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (0.3,6) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 0.3 && max->second == 6);
 
          // get the neighbours of a variable 0.5
-         d1.GetIntervall(0.5,min,max);
+         d1.GetInterval(0.5,min,max);
          CPPUNIT_ASSERT_MESSAGE("min must be (0.3,6) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == 0.3 && min->second == 6);
          CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first ==  1 && max->second == 3);
             
         // get the neighbours of a variable 1
-        d1.GetIntervall(1,min,max);
+        d1.GetInterval(1,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (0.3,6) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == 0.3 && min->second == 6);
         CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 1 && max->second == 3);
 
         // get the neighbours of a variable 1.0000001
-        d1.GetIntervall(1.0000001,min,max);
+        d1.GetInterval(1.0000001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min and max are the end of the distribution", min == d1.Distribution().end() && max == d1.Distribution().end());
 
         // calculate the absolute integral
@@ -363,7 +363,7 @@ public:
             CDigFloat dfTotalIntegral = d1.AbsIntegral(iorder);
             for(int iperc = nPercStart; iperc < 100; iperc++)
             {
-                bool bSuccess = d1.CoverageIntervall(iperc,dfMin, dfMax, iorder);
+                bool bSuccess = d1.CoverageInterval(iperc,dfMin, dfMax, iorder);
                 CDigFloat dfMean = d1.Median(iorder );
                 
                 // check for success
@@ -411,7 +411,7 @@ public:
         pd1.CoverageFromTo(50.,prev(pd1.Distribution().end())->first,max, true);
         CPPUNIT_ASSERT_MESSAGE( "max should be 0: " + max.RawPrint(30) , max == 0) ; 
         
-        pd1.CoverageIntervall(50.,min,max);
+        pd1.CoverageInterval(50.,min,max);
         CPPUNIT_ASSERT_MESSAGE( "min should be -1: " + min.RawPrint(30), min == -1) ;
         CPPUNIT_ASSERT_MESSAGE( "max should be 1: " + max.RawPrint(30) + "\n1: " + CDigFloat(1.).RawPrint(30), max == 1) ; 
         

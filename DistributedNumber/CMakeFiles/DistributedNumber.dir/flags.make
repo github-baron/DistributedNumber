@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_FLAGS = -fPIC  
 
-CXX_DEFINES = -DDistributedNumber_EXPORTS -DGIT_BRANCH=46eedfd37abac4e88925f13ecf95a6b4c5f1691e
+CXX_DEFINES = -DDistributedNumber_EXPORTS -DGIT_BRANCH=92df710b7d09cc68ba3debb67797c8284506b017
 
 CXX_INCLUDES = -I/home/michae/projects/DistributedNumber/DistributedNumber -I/home/michae/projects/DistributedNumber/../FloatingMeasure/build/CMake/include 
 
