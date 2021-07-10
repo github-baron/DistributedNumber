@@ -169,6 +169,12 @@ int main( int argc, char* argv[] )
                     &ProbabilityDensityDistribution_Test
                     )
                   );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(0,2):",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
 
 
     try

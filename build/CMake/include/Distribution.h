@@ -300,7 +300,7 @@ public:
      *
      * @return CDigFloat nthOrder mean variable
      */
-    CDigFloat Mean( int nthOrder = 1 ) { return AbsIntegral(nthOrder) / AbsIntegral(0);}
+    CDigFloat Mean( int nthOrder = 1 ) { return CDigFloat( AbsIntegral(nthOrder) / AbsIntegral(0));}
         
     /**
      * @brief calculates the nthOrder median variable weighted by distribution values

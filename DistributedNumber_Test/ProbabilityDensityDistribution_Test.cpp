@@ -88,7 +88,8 @@ public:
         
         pd1.CoverageInterval(50.,min,max);
         CPPUNIT_ASSERT_MESSAGE( "min should be -1: " + min.RawPrint(30), min == -1) ;
-        CPPUNIT_ASSERT_MESSAGE( "max should be 1: " + max.RawPrint(30) + "\n1: " + CDigFloat(1.).RawPrint(30), max == 1) ;        
+        CPPUNIT_ASSERT_MESSAGE( "max should be 1: " + max.RawPrint(30) + "\n1: " + CDigFloat(1.).RawPrint(30), max == 1) ;   
+        
         
     }  
 
@@ -161,8 +162,10 @@ public:
         ////////////////////////////////////
         d1.Add(-3,1); // --> (-3, 0.5)
         d1.Add(-1,1); // --> (-1, 0.5)
-        d2.Add(1,1);  // --> (+1, 0.5)
-        d2.Add(3,1);  // --> (+3, 0.5)
+        d2.Add(1,0);  // --> (+1, 0)
+        d2.Add(3,1);  // --> (+3, 1)
+        d1.NormalDistribution(50,2,1);
+        d2.NormalDistribution(100,0,10);
         
         
         // summation results in 3 elements:
@@ -174,35 +177,102 @@ public:
         // (-2,0.25) --> (-2, 0.25 / 1.5)
         // ( 0,0.50) --> ( 0, 0.50 / 1.5)
         // ( 2,0.25) --> (+2, 0.25 / 1.5)
-        d1.TriangleDistribution(-3,-1);
-        d2.TriangleDistribution(1,3);
-        d3 = d1*d2;
+//         d1.TriangleDistribution(-3,-1);
+//         d2.TriangleDistribution(1,3);
+//         d1 = d2;
         
+        // work with high resolution to minimize integration errors
+        d1.IntegrationSteps(1000);
+        
+        // checking variable 
+        CDigFloat dfTheoreticalValue=d2.Variance() * d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
+        
+        
+        ///////////////////////////////////
+        // Addition
+        ///////////////////////////////////
+        d3 = d1 + d2;
+        
+        // Mean:
+        // -> d3.Mean == d1.Mean + d2.Mean
+        //DEBUG
         cout << endl;
-        cout << "d3.Variance() " << d3.Variance().Print(10) << endl;
-        cout << "d2.Variance() " << d2.Variance().Print(10) << endl;
-        cout << "d1.Variance() " << d1.Variance().Print(10) << endl;
-        cout << "d1.Mean() " << d1.Mean().Print(10) << endl;
-        cout << "d2.Mean() " << d2.Mean().Print(10) << endl;
-        cout << "calc " << (d2.Variance() + d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean()).Print(10) << endl;
-
-        CPPUNIT_ASSERT_MESSAGE( "variances should sum: " + d3.Variance().Print(10) + "=" +  d1.Variance().Print(10) + " + " + d2.Variance().Print(10) + " ( " + (d1.Variance() + d2.Variance()).Print(10) + ")"+ " + "  + (d1.Variance()*d2.Mean()*d2.Mean()).Print(10) + " + " + (d2.Variance() * d1.Mean() * d1.Mean()).Print(10), d3.Variance() == d2.Variance() + d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean());
-
-        // invert the multiplication: the result must be the same
-        d3 = d2*d1;
-        CDigFloat dfVarianceTheoretical = d2.Variance() + d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
+        dfTheoreticalValue = d1.Mean() + d2.Mean();
+        cout << "d3.Mean() == d1.Mean()+d2.Mean() : " << endl <<
+                "d3.Mean = " << d3.Mean().RawPrint(10) << endl << 
+                "d1.Mean = " << d1.Mean().RawPrint(10) << endl <<
+                "d2.Mean = " << d2.Mean().RawPrint(10) << endl <<
+                "d1.Mean + d2.Mean =" << dfTheoreticalValue.RawPrint(10) << endl << endl;
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  (d1.Mean()+d2.Mean()).RawPrint(10), d3.Mean() == d1.Mean()+d2.Mean());
+        
+        // Variance:
+        // -> d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2)
+        // DEBUG
         cout << endl;
-        cout << "d3.Variance() " << d3.Variance().Print(10) << endl;
-        cout << "d2.Variance() " << d2.Variance().Print(10) << endl;
-        cout << "d1.Variance() " << d1.Variance().Print(10) << endl;
-        cout << "d1.Mean() " << d1.Mean().Print(10) << endl;
-        cout << "d2.Mean() " << d2.Mean().Print(10) << endl;
-        cout << "calc " << dfVarianceTheoretical.Print(10) << endl;
+        dfTheoreticalValue = d1.Variance() + d2.Variance() + 2* d1.Covariance(d2);
+        //DEBUG
+        cout << "d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2): " << endl <<
+                "d3.Var = " << d3.Variance().RawPrint(10) << endl << 
+                "d1.Var = " << d1.Variance().RawPrint(10) << endl <<
+                "d2.Var = " << d2.Variance().RawPrint(10) << endl <<
+                "d1.Covar(d2) = " << d1.Covariance(d2).RawPrint(10) << endl <<
+                "d1.var + d2.var + 2*d1.covar(d2) =" << dfTheoreticalValue.RawPrint(10) << endl << endl;
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  (d1.Mean()+d2.Mean()).RawPrint(10), d3.Mean() == d1.Mean()+d2.Mean());
+        
+        ///////////////////////////////////
+        // Multiplication
+        ///////////////////////////////////
+        d3 = d1 * d2;
+        // Variance:
+        // -> d3.Mean == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²
+        //DEBUG
+        dfTheoreticalValue=d2.Variance() * d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
+        cout << "d3.Var == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²: " << endl <<
+                "d3.Var  = " << d3.Variance().RawPrint(10) << endl << 
+                "d1.Mean = " << d1.Mean().RawPrint(10) << endl <<
+                "d1.Var  = " << d1.Variance().RawPrint(10) << endl <<
+                "d2.Mean = " << d2.Mean().RawPrint(10) << endl <<
+                "d2.Var  = " << d2.Variance().RawPrint(10) << endl <<
+                "d1.Var * d2.Var =" << (d1.Variance()*d2.Variance()).RawPrint(10) << endl << 
+                "d2.Var * d2.Mean² =" << (d2.Variance()*d1.Mean()*d1.Mean()).RawPrint(10) << endl <<
+                "d1.Var * d1.Mean² =" << (d1.Variance()*d2.Mean()*d2.Mean()).RawPrint(10) << endl <<
+                "d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean² =" << dfTheoreticalValue.RawPrint(10) << endl<< endl;
+        CPPUNIT_ASSERT_MESSAGE( "variances should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
 
-        CPPUNIT_ASSERT_MESSAGE( "variances should sum: " + d3.Variance().Print(10) + "=" +  dfVarianceTheoretical.Print(10), d3.Variance() != dfVarianceTheoretical);
-
-  
+ 
     }
     
- 
-};
+    void ProbabilityDensityDistribution_GUMSumOfNormal()
+    {
+        
+        CProbabilityDensityDistribution d1,d2, d3, d4,dRes,dTemp1, dTemp2;
+        d1.NormalDistribution(500,0,1,0.001);
+        d2.NormalDistribution(500,0,1,0.001);
+        d3.NormalDistribution(500,0,1,0.001);
+        d4.NormalDistribution(500,0,1,0.001);
+        d1.IntegrationSteps(100);
+        d2.IntegrationSteps(100);
+        d3.IntegrationSteps(100);
+        d4.IntegrationSteps(100);
+        
+        dTemp1 = d1 + d2;
+        dTemp2 = d3 + d4;
+        dRes = dTemp1 + dTemp2;
+        
+        CDigFloat dfMean, dfVariance, dfFrom,dfTo;
+        dfMean = dRes.Mean();
+        dfVariance = dRes.Variance();
+        dRes.CoverageInterval(95,dfFrom,dfTo);
+
+        cout << endl;
+
+        cout << "Mean: " << dfMean.Print(10) << endl;
+        cout << "Variance: " << dfVariance.Print(10) << endl;
+        cout << "dfFrom: " << dfFrom.Print(10) << endl;
+        cout << "dfTo: " << dfTo.Print(10) << endl;
+
+        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-3.92 but is \n left: " + dfFrom.Print(2) + "\nright:" +  dfTo.Print(2), dfTo == -3.92 && dfFrom == 3.92);
+
+    }
+        
+    };

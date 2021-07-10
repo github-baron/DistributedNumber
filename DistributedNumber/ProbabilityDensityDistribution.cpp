@@ -73,10 +73,6 @@ CProbabilityDensityDistribution& CProbabilityDensityDistribution::operator=(cons
 ////////////////////////////////////////////
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator+=(CProbabilityDensityDistribution& other)
 {
-    
-//     return _GeneralOperatorsFunction(other, ProbDistOp::pdoPlus );
-//     return _Convolution4GeneralOperatorsNew(other, ProbDistOp::pdoPlus );
-//     return _GeneralOperatorsFunctionNumerical(other, ProbDistOp::pdoPlus );
     return _GeneralOperatorsFunctionAnalytical(other, ProbDistOp::pdoPlus );
 }
 
@@ -89,8 +85,6 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator+(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator-=(CProbabilityDensityDistribution& other)
 {
-//     return _Convolution4GeneralOperatorsNew(other, ProbDistOp::pdoMinus );
-//     return _GeneralOperatorsFunctionNumerical(other, ProbDistOp::pdoMinus );
     return _GeneralOperatorsFunctionAnalytical(other, ProbDistOp::pdoMinus );
 }
 
@@ -104,9 +98,6 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator-(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator*=(CProbabilityDensityDistribution& other)
 {
-//     return _GeneralOperatorsFunction(other, ProbDistOp::pdoMult );
-//     return _Convolution4GeneralOperatorsNew(other, ProbDistOp::pdoMult );
-//     return _GeneralOperatorsFunctionNumerical(other, ProbDistOp::pdoMult );
     return _GeneralOperatorsFunctionAnalytical(other, ProbDistOp::pdoMult );
 }
 CProbabilityDensityDistribution CProbabilityDensityDistribution::operator*(CProbabilityDensityDistribution& other)
@@ -118,8 +109,6 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator*(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator/=(CProbabilityDensityDistribution& other)
 {
-//     return _Convolution4GeneralOperatorsNew(other, ProbDistOp::pdoDiv);
-//     return _GeneralOperatorsFunctionNumerical(other, ProbDistOp::pdoDiv);
     return _GeneralOperatorsFunctionAnalytical(other, ProbDistOp::pdoDiv);
 }
 
@@ -234,25 +223,65 @@ void CProbabilityDensityDistribution::NormalDistribution(const int nPoints, cons
     Reset();
     
     CDigFloat dfFac1 = 2*dfSigma*dfSigma;
-    CDigFloat dfXDelta = sqrt(dfFac1*-log(dfMinVal*sqrt(dfFac1*M_PI)));
-    CDigFloat dfXInc = 2*dfXDelta/(nPoints-1);
+    CDigFloat dfPreFac = 1/sqrt(dfFac1*M_PI);
     
-    for(int ipt=0;ipt<nPoints; ipt++)
+    /////////////////////////////////////////////
+    // calculation of the gaussian curve
+    // keeping intervals between the x-values
+    // constant
+    /////////////////////////////////////////////
+//     //set the starting point and increment depending on the min. value.
+//     CDigFloat dfXDelta = sqrt(dfFac1*-log(dfMinVal*sqrt(dfFac1*M_PI)));
+//     CDigFloat dfXInc = 2*dfXDelta/(nPoints-1);
+//     
+//     for(int ipt=0;ipt<nPoints; ipt++)
+//     {
+//         CDigFloat dfX = dfMu-dfXDelta+ipt*dfXInc;
+//         Add(dfX,dfPreFac*pow(M_El, -pow(dfX-dfMu,2)/dfFac1));
+//     }
+
+    
+    /////////////////////////////////////////////
+    // calculation of the gaussian curve
+    // keeping intervals between the y-values constant
+    // STEPS:
+    // 1. the maximal amplitude is at x= dfMu --> dfPreFac
+    // 2. y-steps are dfPreFac / nPoints
+    // 3. for each y-step the value of the gaussian curve
+    //    decrements about y-step, i.e. for the i-th
+    //    step the y - value is 
+    //    dfPreFac * (1-i/n)
+    //    x_{+-i} is derived by solving the Gaussian
+    //    function for x and one obtains:
+    //    x_{+-i} = sqrt( 2 * dfSigma * ln(1- i / nPoints) )
+    //    
+    /////////////////////////////////////////////
+    // set npoints to an even number 
+    int nPtsEvenHalf = nPoints / 2;
+    CDigFloat dfdY = dfPreFac / (nPtsEvenHalf);
+    CDigFloat dfY = dfPreFac;
+    CDigFloat dfRelPreFac = 1.;
+    
+    // add the first point: max at x = dfMu
+    Add(dfMu,dfY);
+    
+    for(int ipt=1;ipt<nPtsEvenHalf; ipt++)
     {
-        CDigFloat dfX = dfMu-dfXDelta+ipt*dfXInc;
-        Add(dfX,1/sqrt(dfFac1*M_PI)*pow(M_El, -pow(dfX-dfMu,2)/dfFac1));
+        dfY -= dfdY;
+        dfRelPreFac = dfY / dfPreFac;
+        CDigFloat dfdXPos = sqrt(2*dfSigma*(-log(dfRelPreFac)));
+        //DEBUG
+//         cout << "ipt = " << to_string(ipt) << endl 
+//              << "relPts = " << dfRelPreFac.Print(10) << endl 
+//              << "y = " << dfY.Print(10) << endl 
+//              << "dx = " << dfdXPos.Print(10) << endl 
+//              << "x-i = " << (dfMu - dfdXPos).Print(10) << endl 
+//              << "x+i = " << (dfMu + dfdXPos).Print(10) << endl; 
+        Add(dfMu + dfdXPos,dfY);
+        Add(dfMu - dfdXPos,dfY);
     }
 
     Normalize();
-}
-
-void CProbabilityDensityDistribution::CovarianceDistribution(CProbabilityDensityDistribution& Other)
-{
-//     _GeneralOperatorsFunction(Other, ProbDistOp::pdoCov);
-    CProbabilityDensityDistribution pddOther(Other);
-    pddOther.Shift(-Other.Mean());
-    Shift(-Mean());
-    operator*=(pddOther);
 }
 
 ///////////////////////////////////
@@ -293,14 +322,148 @@ CDigFloat CProbabilityDensityDistribution::Variance(int nthOrder)
 
 CDigFloat CProbabilityDensityDistribution::Covariance(CProbabilityDensityDistribution& Other)
 {
-    // copy from this
-    CProbabilityDensityDistribution pdd4Calc(*this);
+    /////////////////////////////////////////////////////
+    // General purpose ot this function:
+    //   caclculate <(x-<x>)*(y-<y>)> by solving the 
+    //   double integration:
+    //   Int(Int( (x-<x>)*px(x)* (y-<y>)*py(y)) dx) dy
+    //   where:
+    //   px: this distribution (probability density):
+    //       px(x) = Xslope * x + XOffset
+    //   py: Other distribution (probability density):
+    //       px(x) = Yslope * x + YOffset
+    //
+    // Procedure:
+    //   The solution of the upper double integral is mathematically
+    //   simple becaus it is a polynome in x and y. The tricky
+    //   thing is it consists of a lot of terms: that makes
+    //   the solution look pretty complicated.
+    //   With the solution:
+    //   iterate over x and y intervals with constant
+    //   linear slope and offset and sum up the 
+    //   covariance
+    //
+    /////////////////////////////////////////////////////
     
-     
-    pdd4Calc*=Other;
+    
+    CDigFloat dfCovar = 0;
+    
+    // we need the mean values
+    CDigFloat dfXMean = Mean();
+    CDigFloat dfYMean = Other.Mean();
+    
+    //DEBUG
+//     cout << "dfXMean " << dfXMean.RawPrint(10) << endl;
+//     cout << "dfYMean " << dfYMean.RawPrint(10) << endl;
+    
+    // remember old x-value
+    CDigFloat dfXOld;
+    CDigFloat dfYOld;
+    
+    // DEBUG
+    CDigFloat dfXPOld;
+    CDigFloat dfYPOld;
+    
+    for(auto x: Distribution())
+    {
+        // set the old x-value
+        if( !dfXOld.Valid() )
+        {
+            // set it ...
+            dfXOld = x.first;
+            dfXPOld = x.second;
+            
+            // hop to next x
+            continue;
+            
+        }   //endif( !dfXOld.Valid() )
+        
+        // set all x-dependend variables needed for integration
+        CDigFloat dfXMid = (x.first + dfXOld) / 2.;
+        CDigFloat dfXSlope = LinearSlope(dfXMid);
+        CDigFloat dfXOffset = LinearOffset(dfXMid);
+        CDigFloat dfDx = (x.first - dfXOld);
+        CDigFloat dfDx2 = (pow(x.first,2) -pow(dfXOld,2))/2.;
+        CDigFloat dfDx3 = (pow(x.first,3) - pow(dfXOld,3))/3.;
+        
+        // helping variables used for simplification of integration
+        CDigFloat dfC = dfXSlope*dfDx3 + (dfXOffset-dfXSlope*dfXMean)*dfDx2 - dfXOffset*dfXMean*dfDx;
+        
+        // continue 
+        if(dfC == 0 )
+            continue;
+        
+        //DEBUG
+//         cout << "x = ["<< dfXOld.RawPrint(10) << " ; " << x.first.RawPrint(10) << "]" << endl;
+//         cout << "px= ["<< dfXPOld.RawPrint(10) << " ; " << x.second.RawPrint(10) << "]" << endl;
+//         cout << "dfXMid = "<< dfXMid.RawPrint(10)<< endl;
+//         cout << "dfXOffset = "<< dfXOffset.RawPrint(10)<< endl;
+//         cout << "dfXSlope = "<< dfXSlope.RawPrint(10)<< endl;
+//         cout << "dfDx = "<< dfDx.RawPrint(10)<< endl;
+//         cout << "dfDx2 = "<< dfDx2.RawPrint(10)<< endl;
+//         cout << "dfDx3 = "<< dfDx3.RawPrint(10)<< endl;
+//         cout << "dfC = "<< dfC.RawPrint(10)<< endl;
+//         cout << "dfXSlope*dfDx3  = "<< (dfXSlope*dfDx3 ).RawPrint(10)<< endl;
+//         cout << "(dfXOffset-dfXSlope*dfXMean)*dfDx2 = "<< ((dfXOffset-dfXSlope*dfXMean)*dfDx2).RawPrint(10)<< endl;
+//         cout << "- dfXOffset*dfXMean*dfDx = "<< (- dfXOffset*dfXMean*dfDx).RawPrint(10)<< endl;
+        
+        // 
+        for(auto y: Other.Distribution())
+        {                        
+            // set the old y-value
+            if( !dfYOld.Valid() )
+            {
+                // set it ...
+                dfYOld = y.first;
+                dfYPOld = y.second;
+                
+                // hop to next y
+                continue;
+                
+            }   //endif( !dfXOld.Valid() )
+                
+            // set all y-dependend variables needed for integration
+            CDigFloat dfYMid = (y.first + dfYOld) / 2.;
+            CDigFloat dfDy = (dfYOld - y.first);
+            CDigFloat dfDy2 = (pow(y.first,2) - pow(dfYOld,2))/2.;
+            CDigFloat dfDy3 = (pow(y.first,3) - pow(dfYOld,3))/3.;
+            CDigFloat dfYSlope = Other.LinearSlope(dfYMid);
+            CDigFloat dfYOffset =  Other.LinearOffset(dfYMid);
+            
+            // add to covariance:
+            dfCovar += dfC *(dfDy3 + ( dfYOffset - dfYSlope * dfYMean)*dfDy2 - dfYOffset*dfYMean*dfDy);
+        
+            //DEBUG
+//             cout << "y = ["<< dfYOld.RawPrint(10) << " ; " << y.first.RawPrint(10) << "]" << endl;
+//             cout << "py= ["<< dfYPOld.RawPrint(10) << " ; " << y.second.RawPrint(10) << "]" << endl;
+//             cout << "dfYMid = "<< dfYMid.RawPrint(10)<< endl;
+//             cout << "dfYOffset = "<< dfYOffset.RawPrint(10)<< endl;
+//             cout << "dfYSlope = "<< dfYSlope.RawPrint(10)<< endl;
+//             cout << "dfDy = "<<  dfDy.RawPrint(10)<< endl;
+//             cout << "dfDy2 = "<< dfDy2.RawPrint(10)<< endl;
+//             cout << "dfDy3 = "<< dfDy3.RawPrint(10)<< endl;
+//             cout << "dfCovar " << dfCovar.RawPrint(10) << endl;
+            
+            
+            // increment dfYOld
+            dfYOld = y.first;
+            
+                
+        }   //endfor(int iy=0;iy<Other.Distribution().size()-1; iy++)
+        
+        // invalidate y
+        dfYOld = myNAN;
+        
+        // increment dfXOld
+        dfXOld = x.first;
+        
+    }   //endfor(int ix = 0; ix < Distribution().size()-1; ix++)
+    
+    // DEBUG
+//     cout << endl;
     
     // return mean: should be now <(x-<x>)*(y-<y>)>
-    return pdd4Calc.Mean() - Other.Mean()*Mean();
+    return dfCovar;
 }
 
 CDigFloat CProbabilityDensityDistribution::DistriValue(const CDigFloat& variable)
@@ -367,6 +530,7 @@ void CProbabilityDensityDistribution::DeNormalize()
 
 void CProbabilityDensityDistribution::Normalize()
 {
+
     // do not normalize again ... only once
     if(bNormalized)
         return;
@@ -378,6 +542,11 @@ void CProbabilityDensityDistribution::Normalize()
     bNormalized = true;
     
 }
+
+////////////////////////////////////////////
+// internal functions
+////////////////////////////////////////////
+
 void CProbabilityDensityDistribution::_Init()
 {
     dfAbsIntegral = 0;
@@ -392,7 +561,7 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
 {
     
     // generate plan : setting m_ConvolutionPlan;
-    _SetConvolutionPlan_2(Other, Operation);
+    _SetConvolutionPlan(Other, Operation);
     
     // declare the result distri
     MapDFDFType TargetDistri;
@@ -402,14 +571,14 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
         TargetDistri[itarget.first] = 0;
         
         // DEBUG
-        cout << "itarget.first: " << itarget.first.RawPrint(15) << endl;
+         cout << "itarget.first: " << itarget.first.RawPrint(15) << endl;
         
         // iterate over all sub integration limits
         for(auto intlim: itarget.second)
         {
-            
-            cout << "x = [ " << intlim.first.first.RawPrint(10) << " ; " << intlim.first.second.RawPrint(10) << " ] " << endl;
-            cout << "y = [ " << intlim.second.first.RawPrint(10) << " ; " << intlim.second.second.RawPrint(10) << " ] " << endl;
+            // DEBUG
+//             cout << "x = [ " << intlim.first.first.RawPrint(10) << " ; " << intlim.first.second.RawPrint(10) << " ] " << endl;
+//             cout << "y = [ " << intlim.second.first.RawPrint(10) << " ; " << intlim.second.second.RawPrint(10) << " ] " << endl;
             
             // add to all other probs of this target value
             TargetDistri[itarget.first] += _GetConvolutionIntegralAnalytical4Operation(Other, Operation, itarget.first, intlim);
@@ -436,7 +605,10 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
    
         // DEBUG     
 //         cout << "after Normalization: " << endl << Print(10);
-   
+        // DEBUG
+        if(AbsIntegral() != 1)
+            cout << "AbsIntegral != 1: " << AbsIntegral().RawPrint(30) << endl << endl;
+        
         assert(AbsIntegral() == 1);
         
     }   // endif(!(TargetRangeStart == TargetRangeEnd && TargetRangeStart == 0))
@@ -448,7 +620,7 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
 CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Operation(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const CDigFloat& dfTargetValue, const SubIntLimitsType& vXYLimits)
 {
     // DEBUG
-    cout << "_GetConvolutionIntegralAnalytical4Operation: " << endl;
+//     cout << "_GetConvolutionIntegralAnalytical4Operation: " << endl;
     
     // init the result
     CDigFloat dfResult = 0;
@@ -462,6 +634,7 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
     CDigFloat dfYOffset = Other.LinearOffset(dfYMean);
     CDigFloat dfYSlope = Other.LinearSlope(dfYMean);
     
+    // DEBUG
     cout << "X = [" << vXYLimits.first.first.RawPrint(10) << " ; " << vXYLimits.first.second.RawPrint(10) << " ] "  << endl;
     cout << "dfXMean = " << dfXMean.RawPrint(10) << endl;
     cout << "dfXOffset = " << dfXOffset.RawPrint(10) << endl;
@@ -471,35 +644,42 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
     cout << "dfYOffset = " << dfYOffset.RawPrint(10) << endl;
     cout << "dfYSlope = " << dfYSlope.RawPrint(10) << endl;
     
+    // variables for primitive integral values of upper and lower limit
+    CDigFloat dfPrimIntValLow, dfPrimIntValUp;
+    
     switch( Operation)
     {
         case ProbDistOp::pdoPlus:
-            dfResult = _PrimitiveIntegral4TargetValue4Addition(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second) -
-                       _PrimitiveIntegral4TargetValue4Addition(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
+            dfPrimIntValUp = _PrimitiveIntegral4TargetValue4Addition(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second);
+            dfPrimIntValLow = _PrimitiveIntegral4TargetValue4Addition(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
             break;
         case ProbDistOp::pdoMinus:
-            dfResult = _PrimitiveIntegral4TargetValue4Subtraction(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second) -
-                       _PrimitiveIntegral4TargetValue4Subtraction(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
+            dfPrimIntValUp = _PrimitiveIntegral4TargetValue4Subtraction(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second);
+            dfPrimIntValLow =  _PrimitiveIntegral4TargetValue4Subtraction(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
             break;
         case ProbDistOp::pdoMult:
-            dfResult = _PrimitiveIntegral4TargetValue4Multiplication(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second) -
-                       _PrimitiveIntegral4TargetValue4Multiplication(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
+            dfPrimIntValUp = _PrimitiveIntegral4TargetValue4Multiplication(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second);
+            dfPrimIntValLow = _PrimitiveIntegral4TargetValue4Multiplication(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
             break;
         case ProbDistOp::pdoDiv:
-            dfResult = _PrimitiveIntegral4TargetValue4Division(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second) -
-                       _PrimitiveIntegral4TargetValue4Division(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
+            dfPrimIntValUp = _PrimitiveIntegral4TargetValue4Division(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.second);
+            dfPrimIntValLow = _PrimitiveIntegral4TargetValue4Division(dfXOffset, dfXSlope, dfYOffset,dfYSlope,dfTargetValue, vXYLimits.first.first);
             break;
         default:
             break;
     }   //endswitch( Operation)
     
-    cout << "dfResult = " << dfResult.RawPrint(10) << endl;
-//     assert(dfResult > 0);
+    // calculate the result 
+    dfResult = dfPrimIntValUp - dfPrimIntValLow;
+    
+    //DEBUG
+     cout << "dfResult = " << dfPrimIntValUp.RawPrint(10) << " - " << dfPrimIntValLow.RawPrint(10) << " = " << dfResult.RawPrint(10) << endl;
+    assert(dfResult >= 0);
     return dfResult;
     
 }
 
-void CProbabilityDensityDistribution::_SetConvolutionPlan_2(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
+void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
 {   
     
     CDigFloat dfTargetStart, dfTargetEnd;
@@ -509,27 +689,58 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan_2(CProbabilityDensityD
     CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
     
     // DEBUG
-//     cout << "target interval: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
+    cout << endl << endl << endl << "setting convolution plan for distri:" << endl;
+    cout << "this interval  [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ] " << endl;
+    cout << "other interval  [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ] " << endl;
+    cout << "target interval: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
     
     // clear the plan first
     m_ConvolutionPlan.clear();
     
     // now start building the plan 
     CDigFloat dfActTargetValue = dfTargetStart;
-    while(dfActTargetValue <= dfTargetEnd)
+    bool bZeroTargetValueDetected = false;
+    while(dfActTargetValue < (dfTargetEnd +dfTargetStep))
     {
-        // this is the vector defining the sub integration limits for a given targe value
-        VectorSubIntLimitsType SubIntLimits;
         
         // defining the complete integration range for this and other distribution
-        _GetSubIntegrationIntervals4TargetValue_2(Operation, dfActTargetValue, Other, SubIntLimits);
+        _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, Other);        
         
-        // now add the sub integration limits and its corresponding target value as pair
-        m_ConvolutionPlan.push_back(pair<CDigFloat, VectorSubIntLimitsType>(dfActTargetValue, SubIntLimits));
         
-        // increment actual target value 
-        dfActTargetValue += dfTargetStep;
-    }   // endwhile(dfActTargetValue <= dfTargetEnd)
+        // deal with the incrementation of target value
+        // in case a zero value was found before ....
+        if(bZeroTargetValueDetected)
+        {
+            // ... add only half a step: now we are in sync again
+            dfActTargetValue += dfTargetStep/2.;
+            
+            // no zero anymore 
+            bZeroTargetValueDetected = false;
+            
+        }   // endif(bZeroTargetValueDetected)
+        else            
+            // increment actual target value 
+            dfActTargetValue += dfTargetStep;
+        
+        // split zero dftarget value due to unipolarity trouble for multiplication and division
+        if(dfActTargetValue == 0)
+        {
+            // decrement half a step 
+            dfActTargetValue -= dfTargetStep/2.;
+        
+            // defining the complete integration range for this and other distribution ... again
+            _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, Other); 
+            
+            // increment about one step ... now we are half a step behind because we split the target value == 0
+            dfActTargetValue += dfTargetStep;
+            
+            // remember we found a zero and deal with it the next round 
+            bZeroTargetValueDetected = true;
+            
+            
+        }   // endif(dfTargetValue.RawValue() == 0)
+        
+    }   // endwhile(dfActTargetValue < (dfTargetEnd +dfTargetStep))
     
 }
 
@@ -564,9 +775,11 @@ CDigFloat CProbabilityDensityDistribution::_PrimitiveIntegral4TargetValue4Divisi
         dfOffsetX*dfOffsetY/2.);
 }
 
-
-
-void CProbabilityDensityDistribution::_GetSubIntegrationIntervals4TargetValue_2(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervals4TargetValue)
+/**
+ *@details The sub integration intervals are needed to differentiate parts of the total integration interval (see CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue) where the linear function for x or y distribution changes.
+ * 
+ */
+void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other)
 {
     
     /////////////////////////////////////////////////////
@@ -585,7 +798,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervals4TargetValue_2(
     //        of the complementary variable
     //   
     //    II calcuations of the subintervals with constant
-    //       slope and offset for x and y for the alls total
+    //       slope and offset for x and y for the all total
     //       intervals
     //
     // Explanation of  notations:
@@ -601,6 +814,9 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervals4TargetValue_2(
     //        division: xt/yt = tv
     /////////////////////////////////////////////////////
     
+    // keeps sub integration limits
+    VectorSubIntLimitsType SubIntervals4TargetValue;
+    
     // keeps the total integration interval(s) for a target value
     VectorSubIntLimitsType TotalIntervals4TargetValue;
     
@@ -610,7 +826,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervals4TargetValue_2(
     // DEBUG
     cout << "_SetIntegrationIntervals4TargetValue" << endl;
     cout << "Operation = " <<  to_string((int)Operation ) << endl;
-    cout << "dfTargetValue = " << dfTargetValue.RawPrint(10) << endl;
+    cout << "dfTargetValue = " << dfTargetValue.RawPrint(30) << endl;
     
     // I 1. get the x-interval(s) for calculation: must be unipolar
     //      for division and multiplication
@@ -621,14 +837,14 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervals4TargetValue_2(
     _GetTotalIntegrationInterval4TargetValue(Operation, dfTargetValue, Other, vpdXIntervals, TotalIntervals4TargetValue);
     
     
-    _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue(Operation, dfTargetValue, Other, TotalIntervals4TargetValue, SubIntervals4TargetValue);
+    _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue(Operation, dfTargetValue, Other, TotalIntervals4TargetValue, SubIntervals4TargetValue);  
     
-    
- 
-    //DEBUG
-    cout << endl << endl;
+    // now add the sub integration limits and its corresponding target value as pair
+    m_ConvolutionPlan.push_back(pair<CDigFloat, VectorSubIntLimitsType>(dfTargetValue, SubIntervals4TargetValue)); 
 }
-
+/**
+ * @details In case of multiplication and division the x interval must be unipolar, i.e. purely negativ or positive. Hence, in case of a bipolar distribution there might be two x-intervals which will integrated separately.
+ */
 void CProbabilityDensityDistribution::_GetXInterval4Operation(const ProbDistOp Operation, VectorPairDFType& vXIntervals)
 {     
     
@@ -706,7 +922,7 @@ void CProbabilityDensityDistribution::_GetXInterval4Operation(const ProbDistOp O
 
 }
 
-void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(const ProbDistOp& Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorPairDFType& vpdXIntervals, VectorSubIntLimitsType& TotalIntervals4TargetValue)
+void CProbabilityDensityDistribution:: _GetTotalIntegrationInterval4TargetValue(const ProbDistOp& Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorPairDFType& vpdXIntervals, VectorSubIntLimitsType& TotalIntervals4TargetValue)
 {
     /////////////////////////////////////////////////////
     // General purpose ot this function:
@@ -749,8 +965,8 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
     for(auto xint: vpdXIntervals)
     {
         //DEBUG
-        cout << "xint.first = " << xint.first.RawPrint(10) << endl;
-        cout << "xint.second = " << xint.second.RawPrint(10) << endl;
+//         cout << "xint.first = " << xint.first.RawPrint(10) << endl;
+//         cout << "xint.second = " << xint.second.RawPrint(10) << endl;
         
         /////////////////////////////////////////////////
         // calculate the complementary interval YComp from x
@@ -765,8 +981,8 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
             swap(dfYCompMin, dfYCompMax);        
         
         //DEBUG
-        cout << "dfYCompMin = " << dfYCompMin.RawPrint(10) << endl;
-        cout << "dfYCompMax = " << dfYCompMax.RawPrint(10) << endl;
+//         cout << "dfYCompMin = " << dfYCompMin.RawPrint(10) << endl;
+//         cout << "dfYCompMax = " << dfYCompMax.RawPrint(10) << endl;
         
         
         /////////////////////////////////////////////////
@@ -778,14 +994,14 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
         dfYOverlapMax = min(dfYCompMax,Other.lastVariable());  
         
         //DEBUG
-        cout << "dfYOverlapMin = " << dfYOverlapMin.RawPrint(10) << endl;
-        cout << "dfYOverlapMax = " << dfYOverlapMax.RawPrint(10) << endl;
+//         cout << "dfYOverlapMin = " << dfYOverlapMin.RawPrint(10) << endl;
+//         cout << "dfYOverlapMax = " << dfYOverlapMax.RawPrint(10) << endl;
         
         // the overlap is empty in case dfYOverlapMax <= dfYOverlapMin
         if(dfYOverlapMax <= dfYOverlapMin)
         {
             // DEBUG
-            cout << "empty interval: dfYOverlapMax(" << dfYOverlapMax.RawPrint(4) << ")  <= dfYOverlapMin(" << dfYOverlapMin.RawPrint(4) << ")" << endl;
+//             cout << "empty interval: dfYOverlapMax(" << dfYOverlapMax.RawPrint(4) << ")  <= dfYOverlapMin(" << dfYOverlapMin.RawPrint(4) << ")" << endl;
             continue;
         }
         
@@ -802,8 +1018,8 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
             swap(dfXCompMin, dfXCompMax);        
         
         //DEBUG
-        cout << "dfXCompMin = " << dfXCompMin.RawPrint(10) << endl;
-        cout << "dfXCompMax = " << dfXCompMax.RawPrint(10) << endl;
+//         cout << "dfXCompMin = " << dfXCompMin.RawPrint(10) << endl;
+//         cout << "dfXCompMax = " << dfXCompMax.RawPrint(10) << endl;
         
         /////////////////////////////////////////////////
         // calculate the overlap of the complementary 
@@ -817,15 +1033,15 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
         if(dfXOverlapMax <= dfXOverlapMin)
         {
             // DEBUG
-            cout << "empty interval: dfXOverlapMax (" << dfXOverlapMax.RawPrint(4) << ")  <= dfXOverlapMin(" << dfXOverlapMin.RawPrint(4) << ")" << endl;
+//             cout << "empty interval: dfXOverlapMax (" << dfXOverlapMax.RawPrint(4) << ")  <= dfXOverlapMin(" << dfXOverlapMin.RawPrint(4) << ")" << endl;
             continue;
         }
         //DEBUG
-        cout << "dfXOverlapMin = " << dfXOverlapMin.RawPrint(10) << endl;
-        cout << "dfXOverlapMax = " << dfXOverlapMax.RawPrint(10) << endl;
-        
-        cout << "X=[ " <<  dfXOverlapMin.RawPrint(10) << " ; " << dfXOverlapMax.RawPrint(10) << " ] " << endl;
-        cout << "Y=[ " <<  dfYOverlapMin.RawPrint(10) << " ; " << dfYOverlapMax.RawPrint(10) << " ] " << endl;
+//         cout << "dfXOverlapMin = " << dfXOverlapMin.RawPrint(10) << endl;
+//         cout << "dfXOverlapMax = " << dfXOverlapMax.RawPrint(10) << endl;
+//         
+//         cout << "X=[ " <<  dfXOverlapMin.RawPrint(10) << " ; " << dfXOverlapMax.RawPrint(10) << " ] " << endl;
+//         cout << "Y=[ " <<  dfYOverlapMin.RawPrint(10) << " ; " << dfYOverlapMax.RawPrint(10) << " ] " << endl;
          
         /////////////////////////////////////////////////
         // calculate the overlap of the complementary 
@@ -846,7 +1062,7 @@ void CProbabilityDensityDistribution::_GetTotalIntegrationInterval4TargetValue(c
 void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorSubIntLimitsType& SubIntervals4TargetValue)
  {   
      // DEBUG
-     cout << "_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue:" << endl;
+//      cout << "_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue:" << endl;
      
     /////////////////////////////////////////////////////
     // General purpose ot this function:
@@ -895,8 +1111,8 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
     for(auto xyint: TotalIntervals4TargetValue)
     {
         //DEBUG
-        cout << "x = [" << xyint.first.first.RawPrint(10) << " ; " << xyint.first.second.RawPrint(10) << " ]" << endl;
-        cout << "y = [" << xyint.second.first.RawPrint(10) << " ; " << xyint.second.second.RawPrint(10) << " ]" << endl;
+//         cout << "x = [" << xyint.first.first.RawPrint(10) << " ; " << xyint.first.second.RawPrint(10) << " ]" << endl;
+//         cout << "y = [" << xyint.second.first.RawPrint(10) << " ; " << xyint.second.second.RawPrint(10) << " ]" << endl;
         
         //////////////////////////////////////////////
         // get all relevant supporting points of the x
@@ -912,7 +1128,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
         for(auto x: Distribution())
         {
             // DEBUG
-            cout << "x=" << x.first.RawPrint(10) << endl;
+//             cout << "x=" << x.first.RawPrint(10) << endl;
             
             // break conditions
             if(x.first > xyint.first.second)
@@ -924,7 +1140,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
                 vdfSubPoints.push_back(x.first);
                 
                 //DEBUG
-                cout << "added " << x.first.RawPrint(10) << endl;
+//                 cout << "added " << x.first.RawPrint(10) << endl;
                 
             }
             
@@ -938,7 +1154,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
         for(auto x: Other.Distribution())
         {
             // DEBUG
-            cout << "y=" << x.first.RawPrint(10) << endl;
+//             cout << "y=" << x.first.RawPrint(10) << endl;
             
             // break conditions
             if(x.first > xyint.second.second)
@@ -949,7 +1165,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
                 vdfSubPoints.push_back(_GetComplementaryVariable(Operation,dfTargetValue,x.first,true));
                 
                 //DEBUG
-                cout << "added " << _GetComplementaryVariable(Operation,dfTargetValue,x.first,true).RawPrint(10) << endl;
+//                 cout << "added " << _GetComplementaryVariable(Operation,dfTargetValue,x.first,true).RawPrint(10) << endl;
             }
             
         }   //endfor(auto x: Other.Distribution())
@@ -961,7 +1177,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
         sort(vdfSubPoints.begin(),vdfSubPoints.end());
         //DEBUG
         for(auto x: vdfSubPoints)
-            cout << "SubPoint: " << x.RawPrint(10) << endl;
+            cout << "SubPoint: " << x.RawPrint(30) << endl;
         
         // iterate over sorted sub points
         for(int idx=0; idx < vdfSubPoints.size()-1; idx++)
@@ -997,7 +1213,6 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
     
 }
 
-
 CDigFloat CProbabilityDensityDistribution::_GetComplementaryVariable(const ProbDistOp Operation, const CDigFloat& dfTargetValue, const CDigFloat& dfVariable, bool bVarIsYVar)
 {
     /////////////////////////////////////////////////////
@@ -1031,12 +1246,16 @@ CDigFloat CProbabilityDensityDistribution::_GetComplementaryVariable(const ProbD
             break;
         case ProbDistOp::pdoMult:
             dfComplementaryVariable = dfTargetValue / dfVariable;
+            // the sign must be kept
+            assert(sgn(dfComplementaryVariable)*sgn(dfVariable) == sgn(dfTargetValue));
             break;
         case ProbDistOp::pdoDiv:
             if(bVarIsYVar)
                 dfComplementaryVariable = dfTargetValue * dfVariable;
             else
                 dfComplementaryVariable = dfVariable / dfTargetValue ;
+            // the sign must be kept
+            assert(sgn(dfComplementaryVariable)*sgn(dfVariable) == sgn(dfTargetValue));
             break;
         default:
             break;
@@ -1044,1699 +1263,6 @@ CDigFloat CProbabilityDensityDistribution::_GetComplementaryVariable(const ProbD
     }   //endswitch(Operation)
     
     return dfComplementaryVariable;
-}
-
-
-CProbabilityDensityDistribution& CProbabilityDensityDistribution::_GeneralOperatorsFunctionNumerical(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
-{
-    // generate plan : setting m_ConvolutionPlan;
-    _SetConvolutionPlan(Other, Operation);
-    
-    // declare the result distri
-    MapDFDFType TargetDistri;
-    
-    // this is only needed for covar operations
-    CDigFloat dfMeanThis = Mean();
-    
-    for(auto itarget: m_ConvolutionPlan)
-    {
-        TargetDistri[itarget.first] = 0;
-        
-        // DEBUG
-//         cout << "itarget.first: " << itarget.first.RawPrint(15) << endl;
-        
-        // iterate over all sub integration limits
-        for(auto intlim: itarget.second)
-        {
-            // set the probabilities
-            CDigFloat dfProbThis = AbsIntegral(intlim.first.first, intlim.first.second);
-            CDigFloat dfProbOther = Other.AbsIntegral(intlim.second.first, intlim.second.second);
-            
-            // DEBUG
-//             cout << "ProbThis(" << intlim.first.first.RawPrint(15) << " - " << intlim.first.second.RawPrint(15) << ") = " << dfProbThis.RawPrint(15) << endl;
-//             cout << "ProbOther(" << intlim.second.first.RawPrint(15) << " - " << intlim.second.second.RawPrint(15) << ") = " << dfProbOther.RawPrint(15) << endl;
-            
-            // add to all other probs of this target value
-            TargetDistri[itarget.first] += dfProbThis*dfProbOther;//*_GetIntegrationFactor4Convolution(Operation,intlim.first, dfMeanThis);
-            
-        }   // endfor(auto interval: itarget.second)        
-        
-    }   // endfor(auto itarget: m_ConvolutionPlan)
-    
-    _Init();
-    
-    
-    if(m_ConvolutionPlan.size() > 0)
-    {
-        for(auto iel: TargetDistri)
-            mDistribution[iel.first] = iel.second;
-        
-        
-        // DEBUG
-//         cout << "before Normalization: " << endl << Print(10);
-        
-        
-        bNormalized=false;
-        Normalize();
-   
-        // DEBUG     
-//         cout << "after Normalization: " << endl << Print(10);
-   
-        assert(AbsIntegral() == 1);
-        
-    }   // endif(!(TargetRangeStart == TargetRangeEnd && TargetRangeStart == 0))
-    
-    return *this;
-   
-}
-
-CDigFloat CProbabilityDensityDistribution::_GetIntegrationFactor4Convolution(const ProbDistOp Operation, const PairDFType pdtLimitsOne, const CDigFloat dfMeanOne)
-{
-    CDigFloat dfConvFactor = 1;
-    
-    switch(Operation)
-    {
-        case ProbDistOp::pdoPlus:
-        case ProbDistOp::pdoMinus:
-            // do nothin: 1 is correct
-            break;
-        case ProbDistOp::pdoMult:
-            // is 1/|x|: calculate x as mean :
-            // x = (xmin + xmax) / 2
-            dfConvFactor = 1./abs(pdtLimitsOne.first + pdtLimitsOne.second)*2.;
-            break;
-        case ProbDistOp::pdoDiv:
-            // is |x|: calculate x as mean :
-            // x = (xmin + xmax) / 2
-            dfConvFactor = abs(pdtLimitsOne.first + pdtLimitsOne.second)/2.;
-            break;
-        case ProbDistOp::pdoCov:
-            // is 1./|x-<X>|: calculate x as mean :
-            // x = (xmin + xmax) / 2
-            dfConvFactor = 1./abs((pdtLimitsOne.first + pdtLimitsOne.second)/2. - dfMeanOne);
-            break;
-        default:
-            assert(false);
-    }
-    
-    // DEBUG
-    cout << endl ;
-    cout << "[" << pdtLimitsOne.first.Print(10) << " , " << pdtLimitsOne.second.Print(10) << " ]" << endl;
-    cout << "dfConvFactor : "  << dfConvFactor.Print(10) << endl;
-    
-    return dfConvFactor;
-}
-
-
-void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDistribution& other, const ProbDistOp Operation)
-{
-    CDigFloat dfTargetStart, dfTargetEnd;
-    _GetRangeFromDistributionOperation(other, Operation, dfTargetStart, dfTargetEnd);
-    
-    // get the target step
-    CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
-    
-    // DEBUG
-//     cout << "target interval: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
-    
-    // clear the plan first
-    m_ConvolutionPlan.clear();
-    
-    // now start building the plan 
-    CDigFloat dfActTargetValue = dfTargetStart;
-    while(dfActTargetValue <= dfTargetEnd)
-    {
-        // this is the vector defining the sub integration limits for a given targe value
-        VectorSubIntLimitsType SubIntLimits;
-        
-        // defining the complete integration range for this and other distribution
-        _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, other, SubIntLimits);
-        
-        // now add the sub integration limits and its corresponding target value as pair
-        m_ConvolutionPlan.push_back(pair<CDigFloat, VectorSubIntLimitsType>(dfActTargetValue, SubIntLimits));
-        
-        // increment actual target value 
-        dfActTargetValue += dfTargetStep;
-    }   // endwhile(dfActTargetValue <= dfTargetEnd)
-    
-}
-
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-    switch(Operation)
-    {
-        case ProbDistOp::pdoPlus:
-            _SetSubIntegrationIntervals4TargetValue4Addition(dfActTargetValue, other, SubIntervals4TargetValue);
-            break;
-        case ProbDistOp::pdoMinus:
-            _SetSubIntegrationIntervals4TargetValue4Subtraction(dfActTargetValue, other, SubIntervals4TargetValue);
-            break;
-        case ProbDistOp::pdoMult:
-            _SetSubIntegrationIntervals4TargetValue4Multiplication(dfActTargetValue, other, SubIntervals4TargetValue);
-            break;
-        case ProbDistOp::pdoDiv:
-            _SetSubIntegrationIntervals4TargetValue4Division(dfActTargetValue, other, SubIntervals4TargetValue);
-            break;
-        case ProbDistOp::pdoCov:
-            _SetSubIntegrationIntervals4TargetValue4Covariance(dfActTargetValue, other, SubIntervals4TargetValue);
-            break;
-        default:
-            break;
-    }   // endswitch(Operation)
-}
-
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue4Addition(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-    // init result:
-    SubIntervals4TargetValue.clear();
-    
-    // now set local variables
-    VectorSubIntLimitsType SubTotalIntervalRanges4TargetValue;
-    PairDFType pdtThisLimits, pdtOtherLimits;
-    SubIntLimitsType SingleSubTotalIntervalRange;
-    
-    
-    // DEBUG
-//     cout << endl << "_SetSubIntegrationIntervals4TargetValue4Addition:" << endl;
-//     cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-//     cout << "Other-range: [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ]" << endl;
-
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtThisLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-    // dfXMin: lowest value of complete X-range 
-    // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-    // dfYMin: lowset value of complete Y-range
-    // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-    CDigFloat dfXMin = firstVariable(); 
-    CDigFloat dfXMax = lastVariable();
-    CDigFloat dfYMin = Other.firstVariable();
-    CDigFloat dfYMax = Other.lastVariable();
-
-    // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-    // dfYMinCalc: the lowest possible value for Y
-    // dfYMaxCalc: the larges possible value for Y 
-    CDigFloat dfYMinCalc = dfActTargetValue - dfXMax;
-    CDigFloat dfYMaxCalc = dfActTargetValue - dfXMin;
-            
-
-    // DEBUG
-//     cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//     cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//     cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//     cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-    
-    // is calculation not possible ? --> leave 
-    if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin )
-        return;
-
-    // now calculate the limits for Y
-    pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-    pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-    
-    // and now for X
-    pdtThisLimits.first = dfActTargetValue - pdtOtherLimits.second;
-    pdtThisLimits.second = dfActTargetValue -  pdtOtherLimits.first;
-    
-    // DEBUG
-//     cout << "X-Limits: [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
-//     cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-        
-    // check for x (this distri) being within range
-    if(pdtThisLimits.first > dfXMax || pdtThisLimits.second < dfXMin) 
-        return;
-        
-    // add only if everything is ok
-//     cout << "this: first < second : " << string((pdtThisLimits.first < pdtThisLimits.second) ? "less" : " ge") << endl;
-//     cout << "other: first < second : " << string((pdtOtherLimits.first < pdtOtherLimits.second) ? "less" : "ge") << endl;
-    // add only valid results
-    if((pdtThisLimits.first >= pdtThisLimits.second) || (pdtOtherLimits.first >= pdtOtherLimits.second))
-    {
-        //DEBUG
-//         cout << "zero interval or inverted order" << endl; 
-        return;
-    }
-
-    SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-//     cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//     cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-    
-        // now derive for all elements (total integration intervals) of SubTotalIntervalRanges4TargetValue (max. 2)
-    // the SubIntegrationSteps sub integration intervals and add them to SubIntervals4TargetValue
-         // do we have negative values
-    bool bFirstNegative = (pdtThisLimits.first<0);
-    bool bSecondNegative = (pdtOtherLimits.first<0);
-    
-    // calculate the factor needed for dividing the integration sub intervals from the total interval
-    CDigFloat dfStepInc = (pdtThisLimits.second-pdtThisLimits.first)/SubIntegrationSteps();
-    
-    // in case dfFacInc might be equal one (due to errors in calculation of that factor ) --> leave out this calculations
-    if(dfStepInc == 0)
-        return;
-    
-    // DEBUG
-//     cout << "totIv.first:  [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
-//     cout << "totIv.second: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl; 
-//     cout << "dfStepInc: " << dfStepInc.RawPrint(15) << endl;
-    
-    // set the actual factor
-    CDigFloat dfActAdd = 0;
-    
-    for(int isub = 0; isub < SubIntegrationSteps(); isub++)
-    {
-        // the sub integration limits
-        PairDFType pdtThis, pdtOther;
-        
-        // set for first limit for this and second limit for other
-        pdtThis.first = pdtThisLimits.first + dfActAdd;
-        
-        // increment dfActFac
-        dfActAdd += dfStepInc;
-        
-        // set the second limit for this and the first limit for other
-        pdtThis.second = pdtThisLimits.first + dfActAdd;
-        
-        pdtOther.first = dfActTargetValue - pdtThis.second;
-        pdtOther.second = dfActTargetValue - pdtThis.first;
-        
-//         cout << "pdtThis (" << isub << "):  [" << pdtThis.first.RawPrint(15) << " ; " << pdtThis.second.RawPrint(15) << " ]" << endl;
-//         cout << "pdtOther (" << isub << "): [" << pdtOther.first.RawPrint(15) << " ; " << pdtOther.second.RawPrint(15) << " ]" << endl; 
-            
-        // checks: take care for correct order it might happen that within the numerical error
-        // equality might be achieved
-        assert(pdtThis.first <= pdtThis.second);
-        assert(pdtOther.first <= pdtOther.second);
-        
-        // now add the interval
-        SubIntervals4TargetValue.push_back(SubIntLimitsType(pdtThis, pdtOther));
-    
-    }   // endfor(int isub = 0; isub < SubIntegrationSteps(); isub++)
-    
-}
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue4Subtraction(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-        // init result:
-    SubIntervals4TargetValue.clear();
-    
-    // now set local variables
-    VectorSubIntLimitsType SubTotalIntervalRanges4TargetValue;
-    PairDFType pdtThisLimits, pdtOtherLimits;
-    SubIntLimitsType SingleSubTotalIntervalRange;
-    
-    
-    // DEBUG
-//     cout << endl << "_SetSubIntegrationIntervals4TargetValue4Subtraction:" << endl;
-//     cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-//     cout << "Other-range: [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ]" << endl;
-
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtThisLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-    // dfXMin: lowest value of complete X-range 
-    // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-    // dfYMin: lowset value of complete Y-range
-    // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-    CDigFloat dfXMin = firstVariable(); 
-    CDigFloat dfXMax = lastVariable();
-    CDigFloat dfYMin = Other.firstVariable();
-    CDigFloat dfYMax = Other.lastVariable();
-
-    // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-    // dfYMinCalc: the lowest possible value for Y
-    // dfYMaxCalc: the larges possible value for Y 
-    CDigFloat dfYMinCalc = dfXMin - dfActTargetValue;
-    CDigFloat dfYMaxCalc = dfXMax - dfActTargetValue;
-            
-
-    // DEBUG
-//     cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//     cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//     cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//     cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-    
-    // is calculation not possible ? --> leave 
-    if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin )
-        return;
-
-    // now calculate the limits for Y
-    pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-    pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-    
-    // and now for X
-    pdtThisLimits.first = dfActTargetValue + pdtOtherLimits.first;
-    pdtThisLimits.second = dfActTargetValue +  pdtOtherLimits.second;
-    
-    // DEBUG
-//     cout << "X-Limits: [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
-//     cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-        
-    // check for x (this distri) being within range
-    if(pdtThisLimits.first > dfXMax || pdtThisLimits.second < dfXMin) 
-        return;
-        
-    // add only if everything is ok
-//     cout << "this: first < second : " << string((pdtThisLimits.first < pdtThisLimits.second) ? "less" : " ge") << endl;
-//     cout << "other: first < second : " << string((pdtOtherLimits.first < pdtOtherLimits.second) ? "less" : "ge") << endl;
-
-    // add only valid results
-    if((pdtThisLimits.first >= pdtThisLimits.second) || (pdtOtherLimits.first >= pdtOtherLimits.second))
-    {
-        //DEBUG
-//         cout << "zero interval or inverted order" << endl; 
-        return;
-    }
-
-    SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-    // DEBUG
-    //     cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//     cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-    
-        // now derive for all elements (total integration intervals) of SubTotalIntervalRanges4TargetValue (max. 2)
-    // the SubIntegrationSteps sub integration intervals and add them to SubIntervals4TargetValue
-         // do we have negative values
-    bool bFirstNegative = (pdtThisLimits.first<0);
-    bool bSecondNegative = (pdtOtherLimits.first<0);
-    
-    // calculate the factor needed for dividing the integration sub intervals from the total interval
-    CDigFloat dfStepInc = (pdtThisLimits.second-pdtThisLimits.first)/SubIntegrationSteps();
-    
-    // in case dfFacInc might be equal one (due to errors in calculation of that factor ) --> leave out this calculations
-    if(dfStepInc == 0)
-        return;
-    
-    // DEBUG
-//     cout << "totIv.first:  [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << " ]" << endl;
-//     cout << "totIv.second: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl; 
-//     cout << "dfStepInc: " << dfStepInc.RawPrint(15) << endl;
-    
-    // set the actual factor
-    CDigFloat dfActAdd = 0;
-    
-    for(int isub = 0; isub < SubIntegrationSteps(); isub++)
-    {
-        // the sub integration limits
-        PairDFType pdtThis, pdtOther;
-        
-        // set for first limit for this and second limit for other
-        pdtThis.first = pdtThisLimits.first + dfActAdd;
-        
-        // increment dfActFac
-        dfActAdd += dfStepInc;
-        
-        // set the second limit for this and the first limit for other
-        pdtThis.second = pdtThisLimits.first + dfActAdd;
-        
-        pdtOther.first = pdtThis.first - dfActTargetValue;
-        pdtOther.second = pdtThis.second - dfActTargetValue;
-
-        // DEBUG
-//         cout << "pdtThis (" << isub << "):  [" << pdtThis.first.RawPrint(15) << " ; " << pdtThis.second.RawPrint(15) << " ]" << endl;
-//         cout << "pdtOther (" << isub << "): [" << pdtOther.first.RawPrint(15) << " ; " << pdtOther.second.RawPrint(15) << " ]" << endl; 
-            
-        // checks: take care for correct order it might happen that within the numerical error
-        // equality might be achieved
-        assert(pdtThis.first <= pdtThis.second);
-        assert(pdtOther.first <= pdtOther.second);
-        
-        // now add the interval
-        SubIntervals4TargetValue.push_back(SubIntLimitsType(pdtThis, pdtOther));
-    
-    }   // endfor(int isub = 0; isub < SubIntegrationSteps(); isub++)
-
-}
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue4Multiplication(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-    // init result:
-    SubIntervals4TargetValue.clear();
-    
-    // now set local variables
-    VectorSubIntLimitsType SubTotalIntervalRanges4TargetValue;
-    PairDFType pdtThisLimits, pdtOtherLimits;
-    SubIntLimitsType SingleSubTotalIntervalRange;
-    
-    
-    // DEBUG
-//     cout << endl << "_SetSubIntegrationIntervals4TargetValue4Multiplication:" << endl;
-//     cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-//     cout << "Other-range: [" << other.firstVariable().RawPrint(15) << " ; " << other.lastVariable().RawPrint(15) << " ]" << endl;
-
-    
-    // for zero we cant do anything:
-    // zero is a singularity and will be approximated by surrounding target values near zero
-    if(dfActTargetValue == 0)
-        return;
-    
-    if(dfActTargetValue < 0)
-    {
-        // 1. case: random variable this < 0
-        //          random variable other > 0
-        // --> total integration ranges for this case:
-        // this  [ minThis               ; targetValue / maxOther ]
-        // other [ targetValue / minThis ; maxOther ]
-        if(firstVariable() < 0 && other.lastVariable() > 0)
-        {
-            _GetSubIntegrationTotalInterval4NegativeTargetValue4Multiplication(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-             
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-                
-                // DEBUG
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-        }
-        
-        // add another limits
-        if(other.firstVariable() < 0 && lastVariable() > 0)
-        {
-            _GetSubIntegrationTotalInterval4NegativeTargetValue4Multiplication(dfActTargetValue,other,*this,pdtOtherLimits,pdtThisLimits);
-            
-            // DEBUG
-//                 cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//                 cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-                
-                // DEBUG
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl; 
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl << endl;
-            }
-            
-        }
-        
-        
-    }   // endif(dfActTargetValue < 0)
-    else
-    {
-        // check negative variable ranges case 
-        if( firstVariable() < 0 && other.firstVariable() < 0)
-        {
-            
-            _GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Multiplication(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-            
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-            // DEBUG
-//             cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//             cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( firstVariable() < 0 && other.firstVariable() < 0)
-        
-        // check positive case 
-        if( lastVariable() > 0 && other.lastVariable() > 0)
-        {
-            
-            _GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Multiplication(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-                // DEBUG
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( lastVariable() > 0 && other.lastVariable() > 0)
-        
-    }   // endelse(dfActTargetValue < 0)
-    
-    // now derive for all elements (total integration intervals) of SubTotalIntervalRanges4TargetValue (max. 2)
-    // the SubIntegrationSteps sub integration intervals and add them to SubIntervals4TargetValue
-    for(auto totIv: SubTotalIntervalRanges4TargetValue)
-    {
-        // do we have negative values
-        bool bFirstNegative = (totIv.first.first<0);
-        bool bSecondNegative = (totIv.second.first<0);
-        
-        // calculate the factor needed for dividing the integration sub intervals from the total interval
-        CDigFloat dfFacInc = pow( totIv.first.second / totIv.first.first , 1./SubIntegrationSteps());
-        
-        // in case dfFacInc might be equal one (due to errors in calculation of that factor ) --> leave out this calculations
-        if(dfFacInc == 1)
-            continue;
-        
-        // DEBUG
-//         cout << "totIv.first:  [" << totIv.first.first.RawPrint(15) << " ; " << totIv.first.second.RawPrint(15) << " ]" << endl;
-//         cout << "totIv.second: [" << totIv.second.first.RawPrint(15) << " ; " << totIv.second.second.RawPrint(15) << " ]" << endl; 
-//         cout << "dfFacInc: " << dfFacInc.RawPrint(15) << endl;
-        
-        // set the actual factor
-        CDigFloat dfActFacThis = 1.;
-        
-        for(int isub = 0; isub < SubIntegrationSteps(); isub++)
-        {
-            // the sub integration limits
-            PairDFType pdtThis, pdtOther;
-            
-            // set for first limit for this and second limit for other
-            pdtThis.first = dfActFacThis * totIv.first.first;
-            pdtOther.first = dfActTargetValue / pdtThis.first;
-//             pdtOther.second = totIv.second.second / dfActFacThis;
-            
-            // increment dfActFac
-            dfActFacThis *= dfFacInc;
-            
-            // set the second limit for this and the first limit for other
-            pdtThis.second = dfActFacThis * totIv.first.first;
-            pdtOther.second = dfActTargetValue / pdtThis.second;
-//             pdtOther.first = totIv.second.second / dfActFacThis;
-            
-            if( pdtOther.first > pdtOther.second )
-                swap(pdtOther.first,pdtOther.second);
-            
-            // DEBUG
-//             cout << "pdtThis (" << isub << "):  [" << pdtThis.first.RawPrint(15) << " ; " << pdtThis.second.RawPrint(15) << " ]" << endl;
-//             cout << "pdtOther (" << isub << "): [" << pdtOther.first.RawPrint(15) << " ; " << pdtOther.second.RawPrint(15) << " ]" << endl; 
-            
-            // checks: take care for correct order 
-            assert(pdtThis.first <= pdtThis.second);
-            assert(pdtOther.first <= pdtOther.second);
-            
-            // now add the interval
-            SubIntervals4TargetValue.push_back(SubIntLimitsType(pdtThis, pdtOther));
-            
-        }   // endfor(int isub = 0; isub < SubIntegrationSteps(); isub++)
-         
-    }   // endfor(auto totIntervals: SubTotalIntervalRanges4TargetValue)
-    
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4NegativeTargetValue4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType &pdtOneLimits, PairDFType& pdtOtherLimits )
-{
-    // invalidate result as initialization
-    pdtOneLimits.first =0;
-    pdtOneLimits.second = 0;
-    pdtOtherLimits.first =0;
-    pdtOtherLimits.second = 0;
-    
-    // reset errors in case of re-usage of variables the error might accumulate and lead to strange effects
-    pdtOneLimits.first.ResetError();
-    pdtOneLimits.second.ResetError();
-    pdtOtherLimits.first.ResetError();
-    pdtOtherLimits.second.ResetError();
-    
-    
-    // do this only if the One distri has a negative part AND the Other distri a positive part
-    if(One.firstVariable() < 0 && Other.lastVariable() > 0)
-    {   
-        
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue
-        // dfXMin: lowest value of complete X-range
-        // dfXMax: 0 (if X-range covers positive values) or largest value of complete X-range otherwise
-        // dfYMin: 0 (if Y-range covers negative values) or lowest value of complete Y-range otherwise
-        // dfXMax: largest value of complete range of Y
-        CDigFloat dfXMin = One.firstVariable();
-        CDigFloat dfXMax = (One.lastVariable() >= 0) ? One.lastVariable().Error()*(-10.) /*close to zero (negative)*/ : One.lastVariable();
-        CDigFloat dfYMin = (Other.firstVariable() <= 0) ? Other.firstVariable().Error()*10. /* close to zero (positive) */ : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfXMinCalc: the lowest possible value for X 
-        // dfXMaxCalc: the largest possible value for X 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        // REMARK:
-        // dfXMax and dfYMin could be zero --> this is considered for the calculation of dfXMinCalc and dfYMaxCalc
-        CDigFloat dfXMinCalc = dfActTargetValue / dfYMin;
-        CDigFloat dfXMaxCalc = dfActTargetValue / dfYMax;
-        CDigFloat dfYMinCalc = dfActTargetValue / dfXMin;
-        CDigFloat dfYMaxCalc = dfActTargetValue / dfXMax;
-        
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfXMinCalc: " << dfXMinCalc.RawPrint(15) << endl;
-//         cout << "dfXMaxCalc: " << dfXMaxCalc.RawPrint(15) << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            //DEBUG
-//             cout << "Bereiche schließen sich aus --> keine Berechnung möglich" << endl;
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        
-        // get the min. for the other distri: determined by the division of max. abs. value of the one distri
-        pdtOneLimits.first = max(dfXMin, dfXMinCalc);
-        pdtOneLimits.second = min(dfXMax,dfXMaxCalc);   
-        pdtOtherLimits.first = max(dfYMin, dfYMinCalc);
-        pdtOtherLimits.second = min(dfYMax,dfYMaxCalc); 
-        
-        // DEBUG
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-        
-        // now we got both limits of one and other: assure consistency
-        // i.e. Xll = tv / YLL
-        // AND
-        // XUL = tv / YUL
-        assert(pdtOneLimits.first == dfActTargetValue / pdtOtherLimits.first);
-        assert(pdtOneLimits.second == CDigFloat(dfActTargetValue) / pdtOtherLimits.second);
-        
-    }   // endif(One.firstVariable() < 0 && Other.lastVariable() > 0)
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType &pdtOneLimits, PairDFType& pdtOtherLimits )
-{
-    
-    // invalidate result as initialization
-    pdtOneLimits.first =0;
-    pdtOneLimits.second = 0;
-    pdtOtherLimits.first =0;
-    pdtOtherLimits.second = 0;
-    
-    // reset errors in case of re-usage of variables the error might accumulate and lead to strange effects
-    pdtOneLimits.first.ResetError();
-    pdtOneLimits.second.ResetError();
-    pdtOtherLimits.first.ResetError();
-    pdtOtherLimits.second.ResetError();
-    
-    // do this only if the One AND Other distri have a positive part 
-    if(One.lastVariable() > 0 && Other.lastVariable() > 0)
-    {
-        
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: 0 (if X-range covers also negative values) or lowest value of complete X-range otherwise 
-        // dfXMax: largest value of complete X-range 
-        // dfYMin: 0 (if Y-range covers also negative values) or lowest value of complete Y-range otherwise 
-        // dfXMax: largest value of complete Y-range
-        CDigFloat dfXMin = (One.firstVariable() < 0) ? 0 : One.firstVariable();
-        CDigFloat dfXMax = One.lastVariable();
-        CDigFloat dfYMin = (Other.firstVariable() < 0) ? 0 : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfXMinCalc: the lowest possible value for X 
-        // dfXMaxCalc: the largest possible value for X 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        // REMARK:
-        // dfXMin and dfYMin could be zero --> this is considered for the calculation of dfXMaxCalc and dfYMaxCalc
-        CDigFloat dfXMinCalc = dfActTargetValue / dfYMax;
-        CDigFloat dfXMaxCalc = (dfYMin < (dfActTargetValue/One.lastVariable())) ? One.lastVariable() : dfActTargetValue / dfYMin;
-        CDigFloat dfYMinCalc = dfActTargetValue / dfXMax;
-        CDigFloat dfYMaxCalc = (dfXMin < (dfActTargetValue/Other.lastVariable())) ? Other.lastVariable() : dfActTargetValue / dfXMin;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)         
-        
-        // get the min. for the other distri: determined by the division of max. abs. value of the one distri
-        pdtOneLimits.first = max(dfXMin, dfXMinCalc);
-        pdtOneLimits.second = min(dfXMax,dfXMaxCalc);        
-        pdtOtherLimits.first = max(dfYMin, dfYMinCalc);
-        pdtOtherLimits.second = min(dfYMax,dfYMaxCalc);
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfXMinCalc: " << dfXMinCalc.RawPrint(15) << endl;
-//         cout << "dfXMaxCalc: " << dfXMaxCalc.RawPrint(15) << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-        
-        // now we got both limits of one and other: assure consistency
-        // i.e. Xll = tv / YUL
-        // AND
-        // XUL = tv / YLL
-        assert(pdtOneLimits.first == dfActTargetValue / pdtOtherLimits.second);
-        assert(pdtOneLimits.second == CDigFloat(dfActTargetValue) / pdtOtherLimits.first);
-        
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-}
-
-void CProbabilityDensityDistribution:: _GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Multiplication(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // do this only if the One AND Other distri have a positive part 
-    if(One.firstVariable() < 0 && Other.firstVariable() < 0)
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = One.firstVariable(); 
-        CDigFloat dfXMax = (One.lastVariable() > 0) ? 0 : One.lastVariable();
-        CDigFloat dfYMin = Other.firstVariable();
-        CDigFloat dfYMax = (Other.lastVariable() > 0) ? 0 : Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfXMinCalc: the lowest possible value for X 
-        // dfXMaxCalc: the largest possible value for X 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        // REMARK:
-        // dfXMax and dfYMax could be zero --> this is considered for the calculation of dfXMinCalc and dfYMinCalc
-        CDigFloat dfXMinCalc = (dfYMax > (dfActTargetValue / One.firstVariable()) ) ? One.firstVariable() : dfActTargetValue / dfYMax;
-        CDigFloat dfXMaxCalc = dfActTargetValue / dfYMin;
-        CDigFloat dfYMinCalc = (dfXMax > (dfActTargetValue/ Other.firstVariable())) ? Other.firstVariable() : dfActTargetValue / dfXMax;
-        CDigFloat dfYMaxCalc = dfActTargetValue / dfXMin;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)         
-        
-        // get the min. for the other distri: determined by the division of max. abs. value of the one distri
-        pdtOneLimits.first = max(dfXMin, dfXMinCalc);
-        pdtOneLimits.second = min(dfXMax,dfXMaxCalc);        
-        pdtOtherLimits.first = max(dfYMin, dfYMinCalc);
-        pdtOtherLimits.second = min(dfYMax,dfYMaxCalc);
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfXMinCalc: " << dfXMinCalc.RawPrint(15) << endl;
-//         cout << "dfXMaxCalc: " << dfXMaxCalc.RawPrint(15) << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-        // now we got both limits of one and other: assure consistency
-        // i.e. Xll = tv / YUL
-        // AND
-        // XUL = tv / YLL
-        assert(pdtOneLimits.first == dfActTargetValue / pdtOtherLimits.second);
-        assert(pdtOneLimits.second == CDigFloat(dfActTargetValue) / pdtOtherLimits.first);
-        
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-}
-
-
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue4Division(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-       // init result:
-    SubIntervals4TargetValue.clear();
-    
-    // now set local variables
-    VectorSubIntLimitsType SubTotalIntervalRanges4TargetValue;
-    PairDFType pdtThisLimits, pdtOtherLimits;
-    SubIntLimitsType SingleSubTotalIntervalRange;
-    
-    
-    // DEBUG
-//     cout << endl << "_SetSubIntegrationIntervals4TargetValue4Division:" << endl;
-//     cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-//     cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-//     cout << "Other-range: [" << other.firstVariable().RawPrint(15) << " ; " << other.lastVariable().RawPrint(15) << " ]" << endl;
-
-    
-    // for zero we cant do anything:
-    // zero is a singularity and will be approximated by surrounding target values near zero
-    if(dfActTargetValue == 0)
-        return;
-    
-    if(dfActTargetValue < 0)
-    {
-        // 1. case: random variable this < 0
-        //          random variable other > 0
-        // --> total integration ranges for this case:
-        // this  [ minThis               ; targetValue / maxOther ]
-        // other [ targetValue / minThis ; maxOther ]
-        if(firstVariable() < 0 && other.lastVariable() > 0)
-        {
-            // DEBUG
-//             cout << "calling _GetSubIntegrationTotalInterval4NegativeTargetValueNegPosVariables4Division " << endl;
-   
-            _GetSubIntegrationTotalInterval4NegativeTargetValueNegPosVariables4Division(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
- 
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-            
-                // DEBUG
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-        }
-        
-        // add another limits
-        if(lastVariable() > 0 && other.firstVariable() < 0)
-        {
-            // DEBUG
-//             cout << "calling _GetSubIntegrationTotalInterval4NegativeTargetValuePosNegVariables4Division " << endl;
-   
-            _GetSubIntegrationTotalInterval4NegativeTargetValuePosNegVariables4Division(dfActTargetValue,*this,other,pdtThisLimits,pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-                // DEBUG                
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl; 
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl << endl;
-            }
-            
-        }
-        
-        
-    }   // endif(dfActTargetValue < 0)
-    else
-    {
-        // check negative variable ranges case 
-        if( firstVariable() < 0 && other.firstVariable() < 0)
-        {
-            // DEBUG
-//             cout << "calling _GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Division " << endl;
-            
-            _GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Division(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-   
-            // DEBUG             
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-            
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-                // DEBUG                
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( firstVariable() < 0 && other.firstVariable() < 0)
-        
-        // check positive case 
-        if( lastVariable() > 0 && other.lastVariable() > 0)
-        {
-            
-            // DEBUG
-//             cout << "calling _GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Division " << endl;
-            _GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Division(dfActTargetValue,*this,other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-                // DEBUG                
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( lastVariable() > 0 && other.lastVariable() > 0)
-        
-    }   // endelse(dfActTargetValue < 0)
-    
-    // now derive for all elements (total integration intervals) of SubTotalIntervalRanges4TargetValue (max. 2)
-    // the SubIntegrationSteps sub integration intervals and add them to SubIntervals4TargetValue
-    for(auto totIv: SubTotalIntervalRanges4TargetValue)
-    {
-        // do we have negative values
-        bool bFirstNegative = (totIv.first.first<0);
-        bool bSecondNegative = (totIv.second.first<0);
-        
-        // calculate the factor needed for dividing the integration sub intervals from the total interval
-        CDigFloat dfFacInc = pow( totIv.first.second / totIv.first.first , 1./SubIntegrationSteps());
-        
-        // in case dfFacInc might be equal one (due to errors in calculation of that factor ) --> leave out this calculations
-        if(dfFacInc == 1)
-            continue;
-        
-        // DEBUG
-//         cout << "totIv.first:  [" << totIv.first.first.RawPrint(15) << " ; " << totIv.first.second.RawPrint(15) << " ]" << endl;
-//         cout << "totIv.second: [" << totIv.second.first.RawPrint(15) << " ; " << totIv.second.second.RawPrint(15) << " ]" << endl; 
-//         cout << "dfFacInc: " << dfFacInc.RawPrint(15) << endl;
-        
-        // set the actual factor
-        CDigFloat dfActFacThis = 1.;
-        
-        for(int isub = 0; isub < SubIntegrationSteps(); isub++)
-        {
-            // the sub integration limits
-            PairDFType pdtThis, pdtOther;
-            
-            // set for first limit for this and second limit for other
-            pdtThis.first = dfActFacThis * totIv.first.first;
-            pdtOther.first = pdtThis.first / dfActTargetValue;
-//             pdtOther.second = totIv.second.second / dfActFacThis;
-            
-            // increment dfActFac
-            dfActFacThis *= dfFacInc;
-            
-            // set the second limit for this and the first limit for other
-            pdtThis.second = dfActFacThis * totIv.first.first;
-            pdtOther.second = pdtThis.second / dfActTargetValue;
-//             pdtOther.first = totIv.second.second / dfActFacThis;
-            
-            if( pdtOther.first > pdtOther.second )
-                swap(pdtOther.first,pdtOther.second);
-            
-            // DEBUG
-//             cout << "pdtThis (" << isub << "):  [" << pdtThis.first.RawPrint(15) << " ; " << pdtThis.second.RawPrint(15) << " ]" << endl;
-//             cout << "pdtOther (" << isub << "): [" << pdtOther.first.RawPrint(15) << " ; " << pdtOther.second.RawPrint(15) << " ]" << endl; 
-            
-            // checks: take care for correct order / sensfull integration limits ... might be close to identical in some cases
-            if(pdtThis.first >= pdtThis.second)
-                continue;
-            
-            if(pdtOther.first >= pdtOther.second)
-                continue;
-            
-            // checks: consistency
-//             assert(pdtThis.first * pdtOther.second == dfActTargetValue);
-//             assert(pdtThis.second * pdtOther.first == dfActTargetValue);
-            
-            // now add the interval
-            SubIntervals4TargetValue.push_back(SubIntLimitsType(pdtThis, pdtOther));
-            
-        }   // endfor(int isub = 0; isub < SubIntegrationSteps(); isub++)
-         
-    }   // endfor(auto totIntervals: SubTotalIntervalRanges4TargetValue)
- 
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-        // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // do this only if the One AND Other distri have a positive part 
-    if(One.firstVariable() < 0 && Other.firstVariable() < 0)
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = One.firstVariable(); 
-        CDigFloat dfXMax = (One.lastVariable() >= 0) ? CDigFloat(100).Error()*(-10.) /*close to zero (negative)*/ : One.lastVariable();
-        CDigFloat dfYMin = Other.firstVariable();
-        CDigFloat dfYMax = (Other.lastVariable() >= 0) ? CDigFloat(100).Error()*(-10.) /*close to zero (negative)*/: Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        CDigFloat dfYMinCalc = dfXMin / dfActTargetValue ;
-        CDigFloat dfYMaxCalc = dfXMax / dfActTargetValue ;
-               
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)
-   
-        
-        // now calculate the limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue * pdtOtherLimits.first;
-        pdtOneLimits.second = dfActTargetValue * pdtOtherLimits.second;
-        
-        // DEBUG
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)  
-         
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-
-}
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{   
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // do this only if the One AND Other distri have a positive part 
-    if(One.lastVariable() > 0 && Other.lastVariable() > 0)
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = (One.firstVariable() <= 0) ? CDigFloat(100).Error()*10. /*close to zero (positive)*/ : One.firstVariable();
-        CDigFloat dfXMax = One.lastVariable();
-        CDigFloat dfYMin = (Other.firstVariable() <= 0) ? CDigFloat(100).Error()*10. /*close to zero (positive)*/ : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        CDigFloat dfYMinCalc = dfXMin / dfActTargetValue ;
-        CDigFloat dfYMaxCalc = dfXMax / dfActTargetValue ;
-        
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)
-        
-        // now calculate the limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue * pdtOtherLimits.first;
-        pdtOneLimits.second = dfActTargetValue * pdtOtherLimits.second;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)         
-       
-        // DEBUG
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-         
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4NegativeTargetValuePosNegVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-        // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // do this only if the One AND Other distri have a positive part 
-    if(One.lastVariable() > 0 && Other.firstVariable() < 0 )
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = (One.firstVariable() <= 0) ? CDigFloat(100).Error()*10. /*close to zero (positive)*/ : One.firstVariable();
-        CDigFloat dfXMax = One.lastVariable();
-        CDigFloat dfYMin = Other.firstVariable();
-        CDigFloat dfYMax = (Other.lastVariable() >= 0) ? CDigFloat(100).Error()*(-10.) /*close to zero (negative)*/ : Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        CDigFloat dfYMinCalc = dfXMax / dfActTargetValue ;
-        CDigFloat dfYMaxCalc = dfXMin / dfActTargetValue ;
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)
-        
-        // now calculate the limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue * pdtOtherLimits.second;
-        pdtOneLimits.second = dfActTargetValue * pdtOtherLimits.first;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)         
-       
-        // DEBUG
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-         
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4NegativeTargetValueNegPosVariables4Division(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-           // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // do this only if the One has negative AND Other distri has a positive part 
-    if(One.firstVariable() < 0 && Other.lastVariable() > 0 )
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = One.firstVariable();
-        CDigFloat dfXMax = (One.lastVariable() >= 0) ? CDigFloat(100).Error()*(-10.) /*close to zero (negative)*/ : One.lastVariable();
-        CDigFloat dfYMin = (Other.firstVariable() <= 0) ? CDigFloat(100).Error()*10. /*close to zero (positive)*/ : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the extremal upper and lower limits defined by X/YMax/Min and dfActTargetValue 
-        // dfYMinCalc: the lowest possible value for Y
-        // dfYMaxCalc: the larges possible value for Y 
-        CDigFloat dfYMinCalc = dfXMax / dfActTargetValue ;
-        CDigFloat dfYMaxCalc = dfXMin / dfActTargetValue ;
-        
-        // now calculate the limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue * pdtOtherLimits.second;
-        pdtOneLimits.second = dfActTargetValue * pdtOtherLimits.first;
-        
-        // DEBUG
-//         cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-//         cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-//         cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-//         cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-//         cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(dfXMinCalc > dfXMax || dfXMaxCalc < dfXMin || dfYMinCalc > dfYMax || dfYMaxCalc < dfYMin)         
-       
-        
-        // DEBUG
-//         cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-//         cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-
-         
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-
-}
-
-void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue4Covariance(const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other, VectorSubIntLimitsType& SubIntervals4TargetValue)
-{
-    // init result:
-    SubIntervals4TargetValue.clear();
-    
-    // now set local variables
-    VectorSubIntLimitsType SubTotalIntervalRanges4TargetValue;
-    PairDFType pdtThisLimits, pdtOtherLimits;
-    SubIntLimitsType SingleSubTotalIntervalRange;
-    
-    // need the means very often
-    CDigFloat dfOneMean = Mean();
-    CDigFloat dfOtherMean = Other.Mean();
-    
-    
-    // DEBUG
-    cout << endl << "_SetSubIntegrationIntervals4TargetValue4Covariance:" << endl;
-    cout << "dfActTargetValue = " << dfActTargetValue.RawPrint(15) << endl;
-    cout << "This-range: [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ]" << endl;
-    cout << "Other-range: [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ]" << endl;
-
-    
-    // for zero we cant do anything:
-    // zero is a singularity and will be approximated by surrounding target values near zero
-    if(dfActTargetValue == 0)
-        return;
-    
-    if(dfActTargetValue < 0)
-    {
-        // 1. case: random variable this < 0
-        //          random variable other > 0
-        // --> total integration ranges for this case:
-        // this  [ minThis               ; targetValue / maxOther ]
-        // other [ targetValue / minThis ; maxOther ]
-        if( (firstVariable() - dfOneMean) < 0 && (Other.lastVariable()-dfOtherMean) > 0)
-        {
-            _GetSubIntegrationTotalInterval4NegativeTargetValue4Covariance(dfActTargetValue,*this,Other,pdtThisLimits, pdtOtherLimits);
-             
-            // DEBUG
-            cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-            cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-                
-                // DEBUG
-                cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-                cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-        }
-        
-        // add another limits
-        if( (Other.firstVariable()-dfOtherMean) < 0 && (lastVariable()-dfOneMean) > 0)
-        {
-            _GetSubIntegrationTotalInterval4NegativeTargetValue4Covariance(dfActTargetValue,Other,*this,pdtOtherLimits,pdtThisLimits);
-            
-            // DEBUG
-                cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-                cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-                
-                // DEBUG
-                cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl; 
-                cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl << endl;
-            }
-            
-        }
-        
-        
-    }   // endif(dfActTargetValue < 0)
-    else
-    {
-        // check negative variable ranges case 
-        if( (firstVariable()-dfOneMean) < 0 && (Other.firstVariable()-dfOtherMean) < 0)
-        {
-            
-            _GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Covariance(dfActTargetValue,*this,Other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-            cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-            cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-            
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-            // DEBUG
-            cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-            cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( firstVariable() < 0 && other.firstVariable() < 0)
-        
-        // check positive case 
-        if( (lastVariable()-dfOneMean) > 0 && (Other.lastVariable()-dfOtherMean) > 0)
-        {
-            
-            _GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Covariance(dfActTargetValue,*this,Other,pdtThisLimits, pdtOtherLimits);
-            
-            // DEBUG
-//             cout << "this: first != second : " << string((pdtThisLimits.first != pdtThisLimits.second) ? "different" : "equal") << endl;
-//             cout << "other: first != second : " << string((pdtOtherLimits.first != pdtOtherLimits.second) ? "different" : "equal") << endl;
-
-            // add only valid results
-            if((pdtThisLimits.first != pdtThisLimits.second) && (pdtOtherLimits.first != pdtOtherLimits.second))
-            {
-                SubTotalIntervalRanges4TargetValue.push_back(SubIntLimitsType(pdtThisLimits, pdtOtherLimits));
-
-                // DEBUG
-//                 cout << "adding : [" << pdtThisLimits.first.RawPrint(15) << " ; " << pdtThisLimits.second.RawPrint(15) << endl;
-//                 cout << "adding : [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << endl << endl; 
-            }
-            
-        }   // endif( lastVariable() > 0 && other.lastVariable() > 0)
-        
-    }   // endelse(dfActTargetValue < 0)
-    
-    // now derive for all elements (total integration intervals) of SubTotalIntervalRanges4TargetValue (max. 2)
-    // the SubIntegrationSteps sub integration intervals and add them to SubIntervals4TargetValue
-    for(auto totIv: SubTotalIntervalRanges4TargetValue)
-    {   
-        // calculate the factor needed for dividing the integration sub intervals from the total interval
-        CDigFloat dfFacInc = pow( totIv.first.second / totIv.first.first , 1./SubIntegrationSteps());
-        
-        // in case dfFacInc might be equal one (due to errors in calculation of that factor ) --> leave out this calculations
-        if(dfFacInc == 1)
-            continue;
-        
-        // DEBUG
-        cout << "totIv.first:  [" << totIv.first.first.RawPrint(15) << " ; " << totIv.first.second.RawPrint(15) << " ]" << endl;
-        cout << "totIv.second: [" << totIv.second.first.RawPrint(15) << " ; " << totIv.second.second.RawPrint(15) << " ]" << endl; 
-        cout << "dfFacInc: " << dfFacInc.RawPrint(15) << endl;
-        
-        // set the actual factor
-        CDigFloat dfActFacThis = 1.;
-        
-        for(int isub = 0; isub < SubIntegrationSteps(); isub++)
-        {
-            // the sub integration limits
-            PairDFType pdtThis, pdtOther;
-            
-            // set for first limit for this and second limit for other
-            pdtThis.first = dfActFacThis * totIv.first.first;
-            pdtOther.first = dfActTargetValue / ( pdtThis.first - dfOneMean) + dfOtherMean;
-//             pdtOther.second = totIv.second.second / dfActFacThis;
-            
-            // increment dfActFac
-            dfActFacThis *= dfFacInc;
-            
-            // set the second limit for this and the first limit for other
-            pdtThis.second = dfActFacThis * totIv.first.first;
-            pdtOther.second = dfActTargetValue / (pdtThis.second - dfOneMean) + dfOtherMean;;
-//             pdtOther.first = totIv.second.second / dfActFacThis;
-            
-            if( pdtOther.first > pdtOther.second )
-                swap(pdtOther.first,pdtOther.second);
-            
-            // DEBUG
-            cout << "pdtThis (" << isub << "):  [" << pdtThis.first.RawPrint(15) << " ; " << pdtThis.second.RawPrint(15) << " ]" << endl;
-            cout << "pdtOther (" << isub << "): [" << pdtOther.first.RawPrint(15) << " ; " << pdtOther.second.RawPrint(15) << " ]" << endl; 
-            
-            // checks: take care for correct order 
-            assert(pdtThis.first <= pdtThis.second);
-            assert(pdtOther.first <= pdtOther.second);
-            
-            // now add the interval
-            SubIntervals4TargetValue.push_back(SubIntLimitsType(pdtThis, pdtOther));
-            
-        }   // endfor(int isub = 0; isub < SubIntegrationSteps(); isub++)
-         
-    }   // endfor(auto totIntervals: SubTotalIntervalRanges4TargetValue)
-    
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4NegativeTargetValue4Covariance(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // need the means very often
-    CDigFloat dfOneMean = One.Mean();
-    CDigFloat dfOtherMean = Other.Mean();    
-    
-    // do this only if the One distri has a negative part AND the Other distri a positive part
-    if( (One.firstVariable()-dfOneMean) < 0 && (Other.lastVariable()-dfOtherMean) > 0)
-    {   
-        
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue
-        // dfXMin: lowest value of complete X-range
-        // dfXMax: 0 (if X-range covers positive values) or largest value of complete X-range otherwise
-        // dfYMin: 0 (if Y-range covers negative values) or lowest value of complete Y-range otherwise
-        // dfXMax: largest value of complete range of Y
-        CDigFloat dfXMin = One.firstVariable();
-        CDigFloat dfXMax = ( (One.lastVariable() - dfOneMean) >= 0) ? dfOneMean - CDigFloat(1).Error()*10 /*close to mean (less)*/ : One.lastVariable();
-        CDigFloat dfYMin = ( (Other.firstVariable() - dfOtherMean) <= 0) ? dfOtherMean + Other.firstVariable().Error()*10. /* close to mean (greater) */ : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the theoretical y limits from x
-        CDigFloat dfYMinCalc = dfActTargetValue / (dfXMin-dfOneMean) + dfOtherMean;
-        CDigFloat dfYMaxCalc = dfActTargetValue / (dfXMax-dfOneMean) + dfOtherMean;
-        
-        // now calculate the real limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue / (pdtOtherLimits.first - dfOtherMean) + dfOneMean;
-        pdtOneLimits.second = dfActTargetValue / (pdtOtherLimits.second- dfOtherMean) + dfOneMean;
-        
-        // DEBUG
-        cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-        cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-        cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-        cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-        cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin)        
-       
-        
-        // DEBUG
-        cout << "X-Limits: [" << pdtOneLimits.first.RawPrint(15) << " ; " << pdtOneLimits.second.RawPrint(15) << " ]" << endl;
-        cout << "Y-Limits: [" << pdtOtherLimits.first.RawPrint(15) << " ; " << pdtOtherLimits.second.RawPrint(15) << " ]" << endl;
-        
-        
-    }   // endif( (One.firstVariable()-One.Mean()) < 0 && (Other.lastVariable()-Other.Mean()) > 0)
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4PositiveTargetValueNegativeVariables4Covariance(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // need the means very often
-    CDigFloat dfOneMean = One.Mean();
-    CDigFloat dfOtherMean = Other.Mean();
-    
-    // do this only if the One AND Other distri have a positive part 
-    if( (One.firstVariable()-dfOneMean) < 0 && (Other.firstVariable()-dfOtherMean) < 0)
-    {
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: lowest value of complete X-range 
-        // dfXMax: 0 (if X-range covers also positive values) or largest value of complete X-range otherwise 
-        // dfYMin: lowset value of complete Y-range
-        // dfXMax: 0 (if Y-range covers also positive values) or largest value of complete Y-range otherwise 
-        CDigFloat dfXMin = One.firstVariable(); 
-        CDigFloat dfXMax = ( (One.lastVariable()-dfOneMean) > 0) ? dfOneMean - CDigFloat(1).Error()*10 /*close to mean (less)*/  : One.lastVariable();
-        CDigFloat dfYMin = Other.firstVariable();
-        CDigFloat dfYMax = ( (Other.lastVariable()-dfOtherMean) > 0) ? dfOtherMean - CDigFloat(1).Error()*10 /*close to mean (less)*/  : Other.lastVariable();
-        
-        // take care for correct order:
-        if(dfXMin > dfXMax)
-            swap(dfXMin, dfXMax);
-        if(dfYMin > dfYMax)
-            swap(dfYMin, dfYMax);
-        
-        // calculate the theoretical y limits from x
-        CDigFloat dfYMinCalc = dfActTargetValue / (dfXMin-dfOneMean) + dfOtherMean;
-        CDigFloat dfYMaxCalc = dfActTargetValue / (dfXMax-dfOneMean) + dfOtherMean;
-        
-        // take care for correct order:
-        if(dfYMinCalc > dfYMaxCalc)
-            swap(dfYMinCalc, dfYMaxCalc);
-        
-        // now calculate the real limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue / (pdtOtherLimits.second - dfOtherMean) + dfOneMean;
-        pdtOneLimits.second = dfActTargetValue / (pdtOtherLimits.first- dfOtherMean) + dfOneMean;
-        
-        // DEBUG
-        cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-        cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-        cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-        cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-        cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin)        
-       
-    }
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-
-}
-
-void CProbabilityDensityDistribution::_GetSubIntegrationTotalInterval4PositiveTargetValuePositiveVariables4Covariance(const CDigFloat dfActTargetValue, CProbabilityDensityDistribution& One, CProbabilityDensityDistribution& Other, PairDFType& pdtOneLimits, PairDFType& pdtOtherLimits)
-{
-    
-    // invalidate result as initialization
-    _InitIntegrationLimits(pdtOneLimits);
-    _InitIntegrationLimits(pdtOtherLimits);
-    
-    // need the means very often
-    CDigFloat dfOneMean = One.Mean();
-    CDigFloat dfOtherMean = Other.Mean();    
-    
-    // do this only if the One AND Other distri have a positive part 
-    if( (One.lastVariable()-dfOneMean) > 0 && (Other.lastVariable()-dfOtherMean) > 0)
-    {
-        
-        // set the limits for the relevant  parts of the X-/Y-range used for the consecutive calculation for the given dfActTargetValue (tv)
-        // dfXMin: 0 (if X-range covers also negative values) or lowest value of complete X-range otherwise 
-        // dfXMax: largest value of complete X-range 
-        // dfYMin: 0 (if Y-range covers also negative values) or lowest value of complete Y-range otherwise 
-        // dfXMax: largest value of complete Y-range
-        CDigFloat dfXMin = ( (One.firstVariable()-dfOneMean) <= 0) ? dfOneMean + CDigFloat(1).Error()*10 /*close to mean (greater)*/ : One.firstVariable();
-        CDigFloat dfXMax = One.lastVariable();
-        CDigFloat dfYMin = ((Other.firstVariable()-dfOtherMean) < 0) ? dfOtherMean + CDigFloat(1).Error()*10 /*close to mean (greater)*/  : Other.firstVariable();
-        CDigFloat dfYMax = Other.lastVariable();
-        
-        // calculate the theoretical y limits from x
-        CDigFloat dfYMinCalc = dfActTargetValue / (dfXMin-dfOneMean) + dfOtherMean;
-        CDigFloat dfYMaxCalc = dfActTargetValue / (dfXMax-dfOneMean) + dfOtherMean;
-        
-        // now calculate the real limits for Y
-        pdtOtherLimits.first = max(dfYMinCalc, dfYMin);
-        pdtOtherLimits.second = min(dfYMaxCalc, dfYMax);
-        
-        // and now for X
-        pdtOneLimits.first = dfActTargetValue / (pdtOtherLimits.second - dfOtherMean) + dfOneMean;
-        pdtOneLimits.second = dfActTargetValue / (pdtOtherLimits.first- dfOtherMean) + dfOneMean;
-        
-        // DEBUG
-        cout << "dfActTargetValue: " << dfActTargetValue.RawPrint(15) << endl;
-        cout << "X-range: [" << dfXMin.RawPrint(15) << " ; " << dfXMax.RawPrint(15) << " ]" << endl;
-        cout << "Y-range: [" << dfYMin.RawPrint(15) << " ; " << dfYMax.RawPrint(15) << " ]" << endl;
-        cout << "dfYMinCalc: " << dfYMinCalc.RawPrint(15) << endl;
-        cout << "dfYMaxCalc: " << dfYMaxCalc.RawPrint(15) << endl;
-        
-        // no calculation possible if the extremal calculated limits exceed the variable ranges of x , y:
-        if(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin) 
-        {
-            _InitIntegrationLimits(pdtOneLimits);
-            return;
-            
-        }   // endif(pdtOneLimits.first > dfXMax || pdtOneLimits.second < dfXMin || pdtOtherLimits.first > dfYMax || pdtOtherLimits.second < dfYMin)        
-       
-        
-    }   // endif( (One.lastVariable()-dfOneMean) > 0 && (Other.lastVariable()-dfOtherMean) > 0)
-    
-    // check for non-zero / non-inverted ranges and the second (other) starts after the first (one)
-    assert(pdtOneLimits.first <=  pdtOneLimits.second);
-    assert(pdtOtherLimits.first <= pdtOtherLimits.second);
-}
-
-
-
-
-void CProbabilityDensityDistribution::_InitIntegrationLimits(PairDFType& pdtLimits)
-{
-    pdtLimits.first = 0; pdtLimits.first.ResetError();
-    pdtLimits.second = 0; pdtLimits.second.ResetError();
 }
 
 void CProbabilityDensityDistribution::_GetRangeFromDistributionOperation(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, CDigFloat& TargetRangeStart, CDigFloat& TargetRangeEnd)
@@ -2747,8 +1273,8 @@ void CProbabilityDensityDistribution::_GetRangeFromDistributionOperation(CProbab
     CDigFloat OtherEnd = Other.lastVariable();
     
     // DEBUG
-    cout << "This X variable = [" << ThisStart.RawPrint(10) << " ; " << ThisEnd.RawPrint(10) << endl;
-    cout << "Other Y variable = [" << OtherStart.RawPrint(10) << " ; " << OtherEnd.RawPrint(10) << endl;
+//     cout << "This X variable = [" << ThisStart.RawPrint(10) << " ; " << ThisEnd.RawPrint(10) << endl;
+//     cout << "Other Y variable = [" << OtherStart.RawPrint(10) << " ; " << OtherEnd.RawPrint(10) << endl;
     
     // only needed for covariance calcuations
     CDigFloat dfThisMean = Mean();
@@ -2806,6 +1332,6 @@ void CProbabilityDensityDistribution::_GetRangeFromDistributionOperation(CProbab
     }   //endswitch(Operation)
     
     // DEBUG
-    cout << "TargetRangeStart = " << TargetRangeStart.RawPrint(10) << endl;
-    cout << "TargetRangeEnd = " << TargetRangeEnd.RawPrint(10) << endl;
+//     cout << "TargetRangeStart = " << TargetRangeStart.RawPrint(10) << endl;
+//     cout << "TargetRangeEnd = " << TargetRangeEnd.RawPrint(10) << endl;
 }

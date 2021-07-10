@@ -95,10 +95,10 @@ CDistribution & CDistribution::operator-=(const CDigFloat& Value)
 ///////////////////////////////////    
 void CDistribution::Shift(const CDigFloat& shift)
 {
-    // generate map to copy from
+     // generate map to copy from
     MapDFDFType ShiftedDistribution;
     for(auto iel: mDistribution)
-        ShiftedDistribution[CDigFloat(shift)+iel.first] = iel.second;
+        ShiftedDistribution[iel.first+shift] = iel.second;
     
     // copy
     mDistribution.clear();
@@ -298,7 +298,7 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     
     // DEBUG    
 //  cout << "Integral (3): " << dfIntegral.RawPrint(10) << endl;
-    return dfIntegral;
+    return CDigFloat( dfIntegral );
 }
 CDigFloat CDistribution::Min()
 {
@@ -425,6 +425,7 @@ CDigFloat CDistribution::AbsIntegral(const int& nthOrder /*=0*/)
         // now get the next integral part between two consecutive elements of this distribution
         dfIntegral += _IntegralConsecutiveElements(iel,nthOrder);
     
+    
     return dfIntegral;
 }
 
@@ -442,7 +443,7 @@ CDigFloat CDistribution::_IntegralConsecutiveElements(const MapDFDFType::const_i
         return dfIntegral;
     
     dfIntegral = _IntegralOfTwoPoints(iel->first, iel->second, ielNext->first, ielNext->second, nthOrder);
-    
+
     return dfIntegral;
     
 }
@@ -457,14 +458,25 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
     // calculate : int( x^n * (a*x + b) )dx within the limits [x1, x2]
     // solution: [ a/(n+2)*x^(n+2) + b/2*x² ] (x=x1) - [](x=x2)
     //           where a = (y2-y1)/(x2-x1)
-    //           where b = y1 + a*(-x1)
+    //           where b = (y2*x1 - y1*x2)/(x1-x2)
     if(x1!=x2)
     {
         // use in order:
         assert(x2>=x1);
-        CDigFloat a = (CDigFloat(y1)-y2)/(CDigFloat(x1)-x2);
-        CDigFloat b = CDigFloat(y1) - a * x1;
+        CDigFloat a = (y1-y2)/(x1-x2);
+        CDigFloat b = (y2*x1 - y1*x2)/(x1-x2);
         
+        // DEBUG
+//         cout << "_IntegralOfTwoPoints" << endl;
+//         cout << "a = " << a.RawPrint(10) << endl;
+//         cout << "b = " << b.RawPrint(10) << endl;
+//         
+//         a.ResetError(); b.ResetError();
+        
+        
+//         cout << "a (reset)= " << a.RawPrint(10) << endl;
+//         cout << "b (reset)= " << b.RawPrint(10) << endl << endl;
+//         
         dfIntegral = _nthOrderWeightedPrimitiveIntegral(x2,a,b,nthOrder)  - _nthOrderWeightedPrimitiveIntegral(x1,a,b,nthOrder);
         
 //         DEBUG
@@ -484,7 +496,7 @@ CDigFloat CDistribution::_nthOrderWeightedPrimitiveIntegral(const CDigFloat& x, 
         // calculation of the weighted integral of a linear function y = a*x + b
         // calculates : int( x^n * (a*x + b) )dx within the limits [x1, x2]
         // solution: [ a/(n+2)*x^(n+2) + b/2*x² ] 
-    return CDigFloat(slope)/(nthOrder+2.) * pow(x,nthOrder+2) + CDigFloat(offset)/(nthOrder+1.) * pow(x,nthOrder+1);
+    return slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1);
 }
 
 
