@@ -246,18 +246,19 @@ public:
     {
         
         CProbabilityDensityDistribution d1,d2, d3, d4,dRes,dTemp1, dTemp2;
-        d1.NormalDistribution(500,0,1,0.001);
-        d2.NormalDistribution(500,0,1,0.001);
-        d3.NormalDistribution(500,0,1,0.001);
-        d4.NormalDistribution(500,0,1,0.001);
+        d1.NormalDistribution(1000,0,1,0.001);
+        d2.NormalDistribution(1000,0,1,0.001);
+        d3.NormalDistribution(1000,0,1,0.001);
+        d4.NormalDistribution(1000,0,1,0.001);
         d1.IntegrationSteps(100);
         d2.IntegrationSteps(100);
         d3.IntegrationSteps(100);
         d4.IntegrationSteps(100);
         
-        dTemp1 = d1 + d2;
-        dTemp2 = d3 + d4;
-        dRes = dTemp1 + dTemp2;
+//         dTemp1 = d1 + d2;
+//         dTemp2 = d3 + d4;
+//         dRes = dTemp1 + dTemp2;
+        dRes = d1+d2+d3+d4;
         
         CDigFloat dfMean, dfVariance, dfFrom,dfTo;
         dfMean = dRes.Mean();

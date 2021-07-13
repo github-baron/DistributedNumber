@@ -9,9 +9,13 @@ DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_T
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Measure/PreMeasure.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Measure/SimpleMeasure.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Singleton.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Utils.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/CartesianCoordinate.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/Distribution.h
+DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/LoggingStrings.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber/ProbabilityDensityDistribution.h
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber_Test/CartesianCoordinate_Test.cpp
 DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o: DistributedNumber_Test/DistributedNumber_TestRunner.cpp

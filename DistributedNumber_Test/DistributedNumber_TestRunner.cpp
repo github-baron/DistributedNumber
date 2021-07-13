@@ -100,6 +100,30 @@ int main( int argc, char* argv[] )
                     )
                   );
     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: GetInterval",
+                    &CDistribution_Test::Distribution_GetInterval,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistriValue",
+                    &CDistribution_Test::Distribution_DistriValue,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: DistributionCalculations",
+                    &CDistribution_Test::Distribution_AbsIntegral,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+                    "Distribution: Coverage",
+                    &CDistribution_Test::Distribution_Coverage,
+                    &Distribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
                     "Distribution: DistributionOperations",
                     &CDistribution_Test::DistributionOperations,
                     &Distribution_Test
@@ -111,70 +135,58 @@ int main( int argc, char* argv[] )
                     &Distribution_Test
                     )
                   );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: Coverage",
-                    &CDistribution_Test::Distribution_Coverage,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistributionCalculations",
-                    &CDistribution_Test::DistributionCalculations,
-                    &Distribution_Test
-                    )
-                  );
  
     /////////////////////////////////////////////////
     //// add all tests of CProbabilityDensityDistribution_Test
     /////////////////////////////////////////////////
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Normalize",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Normalize,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Coverage",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Coverage,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Operators",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Operators,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Generate constant distribution",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateConstant,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Generate triangle distribution",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateTriangle,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Generate normal distribution",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateNormal,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: statistical parameters of distributions",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_StatisticalParameters,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(0,2):",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Normalize",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Normalize,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Coverage",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Coverage,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Operators",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Operators,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Generate constant distribution",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateConstant,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Generate triangle distribution",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateTriangle,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Generate normal distribution",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateNormal,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: statistical parameters of distributions",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_StatisticalParameters,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(0,2):",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
 
 
     try

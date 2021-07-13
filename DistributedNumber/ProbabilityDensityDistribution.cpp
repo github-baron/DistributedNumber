@@ -559,6 +559,10 @@ void CProbabilityDensityDistribution::_Init()
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOperatorsFunctionAnalytical(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
 {
+
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("called with args:"));
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("CProbabilityDensityDistribution&:") + Other.PrintMetaInfo());
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical","ProbDistOp: " + GetProbDistOpAsString(Operation));
     
     // generate plan : setting m_ConvolutionPlan;
     _SetConvolutionPlan(Other, Operation);
@@ -570,8 +574,7 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
     {
         TargetDistri[itarget.first] = 0;
         
-        // DEBUG
-         cout << "itarget.first: " << itarget.first.RawPrint(15) << endl;
+        LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("init TargetDistri[" + itarget.first.RawPrint(15) + "] = 0"));
         
         // iterate over all sub integration limits
         for(auto intlim: itarget.second)
@@ -582,6 +585,10 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
             
             // add to all other probs of this target value
             TargetDistri[itarget.first] += _GetConvolutionIntegralAnalytical4Operation(Other, Operation, itarget.first, intlim);
+            
+            // logging trace 
+            LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("incremented TargetDistri[" + itarget.first.RawPrint(15) + "] = " + TargetDistri[itarget.first].RawPrint(15)));
+        
             
         }   // endfor(auto interval: itarget.second)        
         
@@ -606,8 +613,8 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
         // DEBUG     
 //         cout << "after Normalization: " << endl << Print(10);
         // DEBUG
-        if(AbsIntegral() != 1)
-            cout << "AbsIntegral != 1: " << AbsIntegral().RawPrint(30) << endl << endl;
+//         if(AbsIntegral() != 1)
+//             cout << "AbsIntegral != 1: " << AbsIntegral().RawPrint(30) << endl << endl;
         
         assert(AbsIntegral() == 1);
         
@@ -618,32 +625,40 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
 }
 
 CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Operation(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const CDigFloat& dfTargetValue, const SubIntLimitsType& vXYLimits)
-{
-    // DEBUG
-//     cout << "_GetConvolutionIntegralAnalytical4Operation: " << endl;
-    
+{  
     // init the result
     CDigFloat dfResult = 0;
     
     // derive all necessary arguments needed for the analytical calculation of the 
     // convolution integrals
+    // calculate slope and offset for the related interval of this distri
     CDigFloat dfXMean = (vXYLimits.first.first + vXYLimits.first.second)/2.;
+    MapDFDFType::const_iterator Left, Right;
+    GetInterval(dfXMean, Left, Right);
+    CDigFloat dfXOffset = _LinearOffset(Left, Right);
+    CDigFloat dfXSlope = _LinearSlope(Left,Right);
+    
+    // calculate slope and offset for the related interval of other distri
+    MapDFDFType::const_iterator LeftOther, RightOther;
     CDigFloat dfYMean = (vXYLimits.second.first + vXYLimits.second.second)/2.;
-    CDigFloat dfXOffset = LinearOffset(dfXMean);
-    CDigFloat dfXSlope = LinearSlope(dfXMean);
-    CDigFloat dfYOffset = Other.LinearOffset(dfYMean);
-    CDigFloat dfYSlope = Other.LinearSlope(dfYMean);
+    Other.GetInterval(dfYMean, LeftOther, RightOther);
+    CDigFloat dfYOffset = Other._LinearOffset(LeftOther, RightOther);
+    CDigFloat dfYSlope = Other._LinearSlope(LeftOther,RightOther);
     
-    // DEBUG
-    cout << "X = [" << vXYLimits.first.first.RawPrint(10) << " ; " << vXYLimits.first.second.RawPrint(10) << " ] "  << endl;
-    cout << "dfXMean = " << dfXMean.RawPrint(10) << endl;
-    cout << "dfXOffset = " << dfXOffset.RawPrint(10) << endl;
-    cout << "dfXSlope = " << dfXSlope.RawPrint(10) << endl;
-    cout << "Y = [" << vXYLimits.second.first.RawPrint(10) << " ; " << vXYLimits.second.second.RawPrint(10) << " ] "  << endl;
-    cout << "dfYMean = " << dfYMean.RawPrint(10) << endl;
-    cout << "dfYOffset = " << dfYOffset.RawPrint(10) << endl;
-    cout << "dfYSlope = " << dfYSlope.RawPrint(10) << endl;
-    
+    // trace logging 
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("preparation of convolution integral calculation"));
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("X = [") + vXYLimits.first.first.RawPrint(10) + " ; " + vXYLimits.first.second.RawPrint(10) + " ]");
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("X-distri = [") + Left->first.RawPrint(10) + " ; " + Right->first.RawPrint(10) + " ]");
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfXMean = ") + dfXMean.RawPrint(10));
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfXOffset = ") + dfXOffset.RawPrint(10));
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfXSlope = ") + dfXSlope.RawPrint(10) );
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("Y = [") + vXYLimits.second.first.RawPrint(10) + " ; " + vXYLimits.second.second.RawPrint(10) + " ]");
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("Y-distri = [") + LeftOther->first.RawPrint(10) + " ; " + RightOther->first.RawPrint(10) + " ]");
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfYMean = ") + dfYMean.RawPrint(10));
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfYOffset = ") + dfYOffset.RawPrint(10));
+      LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("dfYSlope = ") + dfYSlope.RawPrint(10));
+   
+     
     // variables for primitive integral values of upper and lower limit
     CDigFloat dfPrimIntValLow, dfPrimIntValUp;
     
@@ -671,9 +686,22 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
     
     // calculate the result 
     dfResult = dfPrimIntValUp - dfPrimIntValLow;
+    // trace 
+    LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation", "convolution integral is :");
+    LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("result = ") + dfResult.RawPrint(10));
+    LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("upper value = ") + dfPrimIntValUp.RawPrint(10));
+    LOGTRACE(LS_ProbDist+"_GetConvolutionIntegralAnalytical4Operation",string("lower value = ") + dfPrimIntValLow.RawPrint(10));
     
-    //DEBUG
-     cout << "dfResult = " << dfPrimIntValUp.RawPrint(10) << " - " << dfPrimIntValLow.RawPrint(10) << " = " << dfResult.RawPrint(10) << endl;
+    // error case
+    if(dfResult < 0)
+    {
+        LOGERROR("ErrorLogger","CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Operation: convolution integral is negative :");
+        LOGERROR("ErrorLogger",string("result = ") + dfResult.RawPrint(10));
+        LOGERROR("ErrorLogger",string("upper value = ") + dfPrimIntValUp.RawPrint(10));
+        LOGERROR("ErrorLogger",string("lower value = ") + dfPrimIntValLow.RawPrint(10));
+    }
+    
+    
     assert(dfResult >= 0);
     return dfResult;
     
@@ -681,27 +709,38 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
 
 void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
 {   
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("called with args:\n") +
+    "CProbabilityDensityDistribution&:" + Other.PrintMetaInfo() + "\n" +
+    "ProbDistOp: " + GetProbDistOpAsString(Operation) +"\n" +
+    "this: " + PrintMetaInfo()
+    );
+ 
     
     CDigFloat dfTargetStart, dfTargetEnd;
     _GetRangeFromDistributionOperation(Other, Operation, dfTargetStart, dfTargetEnd);
     
+    // trace 
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("calculated target range = [") + dfTargetStart.RawPrint(15) + ", " + dfTargetEnd.RawPrint(15));
+    
+    
     // get the target step
     CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
     
-    // DEBUG
-    cout << endl << endl << endl << "setting convolution plan for distri:" << endl;
-    cout << "this interval  [" << firstVariable().RawPrint(15) << " ; " << lastVariable().RawPrint(15) << " ] " << endl;
-    cout << "other interval  [" << Other.firstVariable().RawPrint(15) << " ; " << Other.lastVariable().RawPrint(15) << " ] " << endl;
-    cout << "target interval: [" << dfTargetStart.RawPrint(15) << " ; " << dfTargetEnd.RawPrint(15) << " ] " << endl;
+    // trace
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("calculated target step size = ") + dfTargetStep.RawPrint(15) + "( " + to_string(IntegrationSteps()) + " ) ");
     
+  
     // clear the plan first
     m_ConvolutionPlan.clear();
     
     // now start building the plan 
     CDigFloat dfActTargetValue = dfTargetStart;
     bool bZeroTargetValueDetected = false;
+    bool bCheck4ZeroTargetValue = ( (Operation == ProbDistOp::pdoDiv ) || ( Operation== ProbDistOp::pdoMult));
     while(dfActTargetValue < (dfTargetEnd +dfTargetStep))
     {
+
+        LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("iteration dfActTargetValue = ") + dfActTargetValue.RawPrint(15));
         
         // defining the complete integration range for this and other distribution
         _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, Other);        
@@ -711,8 +750,12 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDis
         // in case a zero value was found before ....
         if(bZeroTargetValueDetected)
         {
+            
+            LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("former dfActTargetValue was zero:"));
+            
             // ... add only half a step: now we are in sync again
             dfActTargetValue += dfTargetStep/2.;
+            
             
             // no zero anymore 
             bZeroTargetValueDetected = false;
@@ -722,23 +765,32 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDis
             // increment actual target value 
             dfActTargetValue += dfTargetStep;
         
+        LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("dfActTargetValue set to ") + dfActTargetValue.RawPrint(15));
+                
         // split zero dftarget value due to unipolarity trouble for multiplication and division
-        if(dfActTargetValue == 0)
-        {
-            // decrement half a step 
-            dfActTargetValue -= dfTargetStep/2.;
+        if(bCheck4ZeroTargetValue)
+            if(dfActTargetValue == 0 && dfActTargetValue < (dfTargetEnd +dfTargetStep))
+            {
+                LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("dfActTargetValue zero detected:"));
+                
+                // decrement half a step 
+                dfActTargetValue -= dfTargetStep/2.;
         
-            // defining the complete integration range for this and other distribution ... again
-            _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, Other); 
-            
-            // increment about one step ... now we are half a step behind because we split the target value == 0
-            dfActTargetValue += dfTargetStep;
-            
-            // remember we found a zero and deal with it the next round 
-            bZeroTargetValueDetected = true;
-            
-            
-        }   // endif(dfTargetValue.RawValue() == 0)
+                LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("dfActTargetValue decremented half a step to ") + dfActTargetValue.RawPrint(15));    
+                
+                // defining the complete integration range for this and other distribution ... again
+                _SetSubIntegrationIntervals4TargetValue(Operation, dfActTargetValue, Other); 
+                
+                // increment about one step ... now we are half a step behind because we split the target value == 0
+                dfActTargetValue += dfTargetStep;
+                
+                LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("dfActTargetValue incremented one step to ") + dfActTargetValue.RawPrint(15));  
+                
+                // remember we found a zero and deal with it the next round 
+                bZeroTargetValueDetected = true;
+                
+                
+            }   // endif(dfTargetValue.RawValue() == 0)
         
     }   // endwhile(dfActTargetValue < (dfTargetEnd +dfTargetStep))
     
@@ -824,9 +876,9 @@ void CProbabilityDensityDistribution::_SetSubIntegrationIntervals4TargetValue(co
     VectorPairDFType vpdXIntervals;
     
     // DEBUG
-    cout << "_SetIntegrationIntervals4TargetValue" << endl;
-    cout << "Operation = " <<  to_string((int)Operation ) << endl;
-    cout << "dfTargetValue = " << dfTargetValue.RawPrint(30) << endl;
+//     cout << "_SetIntegrationIntervals4TargetValue" << endl;
+//     cout << "Operation = " <<  to_string((int)Operation ) << endl;
+//     cout << "dfTargetValue = " << dfTargetValue.RawPrint(30) << endl;
     
     // I 1. get the x-interval(s) for calculation: must be unipolar
     //      for division and multiplication
@@ -915,10 +967,10 @@ void CProbabilityDensityDistribution::_GetXInterval4Operation(const ProbDistOp O
     }   //endif( lastVariable() > xInterval.first)
     
     // DEBUG
-    cout << "_GetXInterval4Operation:" << endl;
-    for(auto iint: vXIntervals)
-        cout << "[ " << iint.first.RawPrint(10) << " ; " << iint.second.RawPrint(10) << " ]" << endl;
-    cout << endl;
+//     cout << "_GetXInterval4Operation:" << endl;
+//     for(auto iint: vXIntervals)
+//         cout << "[ " << iint.first.RawPrint(10) << " ; " << iint.second.RawPrint(10) << " ]" << endl;
+//     cout << endl;
 
 }
 
@@ -1036,7 +1088,7 @@ void CProbabilityDensityDistribution:: _GetTotalIntegrationInterval4TargetValue(
 //             cout << "empty interval: dfXOverlapMax (" << dfXOverlapMax.RawPrint(4) << ")  <= dfXOverlapMin(" << dfXOverlapMin.RawPrint(4) << ")" << endl;
             continue;
         }
-        //DEBUG
+        // 
 //         cout << "dfXOverlapMin = " << dfXOverlapMin.RawPrint(10) << endl;
 //         cout << "dfXOverlapMax = " << dfXOverlapMax.RawPrint(10) << endl;
 //         
@@ -1176,8 +1228,8 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
         //////////////////////////////////////////////
         sort(vdfSubPoints.begin(),vdfSubPoints.end());
         //DEBUG
-        for(auto x: vdfSubPoints)
-            cout << "SubPoint: " << x.RawPrint(30) << endl;
+//         for(auto x: vdfSubPoints)
+//             cout << "SubPoint: " << x.RawPrint(30) << endl;
         
         // iterate over sorted sub points
         for(int idx=0; idx < vdfSubPoints.size()-1; idx++)
@@ -1202,9 +1254,9 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
             SubIntervals4TargetValue.push_back(SubIntLimitsType(dfXSubLimit, dfYSubLimit));            
             
             // DEBUG
-            cout << "adding:" << endl;
-            cout << "x = [" << dfXSubLimit.first.RawPrint(10) << " ; " << dfXSubLimit.second.RawPrint(10) << " ]" << endl;
-            cout << "y = [" << dfYSubLimit.first.RawPrint(10) << " ; " << dfYSubLimit.second.RawPrint(10) << " ]" << endl;
+//             cout << "adding:" << endl;
+//             cout << "x = [" << dfXSubLimit.first.RawPrint(10) << " ; " << dfXSubLimit.second.RawPrint(10) << " ]" << endl;
+//             cout << "y = [" << dfYSubLimit.first.RawPrint(10) << " ; " << dfYSubLimit.second.RawPrint(10) << " ]" << endl;
             
         }   //endfor(int idx=0; idx < vdfSubPoints.size()-1; idx++)
         
@@ -1335,3 +1387,25 @@ void CProbabilityDensityDistribution::_GetRangeFromDistributionOperation(CProbab
 //     cout << "TargetRangeStart = " << TargetRangeStart.RawPrint(10) << endl;
 //     cout << "TargetRangeEnd = " << TargetRangeEnd.RawPrint(10) << endl;
 }
+
+////////////////////////////////////////////////////////
+// external functions
+////////////////////////////////////////////////////////
+
+string GetProbDistOpAsString( ProbDistOp op )
+{
+    string strOp;
+    switch(op)
+    {
+        case ProbDistOp::pdoUnknown: strOp = "?"; break;
+        case ProbDistOp::pdoPlus: strOp = "+"; break;
+        case ProbDistOp::pdoMinus: strOp = "-"; break;
+        case ProbDistOp::pdoMult: strOp = "*"; break;
+        case ProbDistOp::pdoDiv: strOp = "/"; break;
+        case ProbDistOp::pdoCov: strOp = "cov"; break;
+        default:
+            break;            
+    }   //endswitch(op)
+    
+    return strOp;
+};

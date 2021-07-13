@@ -63,8 +63,9 @@ IF(CPPUNIT_FOUND)
     set(CPPUNIT_VERSION ${PC_CPPUNIT_VERSION} CACHE INTERNAL "CppUnit Version" FORCE)
 ENDIF()
 
+
 # link cppunit and DistributedNumber lib
-target_link_libraries(DistributedNumber_Test ${CPPUNIT_LIBRARIES} DistributedNumber)
+target_link_libraries(DistributedNumber_Test ${CPPUNIT_LIBRARIES} ${LOG4CPLUS_LIBRARIES} DistributedNumber)
 
 #install into cmake / bin
 # installation directory

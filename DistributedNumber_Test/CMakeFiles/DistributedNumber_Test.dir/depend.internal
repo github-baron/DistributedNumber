@@ -10,9 +10,13 @@ DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_T
  ../FloatingMeasure/build/CMake/include/Measure/PreMeasure.h
  ../FloatingMeasure/build/CMake/include/Measure/SimpleMeasure.h
  ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
+ ../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
+ ../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+ ../FloatingMeasure/build/CMake/include/Utils/Singleton.h
  ../FloatingMeasure/build/CMake/include/Utils/Utils.h
  /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
  /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+ /home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
  /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
  /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
  /home/michae/projects/DistributedNumber/DistributedNumber_Test/DistributedNumber_TestRunner.cpp

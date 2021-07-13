@@ -46,6 +46,26 @@ Measure/BaseMeasure.h
 Utils/Utils.h
 -
 
+../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
+
+../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+log4cplus/logger.h
+-
+log4cplus/configurator.h
+-
+log4cplus/fileappender.h
+-
+log4cplus/consoleappender.h
+-
+log4cplus/loggingmacros.h
+-
+Singleton.h
+../FloatingMeasure/build/CMake/include/Utils/Singleton.h
+CommonUtils.h
+../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
+
+../FloatingMeasure/build/CMake/include/Utils/Singleton.h
+
 ../FloatingMeasure/build/CMake/include/Utils/Utils.h
 string
 -
@@ -65,14 +85,24 @@ assert.h
 -
 ostream
 -
+Singleton.h
+../FloatingMeasure/build/CMake/include/Utils/Singleton.h
+CommonUtils.h
+../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
+Log4cplusWrapper.h
+../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
 FloatingMeasure/FloatingMeasure.h
 -
 
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+LoggingStrings.h
+/home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
 DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
+
+/home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
 Distribution.h

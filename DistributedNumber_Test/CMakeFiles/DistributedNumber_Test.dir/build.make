@@ -80,6 +80,7 @@ DistributedNumber_Test_EXTERNAL_OBJECTS =
 DistributedNumber_Test/DistributedNumber_Test: DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/DistributedNumber_TestRunner.cpp.o
 DistributedNumber_Test/DistributedNumber_Test: DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/build.make
 DistributedNumber_Test/DistributedNumber_Test: /usr/lib/x86_64-linux-gnu/libcppunit.so
+DistributedNumber_Test/DistributedNumber_Test: /usr/lib/x86_64-linux-gnu/liblog4cplus.so
 DistributedNumber_Test/DistributedNumber_Test: DistributedNumber/libDistributedNumber.so
 DistributedNumber_Test/DistributedNumber_Test: DistributedNumber_Test/CMakeFiles/DistributedNumber_Test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/michae/projects/DistributedNumber/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable DistributedNumber_Test"

@@ -548,4 +548,15 @@ protected:
 
 };
 
+   
+////////////////////////////////////////////////////////
+// external functions
+////////////////////////////////////////////////////////
+
+string
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+GetProbDistOpAsString( ProbDistOp op );
+
 #endif // CPROBABILITYDENSITYDISTRIBUTION_H

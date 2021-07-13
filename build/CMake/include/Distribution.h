@@ -26,6 +26,8 @@
 #ifndef CDISTRIBUTION_H
 #define CDISTRIBUTION_H
 
+#include "LoggingStrings.h"
+
 // includes 
 #include "DigFloat/DigFloat.h"
 
@@ -237,9 +239,10 @@ public:
      * around the given variable
      *
      * @param[in] variable CDigFloat& variable to search surrounding \ref def-distri-point "points" for
+     * @param[in] Left MapDFDFType::const_iterator* variable to search surrounding \ref def-distri-point "points" for
      * @return the linear offset
      */
-    CDigFloat LinearOffset(const CDigFloat& Variable);      
+    CDigFloat LinearOffset(const CDigFloat& Variable);
     
     /**
      * @brief returns the slope of the linear function defined by the distribution \ref def-distri-point "points" 
@@ -335,12 +338,20 @@ public:
     bool OutOfBounds(const CDigFloat& variable) {return variable < Distribution().begin()->first || variable > prev(Distribution().end())->first; }
     
     /**
+     * @brief returns string of x-intervall and no of points
+     *
+     * @param nPrecision int
+     * @return string
+     */
+    string PrintMetaInfo();
+    
+    /**
      * @brief returns string of all element pairs with given precision
      *
      * @param nPrecision int
      * @return string
      */
-    string Print(int nPrecision);
+    string Print(int nPrecision, bool bWithError = true);
     
     ///////////////////////////////
     // getter / setter
@@ -381,7 +392,27 @@ protected:
      * @param[in] nthOrder int the order of the weighing of the linear function
      * @return CDigFloat the value of the primitive integral at x
      */
-    CDigFloat _nthOrderWeightedPrimitiveIntegral(const CDigFloat& x,const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder);
+    CDigFloat _nthOrderWeightedPrimitiveIntegral(const CDigFloat& x,const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder);    
+    
+    /**
+     * @brief returns the offset of the linear function defined by the distribution \ref def-distri-point "points" 
+     * for the given interval
+     *
+     * @param[in] Left MapDFDFType::const_iterator& iterator pointing to the left limit of this distribution
+     * @param[in] Right MapDFDFType::const_iterator% iterator pointing to the right limit of this distribution
+     * @return the linear offset
+     */
+    CDigFloat _LinearOffset(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right);
+    /**
+     * @brief returns the slope of the linear function defined by the distribution \ref def-distri-point "points" 
+     * for the given interval
+     *
+     * @param[in] Left MapDFDFType::const_iterator& iterator pointing to the left limit of this distribution
+     * @param[in] Right MapDFDFType::const_iterator% iterator pointing to the right limit of this distribution
+     * @return the linear offset
+     */
+    CDigFloat _LinearSlope(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right);
+    
     /**
      * @brief initializes member
      *
@@ -394,5 +425,15 @@ protected:
     unsigned int uiMaxBinarySearchIterations;    
     MapDFDFType mDistribution;
 };
+
+
+/////////////////////////////////////////
+// external functions
+//////////////////////////////////////
+string 
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+Print(const MapDFDFType::const_iterator& it);
 
 #endif // CDISTRIBUTION_H

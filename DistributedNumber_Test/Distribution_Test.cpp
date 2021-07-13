@@ -145,18 +145,93 @@ public:
         CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
 
  
-    }
-    
+    }    
 
-    void DistributionCalculations()
-    {      
+    void Distribution_DistriValue()
+    {
         
         CDistribution d1;
         // build up distribution
         d1.Add(-1,3);
         d1.Add(1,3);
         
-        // get the neighbours of a variable -1.00001
+        // simple check: get value in between : must be 3
+        CDigFloat dfValue = d1.DistriValue(-0.1);
+        CPPUNIT_ASSERT_MESSAGE("value must be 3 but is : " + dfValue.RawPrint(5), dfValue == 3);
+        
+        // now add a new value and check again
+        d1.Add(0.3, 6);
+        dfValue = d1.DistriValue(-0.1);
+        CDigFloat x1,x2,y1,y2;
+        x1=-1;y1=3;x2=0.3;y2 = 6;
+        CDigFloat dfExpected = (y2-y1)/(x2-x1)*(-0.1-x1)+y1;
+        CPPUNIT_ASSERT_MESSAGE("value must be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == dfExpected);
+        
+
+        
+        ///////////////////////////////////
+        // adding new interpolated 
+        // values --> must not change
+        // the interpolated value at -0.1
+        //////////////////////////////////
+        
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(0.1, d1.DistriValue(0.1));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+        
+        CPPUNIT_ASSERT_MESSAGE("interpolated value at +0.3 should be 6 but is " + d1.DistriValue(0.3).RawPrint(30)  + "\ndistri:\n" + d1.Print(10), d1.DistriValue(0.3) == 6) ;
+
+        
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.1, d1.DistriValue(-0.1));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.2, d1.DistriValue(-0.2));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.3, d1.DistriValue(-0.3));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.4, d1.DistriValue(-0.4));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.5, d1.DistriValue(-0.5));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(-0.6, d1.DistriValue(-0.6));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(0.2, d1.DistriValue(0.2));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(0.3, d1.DistriValue(0.3));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(0.5, d1.DistriValue(0.5));
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+
+        // the value must not change if a new interpolated value is added within this interval
+        d1.Add(0.6, d1.DistriValue(0.6)); 
+        CPPUNIT_ASSERT_MESSAGE("after adding interpolated value must still be " + dfExpected.RawPrint(5)  + " but is : " + dfValue.RawPrint(5), dfValue == d1.DistriValue(-0.1));
+        
+    }
+    
+    void Distribution_GetInterval()
+    {
+        CDistribution d1;
+        // build up distribution
+        d1.Add(-1,3);
+        d1.Add(1,3);
+        
+        // get the neighbours of a variable -1.00001: out of bounds left
         MapDFDFType::const_iterator min, max;
         d1.GetInterval(-1.0001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
@@ -177,25 +252,10 @@ public:
         CPPUNIT_ASSERT_MESSAGE("min must be (-1,3) but is : " + min->first.RawPrint(3) + "," + min->second.RawPrint(3), min->first == -1 && min->second == 3);
         CPPUNIT_ASSERT_MESSAGE("max must be (1,3) but is : " + max->first.RawPrint(3) + "," + max->second.RawPrint(3), max->first == 1 && max->second == 3);
         
-        // get the neighbours of a variable 1.0000001
+        // get the neighbours of a variable 1.0000001: out of bounds right
         d1.GetInterval(1.0000001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min and max are the end of the distribution", min == d1.Distribution().end() && max == d1.Distribution().end());
-
-        // calculate the absolute integral
-        CDigFloat dfIntegral = d1.AbsIntegral();
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be 6 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 6) ;
-              
-        // check if binary search works
-        MapDFDFType::const_iterator left,right;
-        d1.GetInterval(0,left,right);
-        CPPUNIT_ASSERT_MESSAGE( "left should be (-1,0.5) : \n" + left->first.RawPrint(30) + "\n" + left->second.RawPrint(30) ,left->first == -1 && left->second == 3) ;
-        CPPUNIT_ASSERT_MESSAGE( "right should be (1,0.5) : \n" + right->first.RawPrint(30) + "\n" + right->second.RawPrint(30) ,right->first == 1 && right->second == 3) ;
-        
-        // check if interpolation works
-        CDigFloat dfIntVal = d1.DistriValue(0);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 0 should be 3 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 3) ;
-  
-        ///////////////////////////////////////////////
+                ///////////////////////////////////////////////
         // change distribution: add (0.3; 6)
         ///////////////////////////////////////////////
         d1.Add(0.3,6);
@@ -234,15 +294,78 @@ public:
         d1.GetInterval(1.0000001,min,max);
         CPPUNIT_ASSERT_MESSAGE("min and max are the end of the distribution", min == d1.Distribution().end() && max == d1.Distribution().end());
 
+    }
+    
+    void Distribution_AbsIntegral()
+    {      
+        
+        CDistribution d1;
+        // build up distribution
+        d1.Add(-1,3);
+        d1.Add(1,3);
+        
+ 
+        // calculate the absolute integral
+        CDigFloat dfIntegral = d1.AbsIntegral();
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be 6 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 6) ;
+              
+        
+        ////////////////////////////////////
+        // change distri: adding 0.3 / 6
+        ///////////////////////////////////
+        d1.Add(0.3,6);
+        
+        // calculate the absolute integral with new distri
+        dfIntegral = d1.AbsIntegral();
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be 9 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 9) ;
+        
+        // calculate arbitrary integrals of complete distribution elements (i.e. in our case the intervalls
+        // [-1, 1]
+        // [-1, 0.3]
+        // [0.3, 1]
+        dfIntegral = d1.AbsIntegral(-1,1);
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be 9 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 9) ;
+        dfIntegral = d1.AbsIntegral(-1,0.3);
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be 5.85 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 5.85) ;
+        dfIntegral = d1.AbsIntegral(0.3, 1);
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be 3.15 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 3.15) ;
+
+        // halfen the complete distribution intervalls:
+        // [-1, 0.3] --> [-0.675, -0.025]
+        // [0.3 , 1] --> [0.475, 0.825]
+        dfIntegral = d1.AbsIntegral(-0.675,-0.025);
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(5.85/2.) + " but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 5.85/2.) ;
+        dfIntegral = d1.AbsIntegral(0.475,1-0.175);
+        CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(3.15 /2.) + "but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 3.15 / 2.) ;
+        
+        ////////////////////////////////////////////////
+        // adding a new distribution element into the
+        // linear interpolation / integration path
+        // must not change any of the former integration 
+        // and interpolation results
+        ////////////////////////////////////////////////
+        d1.Add(-0.1, d1.DistriValue(-0.1));
+//         d1.Add(-0.2, d1.DistriValue(-0.2));
+//         d1.Add(-0.3, d1.DistriValue(-0.3));
+//         d1.Add(-0.4, d1.DistriValue(-0.4));
+//         d1.Add(-0.5, d1.DistriValue(-0.5));
+//         d1.Add(-0.6, d1.DistriValue(-0.6));
+//         
+//         
+//         d1.Add(0.1, d1.DistriValue(0.1));
+//         d1.Add(0.2, d1.DistriValue(0.2));
+//         d1.Add(0.3, d1.DistriValue(0.3));
+//         d1.Add(0.5, d1.DistriValue(0.5));
+//         d1.Add(0.6, d1.DistriValue(0.6)); 
+        
         // calculate the absolute integral
         dfIntegral = d1.AbsIntegral();
         CPPUNIT_ASSERT_MESSAGE( "Integral should be 9 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 9) ;
         
         // interpolate value at fixed points: -1 / 0.3 / 1
-        dfIntVal = d1.DistriValue(-1);
+        CDigFloat dfIntVal = d1.DistriValue(-1);
         CPPUNIT_ASSERT_MESSAGE("interpolated value at -1 should be 3 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 3) ;
         dfIntVal = d1.DistriValue(0.3);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at +0.3 should be 6 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 6) ;
         dfIntVal = d1.DistriValue(1);
         CPPUNIT_ASSERT_MESSAGE("interpolated value at 1 should be 3 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 3) ;
         
@@ -280,15 +403,19 @@ public:
         CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(5.85/2.) + " but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 5.85/2.) ;
         dfIntegral = d1.AbsIntegral(0.475,1-0.175);
         CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(3.15 /2.) + "but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 3.15 / 2.) ;
-
         
-        ////////////////////////////////////////////////
-        // adding a new distribution element into the
-        // linear interpolation / integration path
-        // must not change any of the former integration 
-        // and interpolation results
-        ////////////////////////////////////////////////
-        d1.Add(-0.1, d1.DistriValue(-0.1));
+
+    }
+       
+    void Distribution_Coverage()
+    {
+        CDistribution d1,pd1;
+                ////////////////////////////////////
+        // coverage calculations 
+        ///////////////////////////////////
+        d1.Add(-1,3);
+        d1.Add(1,3);
+               d1.Add(-0.1, d1.DistriValue(-0.1));
         d1.Add(-0.2, d1.DistriValue(-0.2));
         d1.Add(-0.3, d1.DistriValue(-0.3));
         d1.Add(-0.4, d1.DistriValue(-0.4));
@@ -301,56 +428,7 @@ public:
         d1.Add(0.3, d1.DistriValue(0.3));
         d1.Add(0.5, d1.DistriValue(0.5));
         d1.Add(0.6, d1.DistriValue(0.6)); 
-               // calculate the absolute integral
-        dfIntegral = d1.AbsIntegral();
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be 9 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 9) ;
-        
-        // interpolate value at fixed points: -1 / 0.3 / 1
-        dfIntVal = d1.DistriValue(-1);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at -1 should be 3 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 3) ;
-        dfIntVal = d1.DistriValue(0.3);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at +0.3 should be 6 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 6) ;
-        dfIntVal = d1.DistriValue(1);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 1 should be 3 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 3) ;
-        
-        // now do the interpolation for outside points:
-        dfIntVal = d1.DistriValue(-2);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at -2 should be  0 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 0);
-        dfIntVal = d1.DistriValue(+1.00000001);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 1.00000001 should be  0 but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == 0);
- 
-        // now interpolate points within the distribution :
-        dfIntVal = d1.DistriValue(-0.5);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 0.5 should be " + to_string(double(1.5/1.3+3.))+ " but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == double(3./1.3 * 0.5 +3.));
-        dfIntVal = d1.DistriValue(0.2);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 0.5 should be " + to_string(double(3./1.3 * (0.2+1) +3.))+ " but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == double(3./1.3 * (0.2+1) +3.));
-        dfIntVal = d1.DistriValue(0.35);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 0.5 should be " + to_string(double(-3./0.7 * (0.05) +6))+ " but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == double(-3./0.7 * (0.05) +6));
-        dfIntVal = d1.DistriValue(0.98);
-        CPPUNIT_ASSERT_MESSAGE("interpolated value at 0.5 should be " + to_string(double(-3./0.7 * (0.98-0.3) +6))+ " but is " + dfIntVal.RawPrint(30)  + "\ndistri:\n" + d1.Print(10), dfIntVal == double(-3./0.7 * (0.98-0.3) +6));
-        
-        // calculate arbitrary integrals of complete distribution elements (i.e. in our case the intervalls
-        // [-1, 1]
-        // [-1, 0.3]
-        // [0.3, 1]
-        dfIntegral = d1.AbsIntegral(-1,1);
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be 9 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 9) ;
-        dfIntegral = d1.AbsIntegral(-1,0.3);
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be 5.85 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 5.85) ;
-        dfIntegral = d1.AbsIntegral(0.3, 1);
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be 3.15 but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 3.15) ;
 
-        // halfen the complete distribution intervalls:
-        // [-1, 0.3] --> [-0.675, -0.025]
-        // [0.3 , 1] --> [0.475, 0.825]
-        dfIntegral = d1.AbsIntegral(-0.675,-0.025);
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(5.85/2.) + " but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 5.85/2.) ;
-        dfIntegral = d1.AbsIntegral(0.475,1-0.175);
-        CPPUNIT_ASSERT_MESSAGE( "Integral should be " + to_string(3.15 /2.) + "but is: " + dfIntegral.Print() +  "\n distribution: \n" + d1.Print(10) , dfIntegral == 3.15 / 2.) ;
-        
-        ////////////////////////////////////
-        // coverage calculations 
-        ///////////////////////////////////
         CDigFloat dfMin, dfMax, dfMaxOld, dfMinOld;
 //         cout << endl << endl;
         // check for iterations max. 50
@@ -374,8 +452,12 @@ public:
                 CPPUNIT_ASSERT_MESSAGE( "old intervall must be less(" + to_string(iorder) + "," + to_string(iperc) +"): " +" \nminOld="+ dfMinOld.Print(10) +  "\nminNew: " + dfMin.RawPrint(10) + "\nmaxOld:" + dfMaxOld.RawPrint(10)+ "\nmaxNew:" + dfMax.RawPrint(10) , dfMinOld > dfMin && dfMaxOld < dfMax) ;
                 
                 // check the integral
-                CPPUNIT_ASSERT_MESSAGE( "integral must be " + to_string(iperc) + "\% of total integral:\ntotal integral(" + to_string(iorder) + "," + to_string(iperc) +"):" + dfTotalIntegral.RawPrint(10)+ "\ncalculated from iperc * total: " + CDigFloat(dfTotalIntegral*iperc/100.).RawPrint(10) + " \ncalc. from AbsIntegral:"+ d1.AbsIntegral(dfMin
-                    , dfMax,iorder).RawPrint(10), d1.AbsIntegral(dfMin,dfMax,iorder) == dfTotalIntegral*iperc/100.);
+                CDigFloat dfExpectedIntegral = dfTotalIntegral * iperc / 100.;
+                CPPUNIT_ASSERT_MESSAGE( "integral must be " + to_string(iperc) + "\% of total integral:\n" +
+                "total integral(" + to_string(iorder) + "," + to_string(iperc) +"):" + dfTotalIntegral.RawPrint(10)+ "\n" +
+                "calculated from iperc * total: " + dfExpectedIntegral.RawPrint(30) + " \n" +
+                "calc. from AbsIntegral:"+ d1.AbsIntegral(dfMin, dfMax,iorder).RawPrint(30) , 
+                d1.AbsIntegral(dfMin,dfMax,iorder) == dfExpectedIntegral);
  
                 // finally remember old values
                 dfMinOld = dfMin; dfMaxOld = dfMax;
@@ -392,10 +474,6 @@ public:
             }   // endfor(int iperc = 0; iperc < 100; iperc++)
         }   // endfor( int iorder = 0; iorder < 2; iorder++)
 
-    }
-       void Distribution_Coverage()
-    {
-        CDistribution pd1;
         
         // normalization after adding the last element
         pd1.Add(-2,0);

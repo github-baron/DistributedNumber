@@ -14,6 +14,7 @@ set(distributednumber_lib
     Distribution.cpp
     ProbabilityDensityDistribution.cpp
 )
+
 add_library(DistributedNumber SHARED ${distributednumber_lib})
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
