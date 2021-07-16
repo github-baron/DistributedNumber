@@ -78,63 +78,63 @@ int main( int argc, char* argv[] )
     /////////////////////////////////////////////////
     //// add all tests of CCartesianCoordinate_Test
     /////////////////////////////////////////////////
-    runner.addTest( new CppUnit::TestCaller<CCartesianCoordinate_Test> ( 
-                    "CartesianCoordinate: operators",
-                    &CCartesianCoordinate_Test::CheckOperators,
-                    &CartesianCoordinate_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CCartesianCoordinate_Test> ( 
-                    "CartesianCoordinate: functions",
-                    &CCartesianCoordinate_Test::CheckFunctions,
-                    &CartesianCoordinate_Test
-                    )
-                  );
+//     runner.addTest( new CppUnit::TestCaller<CCartesianCoordinate_Test> ( 
+//                     "CartesianCoordinate: operators",
+//                     &CCartesianCoordinate_Test::CheckOperators,
+//                     &CartesianCoordinate_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CCartesianCoordinate_Test> ( 
+//                     "CartesianCoordinate: functions",
+//                     &CCartesianCoordinate_Test::CheckFunctions,
+//                     &CartesianCoordinate_Test
+//                     )
+//                   );
     /////////////////////////////////////////////////
     //// add all tests of Distribution_Test
     /////////////////////////////////////////////////
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistributionBuildUp",
-                    &CDistribution_Test::DistributionBuildUp,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: GetInterval",
-                    &CDistribution_Test::Distribution_GetInterval,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistriValue",
-                    &CDistribution_Test::Distribution_DistriValue,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistributionCalculations",
-                    &CDistribution_Test::Distribution_AbsIntegral,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: Coverage",
-                    &CDistribution_Test::Distribution_Coverage,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistributionOperations",
-                    &CDistribution_Test::DistributionOperations,
-                    &Distribution_Test
-                    )
-                  );
-    runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
-                    "Distribution: DistributionFunctionOnVariable",
-                    &CDistribution_Test::DistributionFunctionOnVariable,
-                    &Distribution_Test
-                    )
-                  );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: DistributionBuildUp",
+//                     &CDistribution_Test::DistributionBuildUp,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: GetInterval",
+//                     &CDistribution_Test::Distribution_GetInterval,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: DistriValue",
+//                     &CDistribution_Test::Distribution_DistriValue,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: DistributionCalculations",
+//                     &CDistribution_Test::Distribution_AbsIntegral,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: Coverage",
+//                     &CDistribution_Test::Distribution_Coverage,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: DistributionOperations",
+//                     &CDistribution_Test::DistributionOperations,
+//                     &Distribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CDistribution_Test> ( 
+//                     "Distribution: DistributionFunctionOnVariable",
+//                     &CDistribution_Test::DistributionFunctionOnVariable,
+//                     &Distribution_Test
+//                     )
+//                   );
  
     /////////////////////////////////////////////////
     //// add all tests of CProbabilityDensityDistribution_Test
@@ -169,18 +169,18 @@ int main( int argc, char* argv[] )
 //                     &ProbabilityDensityDistribution_Test
 //                     )
 //                   );
-//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-//                     "ProbabilityDensityDistribution: Generate normal distribution",
-//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateNormal,
-//                     &ProbabilityDensityDistribution_Test
-//                     )
-//                   );
-//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-//                     "ProbabilityDensityDistribution: statistical parameters of distributions",
-//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_StatisticalParameters,
-//                     &ProbabilityDensityDistribution_Test
-//                     )
-//                   );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: Generate normal distribution",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateNormal,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: statistical parameters of distributions",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_StatisticalParameters,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
 //     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
 //                     "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(0,2):",
 //                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,

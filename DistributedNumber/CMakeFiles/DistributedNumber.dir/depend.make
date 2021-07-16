@@ -11,6 +11,7 @@ DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ..
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Measure/VectorHandle.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/LoggingStrings.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Singleton.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: ../FloatingMeasure/build/CMake/include/Utils/Utils.h
 DistributedNumber/CMakeFiles/DistributedNumber.dir/CartesianCoordinate.cpp.o: DistributedNumber/CartesianCoordinate.cpp

@@ -213,17 +213,26 @@ void CProbabilityDensityDistribution::TriangleDistribution(const CDigFloat& dfXM
     
 }
 
-void CProbabilityDensityDistribution::NormalDistribution(const int nPoints, const CDigFloat& dfMu, const CDigFloat& dfSigma, const CDigFloat& dfMinVal)
+void CProbabilityDensityDistribution::NormalDistribution(const CDigFloat& dfMu, const CDigFloat& dfSigma, const int nPoints /* = 50*/)
 {
+    LOGTRACE(LS_ProbDist+"NormalDistribution","called with args:");
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("int Points              =") + to_string(nPoints));
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("CDigFloat mean          =") + dfMu.RawPrint(10));
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("CDigFloat sigma         =") + dfSigma.RawPrint(10));
+    
     // check consistent parameters:
-    if(dfSigma <= 0 || dfMinVal <= 0)
+    if(dfSigma <= 0 )
         return;
     
     // reset
     Reset();
     
     CDigFloat dfFac1 = 2*dfSigma*dfSigma;
-    CDigFloat dfPreFac = 1/sqrt(dfFac1*M_PI);
+    CDigFloat dfPreFac = 1/sqrt(dfFac1*M_PIf64);
+    
+    LOGTRACE(LS_ProbDist+"NormalDistribution","calculated:");
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("CDigFloat dfFac1 =") + dfFac1.RawPrint(10));
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("CDigFloat dfPreFac (amplitude) =") + dfPreFac.RawPrint(10));
     
     /////////////////////////////////////////////
     // calculation of the gaussian curve
@@ -231,7 +240,7 @@ void CProbabilityDensityDistribution::NormalDistribution(const int nPoints, cons
     // constant
     /////////////////////////////////////////////
 //     //set the starting point and increment depending on the min. value.
-//     CDigFloat dfXDelta = sqrt(dfFac1*-log(dfMinVal*sqrt(dfFac1*M_PI)));
+//     CDigFloat dfXDelta = sqrt(dfFac1*-log(dfYResolution*sqrt(dfFac1*M_PI)));
 //     CDigFloat dfXInc = 2*dfXDelta/(nPoints-1);
 //     
 //     for(int ipt=0;ipt<nPoints; ipt++)
@@ -258,28 +267,40 @@ void CProbabilityDensityDistribution::NormalDistribution(const int nPoints, cons
     /////////////////////////////////////////////
     // set npoints to an even number 
     int nPtsEvenHalf = nPoints / 2;
-    CDigFloat dfdY = dfPreFac / (nPtsEvenHalf);
+    nPtsEvenHalf += (nPtsEvenHalf % 2);
+    
+    // for npts we want to have npts+1 intervals: otherwise the last point is close to zero
+    // which leads to a very broad x-intervall (y = 0 --> x = +- infinity)
+    CDigFloat dfdY = dfPreFac / (nPtsEvenHalf+1);
     CDigFloat dfY = dfPreFac;
     CDigFloat dfRelPreFac = 1.;
+    
+    
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("int nPtsEvenHalf =") + to_string(nPtsEvenHalf));
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("int total points =") + to_string(2* nPtsEvenHalf + 1));
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("CDigFloat dfPreFac (amplitude) =") + dfPreFac.RawPrint(10));
+    
+    if( (2*nPtsEvenHalf + 1) > DISTRI_POINTS_WARNING_LIMIT)
+        LOGWARN("WarningLogger", LS_ProbDist+"NormalDistribution: no. of points (" + to_string(2*nPtsEvenHalf+1) + ") exceeds warning limit (" + to_string(DISTRI_POINTS_WARNING_LIMIT) + ")!!");
     
     // add the first point: max at x = dfMu
     Add(dfMu,dfY);
     
-    for(int ipt=1;ipt<nPtsEvenHalf; ipt++)
+    for(int ipt=0;ipt<nPtsEvenHalf; ipt++)
     {
         dfY -= dfdY;
         dfRelPreFac = dfY / dfPreFac;
-        CDigFloat dfdXPos = sqrt(2*dfSigma*(-log(dfRelPreFac)));
-        //DEBUG
-//         cout << "ipt = " << to_string(ipt) << endl 
-//              << "relPts = " << dfRelPreFac.Print(10) << endl 
-//              << "y = " << dfY.Print(10) << endl 
-//              << "dx = " << dfdXPos.Print(10) << endl 
-//              << "x-i = " << (dfMu - dfdXPos).Print(10) << endl 
-//              << "x+i = " << (dfMu + dfdXPos).Print(10) << endl; 
+        CDigFloat dfdXPos = sqrt(dfFac1*(-log(dfRelPreFac)));
         Add(dfMu + dfdXPos,dfY);
         Add(dfMu - dfdXPos,dfY);
+        
+        LOGTRACE(LS_ProbDist+"NormalDistribution",string("added point = (") + (dfMu-dfdXPos).RawPrint(10) + ", " + dfY.RawPrint(10) + ")" );
+        LOGTRACE(LS_ProbDist+"NormalDistribution",string("added point = (") + (dfMu+dfdXPos).RawPrint(10) + ", " + dfY.RawPrint(10) + ")" );
+        
     }
+    
+    LOGTRACE(LS_ProbDist+"NormalDistribution",string("integral (should be 1) = ") + AbsIntegral().RawPrint(10));
+    
 
     Normalize();
 }
@@ -308,15 +329,26 @@ void CProbabilityDensityDistribution::Scale(const CDigFloat& scale)
 // functions
 ////////////////////////////////////////////
 
-CDigFloat CProbabilityDensityDistribution::Variance(int nthOrder)
+CDigFloat CProbabilityDensityDistribution::Variance()
 {
+    LOGTRACE(LS_ProbDist+"Variance", "called");
+    
     // copy from this
     CProbabilityDensityDistribution pdd4Calc(*this);
     
-    // shift by mean: mean is now zero because of Integral (x-<x>) = 0
-    pdd4Calc.Shift(-pdd4Calc.Mean());
     
-    // return the second moment which is (x-<x>)²
+    LOGTRACE(LS_ProbDist+"Variance", string("original mean = ") + Mean().RawPrint(10));
+    LOGTRACE(LS_ProbDist+"Variance", string("actual mean of copy (must be the same) = ") + pdd4Calc.Mean().RawPrint(10));
+    
+    
+    // shift by mean: mean is now zero because of Integral (x-<x>) = 0
+    pdd4Calc.Shift(-Mean());
+    
+    
+    LOGTRACE(LS_ProbDist+"Variance", string("control: mean must be zero = ") + pdd4Calc.Mean().RawPrint(10));
+    LOGTRACE(LS_ProbDist+"Variance", string("result = ") + pdd4Calc.Mean(2).RawPrint(10));
+    
+    // return the second moment which is (x-<x>)² identical to x²
     return pdd4Calc.Mean(2);
 }
 
@@ -557,12 +589,13 @@ void CProbabilityDensityDistribution::_Init()
 
 }
 
-CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOperatorsFunctionAnalytical(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
+CProbabilityDensityDistribution & CProbabilityDensityDistribution:: _GeneralOperatorsFunctionAnalytical(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
 {
 
     LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("called with args:"));
-    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("CProbabilityDensityDistribution&:") + Other.PrintMetaInfo());
-    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical","ProbDistOp: " + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("probdist other:") + Other.PrintMetaInfo());
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("operation     : ") + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("probdist this :") + PrintMetaInfo());
     
     // generate plan : setting m_ConvolutionPlan;
     _SetConvolutionPlan(Other, Operation);
@@ -594,8 +627,18 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOpera
         
     }   // endfor(auto itarget: m_ConvolutionPlan)
     
+    // remember some things before init resets all the values 
+    int nMaxBinIter = MaxBinarySearchIterations();
+    int nIntegrationSteps = IntegrationSteps();
+    int nSubIntegrationSteps = SubIntegrationSteps();
+    
+    // now init: especially the integration step for convolution get lost
     _Init();
     
+    // reset to old values 
+    MaxBinarySearchIterations(nMaxBinIter);
+    IntegrationSteps(nIntegrationSteps);
+    SubIntegrationSteps(nSubIntegrationSteps);
     
     if(m_ConvolutionPlan.size() > 0)
     {
@@ -709,25 +752,23 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
 
 void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
 {   
-    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("called with args:\n") +
-    "CProbabilityDensityDistribution&:" + Other.PrintMetaInfo() + "\n" +
-    "ProbDistOp: " + GetProbDistOpAsString(Operation) +"\n" +
-    "this: " + PrintMetaInfo()
-    );
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("called with args:"));
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("probdist other :") + Other.PrintMetaInfo());
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("operation      :") + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan", string("probdist this  :") + PrintMetaInfo());
  
     
     CDigFloat dfTargetStart, dfTargetEnd;
     _GetRangeFromDistributionOperation(Other, Operation, dfTargetStart, dfTargetEnd);
     
-    // trace 
-    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("calculated target range = [") + dfTargetStart.RawPrint(15) + ", " + dfTargetEnd.RawPrint(15));
-    
     
     // get the target step
     CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
     
-    // trace
-    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("calculated target step size = ") + dfTargetStep.RawPrint(15) + "( " + to_string(IntegrationSteps()) + " ) ");
+    // trace 
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("calculated:"));    
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("target range = [") + dfTargetStart.RawPrint(15) + ", " + dfTargetEnd.RawPrint(15) + " ]");
+    LOGTRACE(LS_ProbDist+"_SetConvolutionPlan",string("step size = ") + dfTargetStep.RawPrint(15) + "( " + to_string(IntegrationSteps()) + " ) ");
     
   
     // clear the plan first

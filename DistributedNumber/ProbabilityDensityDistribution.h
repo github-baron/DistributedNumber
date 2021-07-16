@@ -295,12 +295,13 @@ public:
     /**
      * @brief clears existing distri and generates a distribution according to function \f$f(x,\mu, \sigma) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-\mu)^2}{2\sigma^2}}\f$ 
      * 
-     * @param[in] nPoints int number of points
      * @param[in] dfMu CDigFloat expectation value
      * @param[in] dfSigma CDigFloat width of curve
-     * @param[in] dfMinVal CDigFloat minimum value to start calculation with (the lower, the broader the interval for calculating of this distribution)
+     * @param[in] dfYResolution CDigFloat determines the resolution of  \f$f(x,\mu, \sigma) :
+     *            the number of points used for one half of the symmetric distri is then:
+     *            n = \frac{1}{\sqrt{2\pi\sigma^2}} \frac{1}{dfYResolution} 
      */
-    void NormalDistribution(const int nPoints, const CDigFloat& dfMu, const CDigFloat& dfSigma, const CDigFloat& dfMinVal = 0.001);
+    void NormalDistribution(const CDigFloat& dfMu, const CDigFloat& dfSigma, const int nPoints = 50);
  
     ////////////////////////////////////////////
     // functions
@@ -317,9 +318,9 @@ public:
     /**
      * @brief calculates the nthOrder variance  
      *
-     * @return CDigFloat nthOrder mean variable
+     * @return CDigFloat variance < x-<x> >²
      */
-    CDigFloat Variance( int nthOrder = 1 );
+    CDigFloat Variance();
         
     /**
      * @brief calculates the nthOrder mean variable weighted by distribution values

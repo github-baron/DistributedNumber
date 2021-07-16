@@ -12,7 +12,7 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "GIT_BRANCH=6b90d213d8dbb869319eb9ee8037e2f8e9d4a279"
+  "GIT_BRANCH=7a32e2ff3214e34a7d2f3fdf959d9c52f8d2efb9"
   "LOG4CPLUS_ENABLED"
   )
 

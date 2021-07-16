@@ -124,17 +124,21 @@ public:
     void ProbabilityDensityDistribution_GenerateNormal()
     {
         CProbabilityDensityDistribution pd1;
-        CDigFloat dfMu = -1, dfSigma = 0.01, dfMinVal = 0.00001;
+        CDigFloat dfMu = -1, dfSigma = 0.01;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal","generating normal distri with:");
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("dfMu = ") + dfMu.RawPrint(10));
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("dfSigma = ") + dfSigma.RawPrint(10));
         
-        pd1.NormalDistribution(100,dfMu,dfSigma,dfMinVal);
+        pd1.NormalDistribution(dfMu,dfSigma,1000);
         
-        // check edges
-        CPPUNIT_ASSERT_MESSAGE( "left is " + pd1.DistriValue( pd1.firstVariable()).Print(10) + " but should be " + dfMinVal.Print(), pd1.DistriValue( pd1.firstVariable())== dfMinVal) ;
-        CPPUNIT_ASSERT_MESSAGE( "right is " +pd1.DistriValue( pd1.lastVariable()).Print(10) + " but should be " + dfMinVal.Print(), pd1.DistriValue( pd1.lastVariable())== dfMinVal) ;
-        
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal","comparing calculated values:");
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("mean           = ") + pd1.Mean().RawPrint(10));
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("sqrt(variance) = ") + sqrt(pd1.Variance()).RawPrint(10));
         
         // mid is zero        
         CPPUNIT_ASSERT_MESSAGE( "mean is " + pd1.Mean().Print(10) + " but should be " + dfMu.Print(10), pd1.Mean() == dfMu);
+        // sigma
+        CPPUNIT_ASSERT_MESSAGE( "sqrt(variance) is " + sqrt(pd1.Variance()).Print(10) + " but should be " + dfSigma.Print(10), sqrt(pd1.Variance()) == dfSigma);
     }
  
 
@@ -164,8 +168,8 @@ public:
         d1.Add(-1,1); // --> (-1, 0.5)
         d2.Add(1,0);  // --> (+1, 0)
         d2.Add(3,1);  // --> (+3, 1)
-        d1.NormalDistribution(50,2,1);
-        d2.NormalDistribution(100,0,10);
+        d1.NormalDistribution(2,1);
+        d2.NormalDistribution(0,10);
         
         
         // summation results in 3 elements:
@@ -246,11 +250,11 @@ public:
     {
         
         CProbabilityDensityDistribution d1,d2, d3, d4,dRes,dTemp1, dTemp2;
-        d1.NormalDistribution(1000,0,1,0.001);
-        d2.NormalDistribution(1000,0,1,0.001);
-        d3.NormalDistribution(1000,0,1,0.001);
-        d4.NormalDistribution(1000,0,1,0.001);
-        d1.IntegrationSteps(100);
+        d1.NormalDistribution(0,1,500);
+        d2.NormalDistribution(0,1,1000);
+        d3.NormalDistribution(0,1,1000);
+        d4.NormalDistribution(0,1,1000);
+        d1.IntegrationSteps(500);
         d2.IntegrationSteps(100);
         d3.IntegrationSteps(100);
         d4.IntegrationSteps(100);
@@ -258,7 +262,7 @@ public:
 //         dTemp1 = d1 + d2;
 //         dTemp2 = d3 + d4;
 //         dRes = dTemp1 + dTemp2;
-        dRes = d1+d2+d3+d4;
+        dRes = d1+d1+d1+d1;
         
         CDigFloat dfMean, dfVariance, dfFrom,dfTo;
         dfMean = dRes.Mean();

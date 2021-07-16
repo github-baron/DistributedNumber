@@ -5,6 +5,7 @@ project(DistributedNumber_Test)
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 #add the executable
 #http://www.cmake.org/pipermail/cmake/2006-October/011446.html

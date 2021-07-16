@@ -32,7 +32,8 @@
 #include "DigFloat/DigFloat.h"
 
 // macros
-#define     MAX_BINARY_SEARCH_ITERATIONS 120
+#define     MAX_BINARY_SEARCH_ITERATIONS    120
+#define     DISTRI_POINTS_WARNING_LIMIT     1000
 
 // typedef
 typedef    map<CDigFloat,CDigFloat> MapDFDFType;
@@ -280,6 +281,7 @@ public:
     /**
      * @brief calculates the integral of the absolute value of this distribution
      *
+     * @param[in] nthOrder int for weighing the integral calculation with variable<SUP>+nthOrder</SUP>
      * @return CDigFloat
      */
     CDigFloat AbsIntegral(const int& nthOrder =0);
@@ -301,6 +303,7 @@ public:
     /**
      * @brief calculates the nthOrder mean variable weighted by distribution values
      *
+     * @param[in] nthOrder int for weighing the integral calculation with variable<SUP>+nthOrder</SUP>
      * @return CDigFloat nthOrder mean variable
      */
     CDigFloat Mean( int nthOrder = 1 ) { return CDigFloat( AbsIntegral(nthOrder) / AbsIntegral(0));}
@@ -308,6 +311,7 @@ public:
     /**
      * @brief calculates the nthOrder median variable weighted by distribution values
      *
+     * @param[in] nthOrder int for weighing the integral calculation with variable<SUP>+nthOrder</SUP>
      * @return CDigFloat nthOrder median variable
      */
     CDigFloat Median( int nthOrder = 0 );

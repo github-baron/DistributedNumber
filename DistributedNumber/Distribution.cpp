@@ -95,15 +95,35 @@ CDistribution & CDistribution::operator-=(const CDigFloat& Value)
 ///////////////////////////////////    
 void CDistribution::Shift(const CDigFloat& shift)
 {
+    LOGTRACE(LS_Dist+"Shift", "called with arg:");
+    LOGTRACE(LS_Dist+"Shift", string("CDigFloat shift = ") + shift.RawPrint(10));
+    LOGTRACE(LS_Dist+"Shift", string("distri before \n") + Print(10));
+    
      // generate map to copy from
     MapDFDFType ShiftedDistribution;
     for(auto iel: mDistribution)
-        ShiftedDistribution[iel.first+shift] = iel.second;
-    
+    {
+        ShiftedDistribution[iel.first] = iel.second;
+//         LOGTRACE(LS_Dist+"Shift", string("copy and shift: ShiftedDistribution[") + (iel.first+shift).RawPrint(10) + "] = " + ShiftedDistribution[iel.first+shift].RawPrint(10) );
+    }
+ 
+    // debug
+//     for(MapDFDFType::iterator iel= ShiftedDistribution.begin(); iel != ShiftedDistribution.end(); iel++)
+//     {
+//         LOGTRACE(LS_Dist+"Shift", string("before clear ShiftedDistribution[") + (iel->first).RawPrint(10) + "] = " + ShiftedDistribution[iel->first].RawPrint(10) );
+//     }
+ 
     // copy
     mDistribution.clear();
+ 
+ 
     for(auto iel: ShiftedDistribution)
+    {
         mDistribution[iel.first] = iel.second;
+    }
+ 
+    
+    LOGTRACE(LS_Dist+"Shift", string("distri after \n") + Print(10));
     
     // clear temporary map
     ShiftedDistribution.clear();    
@@ -141,7 +161,7 @@ bool CDistribution::Add(const CDigFloat& variable, const CDigFloat value)
 void CDistribution::GetInterval(const CDigFloat& variable, MapDFDFType::const_iterator& VariableLeft, MapDFDFType::const_iterator& VariableRight)
 {
     LOGTRACE(LS_Dist + "GetInterval", string("called with argument :"));
-    LOGTRACE(LS_Dist + "GetInterval", string("CDigFloat:") + variable.RawPrint(10));
+    LOGTRACE(LS_Dist + "GetInterval", string("CDigFloat:") + variable.RawPrint(20));
     LOGTRACE(LS_Dist + "GetInterval", string("this Distri:") + PrintMetaInfo());
     
     int nInterval = mDistribution.size()-1;    
@@ -250,7 +270,7 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
 {   
     
     LOGTRACE(LS_Dist + "DistriValue", string("called with argument :"));
-    LOGTRACE(LS_Dist + "DistriValue", string("CDigFloat =") + variable.RawPrint(10));
+    LOGTRACE(LS_Dist + "DistriValue", string("CDigFloat =") + variable.RawPrint(20));
 
     // init result with zero
     CDigFloat dfDistriValue(0);
@@ -275,7 +295,7 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
         dfDistriValue = CDigFloat(imin->second) + (CDigFloat(imax->second) - imin->second) / (CDigFloat(imax->first) - imin->first) * (CDigFloat(variable) - imin->first);
     }
     
-    LOGTRACE(LS_Dist + "DistriValue", string("interpolated value =") + dfDistriValue.RawPrint(10));
+    LOGTRACE(LS_Dist + "DistriValue", string("interpolated value =") + dfDistriValue.RawPrint(20));
  
     return dfDistriValue;
     
@@ -285,7 +305,7 @@ CDigFloat CDistribution::LinearOffset(const CDigFloat& Variable)
 {
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "LinearOffset", string("called with argument :"));
-    LOGTRACE(LS_Dist + "LinearOffset", string("CDigFloat:") + Variable.RawPrint(10)); 
+    LOGTRACE(LS_Dist + "LinearOffset", string("CDigFloat:") + Variable.RawPrint(20)); 
     
     MapDFDFType::const_iterator Left, Right;
     GetInterval(Variable, Left, Right);
@@ -302,7 +322,7 @@ CDigFloat CDistribution::LinearSlope(const CDigFloat& Variable)
 {
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "LinearSlope", string("called with argument :"));
-    LOGTRACE(LS_Dist + "LinearSlope", string("CDigFloat:") + Variable.RawPrint(10)); 
+    LOGTRACE(LS_Dist + "LinearSlope", string("CDigFloat:") + Variable.RawPrint(20)); 
     
     MapDFDFType::const_iterator Left, Right;
     GetInterval(Variable, Left, Right);
@@ -314,8 +334,8 @@ CDigFloat CDistribution::LinearSlope(const CDigFloat& Variable)
 CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFloat& variableRight, int nthOrder /*= 0*/)
 {
     LOGTRACE(LS_Dist+"AbsIntegral", "called with arguments:");
-    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Left = ")+ variableLeft.RawPrint(10));
-    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Right= ")+ variableRight.RawPrint(10));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Left = ")+ variableLeft.RawPrint(20));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Right= ")+ variableRight.RawPrint(20));
     LOGTRACE(LS_Dist+"AbsIntegral", string("int nthOrder   = ")+ to_string(nthOrder));
     LOGTRACE(LS_Dist+"AbsIntegral", string("this distri: ") + PrintMetaInfo());
     
@@ -343,8 +363,8 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     if( variableRight >= prev(Distribution().end())->first)
         variableRightCorr = prev(Distribution().end())->first;
     
-    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Left corrected  = ")+ variableLeftCorr.RawPrint(10));
-    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Right corrected = ")+ variableRightCorr.RawPrint(10));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Left corrected  = ")+ variableLeftCorr.RawPrint(20));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("CDigFloat Right corrected = ")+ variableRightCorr.RawPrint(20));
     
     bool bSameInterval = false;
     MapDFDFType::const_iterator iminLeft, imaxLeft, iminRight, imaxRight;
@@ -361,16 +381,9 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
     }
     
     
-    LOGTRACE(LS_Dist+"AbsIntegral", string("interval left: [ ") + iminLeft->first.RawPrint(10) + ", " + imaxLeft->first.RawPrint(10) );
-    LOGTRACE(LS_Dist+"AbsIntegral", string("interval right: [ ") + iminRight->first.RawPrint(10) + ", " + imaxRight->first.RawPrint(10) );
+    LOGTRACE(LS_Dist+"AbsIntegral", string("interval left: [ ") + iminLeft->first.RawPrint(20) + ", " + imaxLeft->first.RawPrint(20) );
+    LOGTRACE(LS_Dist+"AbsIntegral", string("interval right: [ ") + iminRight->first.RawPrint(20) + ", " + imaxRight->first.RawPrint(20) );
     LOGTRACE(LS_Dist+"AbsIntegral", string("bSameInterval: ") + Bool2String(bSameInterval));
-    
-    // DEBUG
-//      cout << endl << "AbsIntegral(" << variableLeft.RawPrint(10) << "," << variableRight.RawPrint(10) << "): " << endl;
-//     cout << "left interval: " << iminLeft->first.RawPrint(10) << "," << imaxLeft->first.RawPrint(10) << endl;
-//     cout << "right interval: " << iminRight->first.RawPrint(10) << "," << imaxRight->first.RawPrint(10) << endl;
-//     cout << "left corr. variable: " << variableLeftCorr.RawPrint(10)  << endl;
-//     cout << "right corr. variable: " << variableRightCorr.RawPrint(10) << endl;
     
     // check for same interval to avoid double calculations
     // in this case no calculation is done for 
@@ -387,18 +400,18 @@ CDigFloat CDistribution::AbsIntegral(const CDigFloat& variableLeft, const CDigFl
             dfIntegral += _IntegralConsecutiveElements(iel,nthOrder);
         
         
-    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (consecutive elements) = ")+ dfIntegral.RawPrint(10));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (consecutive elements) = ")+ dfIntegral.RawPrint(20));
     
     // add the part on the left:
     dfIntegral += _IntegralOfTwoPoints( variableLeftCorr, DistriValue(variableLeftCorr), dfLeftIntegralMax, DistriValue(dfLeftIntegralMax),nthOrder);
     
-    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (left part added) = ")+ dfIntegral.RawPrint(10));
+    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (left part added) = ")+ dfIntegral.RawPrint(20));
 
     // add the part on the right:
     if(iminRight != mDistribution.end() && !bSameInterval)
         dfIntegral += _IntegralOfTwoPoints(iminRight->first, iminRight->second, variableRightCorr, DistriValue(variableRightCorr),nthOrder);
 
-    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (right part added: final) = ")+ dfIntegral.RawPrint(10));    
+    LOGTRACE(LS_Dist+"AbsIntegral", string("Integral (right part added: final) = ")+ dfIntegral.RawPrint(20));    
     
     return CDigFloat( dfIntegral );
 }
@@ -432,15 +445,25 @@ CDigFloat CDistribution::Max()
 
 bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDigFloat& dfFrom, CDigFloat& dfTo, bool bReverse, int nthOrder)
 {
+    LOGTRACE(LS_Dist+"CoverageFromTo", "called with args:");
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("CDigFloat coverage[%] = ")+ dfCoveragePercent.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("CDigFloat From        = ")+ dfFrom.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("CDigFloat To[out]     = ")+ Address2String(&dfTo));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("bool reverse          = ")+ Bool2String(bReverse));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("int order             = ")+ to_string(nthOrder));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("this distri: ")+ PrintMetaInfo());
+
     // init the output variable with the corresponding starting point depending on the direction
     CDigFloat dfStart = dfFrom;
     dfTo = bReverse ? mDistribution.begin()->first : prev(mDistribution.end())->first;
  
     // the sign of the interval controls the direction
     CDigFloat dfInterval = CDigFloat(dfTo) - dfFrom;
+ 
     
     CDigFloat dfTargetCoverage = AbsIntegral(nthOrder)* dfCoveragePercent/100.;
     CDigFloat dfActualCoverage = AbsIntegral(bReverse ? dfTo : dfFrom ,bReverse ? dfFrom : dfTo, nthOrder);
+    
     
     // reset errors for later break condition in while loop
     dfTargetCoverage.ResetError();
@@ -448,13 +471,35 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
     
     // give up if the dfActualCoverage (this is max right now) is less than the dfTargetCoverage
     if(dfActualCoverage < dfTargetCoverage)
+    {
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: coverage cannot be achieved with given parameters:");
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: calculated target coverage = " + dfTargetCoverage.RawPrint(20));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: calculated actual coverage = " + dfActualCoverage.RawPrint(20));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo called with args:");
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: CDigFloat coverage[%] = " + dfCoveragePercent.RawPrint(20));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: CDigFloat From        = " + dfFrom.RawPrint(20));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: CDigFloat To[out]     = " + Address2String(&dfTo));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: bool reverse          = " + Bool2String(bReverse));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: int order             = " + to_string(nthOrder));
+        LOGWARN("WarningLogger", LS_Dist+"CoverageFromTo: this distri: " + PrintMetaInfo());
         return false;
-    
+    }
     // do a binary search shrinking the actual to the target coverage
     // break condition: do until the interval for the binary search is
     // less than the error of the demanded limit
+    
     CDigFloat dfToOld = dfTo+1.;
     int count = 0;
+    
+    LOGTRACE(LS_Dist+"CoverageFromTo", "preparing binary search with args:");
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("target coverage   = ")+ dfTargetCoverage.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("actual coverage   = ")+ dfActualCoverage.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("To                = ")+ dfTo.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("ToOld             = ")+ dfToOld.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("Interval(reverse) = ")+ dfInterval.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("count             = ")+ to_string(count));
+    LOGTRACE(LS_Dist+"CoverageFromTo", string("max. iterations   = ")+ to_string(MaxBinarySearchIterations()));
+    LOGTRACE(LS_Dist+"CoverageFromTo", "starting binary search ... ");
     while( dfActualCoverage != dfTargetCoverage && count < MaxBinarySearchIterations() )
     {
         count++;
@@ -476,11 +521,18 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
         }   // endelse(dfActualCoverage < dfTargetCoverage)
         
         // the error might accumulate and the break condition might be true earlier due to the accumulated errors
-        dfTo.ResetError();
+        // dfTo.ResetError();
         
         // calculate the actual coverage: take raw value is the same as
         // handing over CDigFloat and then to call ResetError()
         dfActualCoverage = AbsIntegral(bReverse ? dfTo.RawValue() : dfFrom.RawValue() ,bReverse ? dfFrom.RawValue() : dfTo.RawValue(), nthOrder).RawValue();
+        
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... target coverage   = ")+ dfTargetCoverage.RawPrint(20));
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... actual coverage   = ")+ dfActualCoverage.RawPrint(20));
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... To                = ")+ dfTo.RawPrint(20));
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... ToOld             = ")+ dfToOld.RawPrint(20));
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... Interval(reverse) = ")+ dfInterval.RawPrint(20));
+        LOGTRACE(LS_Dist+"CoverageFromTo", string("... count             = ")+ to_string(count));
       
     
     }   // endwhile( dfActualCoverage != dfTargetCoverage)
@@ -490,17 +542,30 @@ bool CDistribution::CoverageFromTo(const CDigFloat& dfCoveragePercent, const CDi
 
 bool CDistribution::CoverageInterval(const CDigFloat& dfCoveragePercent, CDigFloat& dfMin, CDigFloat& dfMax, int nthOrder)
 {
+    LOGTRACE(LS_Dist+"CoverageInterval", "called with args:");
+    LOGTRACE(LS_Dist+"CoverageInterval", string("CDigFloat coverage[%] = ")+ dfCoveragePercent.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageInterval", string("CDigFloat Min[out]    = ")+ Address2String(&dfMin));
+    LOGTRACE(LS_Dist+"CoverageInterval", string("CDigFloat Max[out]    = ")+ Address2String(&dfMax));
+    LOGTRACE(LS_Dist+"CoverageInterval", string("int order             = ")+ to_string(nthOrder));
     
     // at least the mean of first order ... zeroth order will always yield 1
     CDigFloat dfMean = Median(nthOrder);
     assert(dfMean.RawValue() >= mDistribution.begin()->first.RawValue());
     assert(dfMean.RawValue() <= prev(mDistribution.end())->first.RawValue());
     
+    
+    LOGTRACE(LS_Dist+"CoverageInterval", string("caclulated median = ")+  dfMean.RawPrint(20));
+    
     // simply calculate the CoverageFromTo intervals for min and max from median
     if( ! CoverageFromTo(CDigFloat( dfCoveragePercent)/2.,dfMean, dfMin,true, nthOrder) )
         return false;
     if( ! CoverageFromTo(CDigFloat( dfCoveragePercent)/2.,dfMean, dfMax,false, nthOrder) )
         return false;
+    
+    
+    LOGTRACE(LS_Dist+"CoverageInterval", string("success: "));
+    LOGTRACE(LS_Dist+"CoverageInterval", string("Min = ") + dfMin.RawPrint(20));
+    LOGTRACE(LS_Dist+"CoverageInterval", string("Max = ") + dfMax.RawPrint(20));
     
     return true;
     
@@ -564,10 +629,10 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
 {
     
     LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", "called with args:");
-    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat x1 =") + x1.RawPrint(10));
-    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat y1 =") + y1.RawPrint(10));
-    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat x2 =") + x2.RawPrint(10));
-    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat y2 =") + y2.RawPrint(10));
+    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat x1 =") + x1.RawPrint(20));
+    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat y1 =") + y1.RawPrint(20));
+    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat x2 =") + x2.RawPrint(20));
+    LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("CDigFloat y2 =") + y2.RawPrint(20));
     LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("int order    =") + to_string(nthOrder));
     
     CDigFloat dfIntegral = 0; 
@@ -584,12 +649,12 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
         CDigFloat a = (y1-y2)/(x1-x2);
         CDigFloat b = (y2*x1 - y1*x2)/(x1-x2);
         
-        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated slope =") + a.RawPrint(10));
-        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated offset=") + b.RawPrint(10));
+        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated slope =") + a.RawPrint(20));
+        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated offset=") + b.RawPrint(20));
         
         dfIntegral = _nthOrderWeightedPrimitiveIntegral(x2,a,b,nthOrder)  - _nthOrderWeightedPrimitiveIntegral(x1,a,b,nthOrder);
         
-        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated specific integral=") + dfIntegral.RawPrint(10));
+        LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated specific integral=") + dfIntegral.RawPrint(20));
         
     }
     
@@ -600,15 +665,15 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
 CDigFloat CDistribution::_nthOrderWeightedPrimitiveIntegral(const CDigFloat& x, const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder)
 {
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", "called with args:");
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat x      =") + x.RawPrint(10));
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat slope  =") + slope.RawPrint(10));
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat offset =") + offset.RawPrint(10));
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat x      =") + x.RawPrint(20));
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat slope  =") + slope.RawPrint(20));
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat offset =") + offset.RawPrint(20));
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("int order        =") + to_string(nthOrder));
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("result =") + (slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1)).RawPrint(10) );
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("result =") + (slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1)).RawPrint(20) );
     
         // calculation of the weighted integral of a linear function y = a*x + b
         // calculates : int( x^n * (a*x + b) )dx within the limits [x1, x2]
-        // solution: [ a/(n+2)*x^(n+2) + b/2*x² ] 
+        // solution: [ a/(n+2)*x^(n+2) + b/(n+1)*x^(n+1) ] 
     return slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1);
 }
 
@@ -621,10 +686,10 @@ CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left, MapDFD
    
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearOffset", "calculation offset: (x2*y1 - x1*y2) / (x2 - x1)");
-    LOGTRACE(LS_Dist + "_LinearOffset", string("(x2*y1 - x1*y2) = ") + (Right->first*Left->second - Left->first*Right->second).RawPrint(10)); 
-    LOGTRACE(LS_Dist + "_LinearOffset", string("(x2 - x1) = ") + (Right->first - Left->first).RawPrint(10)); 
+    LOGTRACE(LS_Dist + "_LinearOffset", string("(x2*y1 - x1*y2) = ") + (Right->first*Left->second - Left->first*Right->second).RawPrint(20)); 
+    LOGTRACE(LS_Dist + "_LinearOffset", string("(x2 - x1) = ") + (Right->first - Left->first).RawPrint(20)); 
     LOGTRACE(LS_Dist + "_LinearOffset", string(" result = ") + ((Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first)        
-    ).RawPrint(10)); 
+    ).RawPrint(20)); 
     
     return (Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first);
     
@@ -639,9 +704,9 @@ CDigFloat CDistribution::_LinearSlope(MapDFDFType::const_iterator& Left, MapDFDF
     
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearSlope", "calculation offset: (y2-y1) / (x2 - x1)");
-    LOGTRACE(LS_Dist + "_LinearSlope", string("(y2 - y1) = ") + (Right->second - Left->second).RawPrint(10)); 
-    LOGTRACE(LS_Dist + "_LinearSlope", string("(x2 - x1) = ") + (Right->first - Left->first).RawPrint(10)); 
-    LOGTRACE(LS_Dist + "_LinearSlope", string(" result = ") + ((Right->second - Left->second) / (Right->first - Left->first)).RawPrint(10)); 
+    LOGTRACE(LS_Dist + "_LinearSlope", string("(y2 - y1) = ") + (Right->second - Left->second).RawPrint(20)); 
+    LOGTRACE(LS_Dist + "_LinearSlope", string("(x2 - x1) = ") + (Right->first - Left->first).RawPrint(20)); 
+    LOGTRACE(LS_Dist + "_LinearSlope", string(" result = ") + ((Right->second - Left->second) / (Right->first - Left->first)).RawPrint(20)); 
     
     return (Right->second - Left->second) / (Right->first - Left->first);
 
@@ -659,5 +724,5 @@ void CDistribution::_Init()
 //////////////////////////////////////
 string Print(const MapDFDFType::const_iterator& it)
 {
-    return string("( ") + it->first.RawPrint(10) + ", " + it->second.RawPrint(10) + " )";
+    return string("( ") + it->first.RawPrint(20) + ", " + it->second.RawPrint(20) + " )";
 }

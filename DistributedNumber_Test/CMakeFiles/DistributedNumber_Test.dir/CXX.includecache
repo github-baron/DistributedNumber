@@ -91,6 +91,8 @@ CommonUtils.h
 ../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
 Log4cplusWrapper.h
 ../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+LoggingStrings.h
+../FloatingMeasure/build/CMake/include/Utils/LoggingStrings.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/CartesianCoordinate.h
 FloatingMeasure/FloatingMeasure.h

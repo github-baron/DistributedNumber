@@ -428,7 +428,12 @@ public:
         d1.Add(0.3, d1.DistriValue(0.3));
         d1.Add(0.5, d1.DistriValue(0.5));
         d1.Add(0.6, d1.DistriValue(0.6)); 
+        
+        // shift the distribution to one polarity:
+        // avoid zero odd order total integrals
 
+        d1.Shift(-d1.firstVariable());
+        
         CDigFloat dfMin, dfMax, dfMaxOld, dfMinOld;
 //         cout << endl << endl;
         // check for iterations max. 50
@@ -437,22 +442,32 @@ public:
         {
             dfMaxOld = 0;
             dfMinOld = 0;
-            int nPercStart = 0;
+            int nPercStart = 1;
             CDigFloat dfTotalIntegral = d1.AbsIntegral(iorder);
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("total integral =") + dfTotalIntegral.RawPrint(10));
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("int iorder = ") + to_string(iorder));
+            CDigFloat dfMean = d1.Median(iorder );
             for(int iperc = nPercStart; iperc < 100; iperc++)
             {
+                // check the integral
+                CDigFloat dfExpectedIntegral = dfTotalIntegral * iperc / 100.;
+                
+                LOGTRACE("Distribution_Test::Distribution_Coverage","args:");
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("int iperc = ") + to_string(iperc));
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("expected integral =") +  dfExpectedIntegral.RawPrint(30));
+                
                 bool bSuccess = d1.CoverageInterval(iperc,dfMin, dfMax, iorder);
-                CDigFloat dfMean = d1.Median(iorder );
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("calculated min =") +  dfMin.RawPrint(30));
+                LOGTRACE("Distribution_Test::Distribution_Coverage",string("calculated max =") +  dfMax.RawPrint(30));
                 
                 // check for success
                 CPPUNIT_ASSERT_MESSAGE( "return Succes != true (" + to_string(iorder) + "," + to_string(iperc) +") ", bSuccess==true) ;
       
                 // check for new intervall being > than the old one
                 if(iperc > nPercStart)
-                CPPUNIT_ASSERT_MESSAGE( "old intervall must be less(" + to_string(iorder) + "," + to_string(iperc) +"): " +" \nminOld="+ dfMinOld.Print(10) +  "\nminNew: " + dfMin.RawPrint(10) + "\nmaxOld:" + dfMaxOld.RawPrint(10)+ "\nmaxNew:" + dfMax.RawPrint(10) , dfMinOld > dfMin && dfMaxOld < dfMax) ;
+                CPPUNIT_ASSERT_MESSAGE( "old intervall must be less(" + to_string(iorder) + "," + to_string(iperc) +"): " +" \nminOld="+ dfMinOld.Print(30) +  "\nminNew: " + dfMin.RawPrint(30) + "\nmaxOld:" + dfMaxOld.RawPrint(30)+ "\nmaxNew:" + dfMax.RawPrint(30) , dfMinOld > dfMin && dfMaxOld < dfMax) ;
                 
-                // check the integral
-                CDigFloat dfExpectedIntegral = dfTotalIntegral * iperc / 100.;
+                
                 CPPUNIT_ASSERT_MESSAGE( "integral must be " + to_string(iperc) + "\% of total integral:\n" +
                 "total integral(" + to_string(iorder) + "," + to_string(iperc) +"):" + dfTotalIntegral.RawPrint(10)+ "\n" +
                 "calculated from iperc * total: " + dfExpectedIntegral.RawPrint(30) + " \n" +

@@ -55,6 +55,8 @@ CommonUtils.h
 ../FloatingMeasure/build/CMake/include/Utils/CommonUtils.h
 Log4cplusWrapper.h
 ../FloatingMeasure/build/CMake/include/Utils/Log4cplusWrapper.h
+LoggingStrings.h
+../FloatingMeasure/build/CMake/include/Utils/LoggingStrings.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.cpp
 Distribution.h
@@ -69,16 +71,4 @@ DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
-
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.cpp
-ProbabilityDensityDistribution.h
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
-iostream
-/home/michae/projects/DistributedNumber/DistributedNumber/iostream
-
-/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
-Distribution.h
-/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
-iostream
--
 
