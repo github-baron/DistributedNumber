@@ -59,8 +59,27 @@
 
 // includes
 #include "Distribution.h"
+#include <unordered_map>
 #include <iostream>
 
+// hasher class for distri map iterator: is needed for unordered_map keeping the linear parameters 
+// of the distribution intervals
+class DistriIterHasher
+{
+public:
+    size_t operator() (MapDFDFType::const_iterator const& key) const 
+    {     // the parameter type should be the same as the type of key of unordered_map
+        
+        union
+        {
+            double dValue;
+            unsigned uiValue;
+        };
+        dValue = key->first.RawValue();
+        return uiValue;
+            
+    }
+};
 // typedefs
 typedef pair< PairDFType, PairDFType >SubIntLimitsType;
 typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
@@ -71,7 +90,21 @@ typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
 // no. of integration limits for this and other: PDD_DEFAULT_SUBINTEGRATION_STEPS
 typedef vector< pair<CDigFloat, VectorSubIntLimitsType > > ConvolutionPlanType;
 typedef vector< PairDFType >  VectorPairDFType;
-typedef vector< pair<CDigFloat, VectorPairDFType  > > ConvolutionPlanType2;
+class ConvPlanElement
+{
+public:
+    PairDFType  xLimits;
+    PairDFType  yLimits;
+    MapDFDFType::const_iterator xDistriIter;
+    MapDFDFType::const_iterator yDistriIter;
+};
+typedef vector< ConvPlanElement >  VectorConvPlanElementType;
+typedef vector< pair<CDigFloat, VectorConvPlanElementType> > ConvolutionPlanType2;
+
+typedef unordered_map<MapDFDFType::const_iterator,PairDFType, DistriIterHasher> UMapPDFType;
+
+
+
 
 // macros
 #define PDD_DEFAULT_INTEGRATION_STEPS 50
@@ -432,6 +465,18 @@ public:
      */
     int SubIntegrationSteps() const { return m_nSubIntegrationSteps;}
     
+    CDigFloat& Offset(MapDFDFType::const_iterator it){assert(m_LinPars.find(it) != m_LinPars.end()); return m_LinPars[it].first;};
+    CDigFloat& Slope(MapDFDFType::const_iterator it){assert(m_LinPars.find(it) != m_LinPars.end()); return m_LinPars[it].second;};
+    
+    /**
+     * @brief returns the linear parameters for all intervalls as string
+     * 
+     * @return string
+     * 
+     */
+   string PrintLinPars();
+   
+    
 protected:     
     /**
      * @brief initializes member
@@ -461,6 +506,7 @@ protected:
     *
     */     
     CProbabilityDensityDistribution& _GeneralOperatorsFunctionAnalytical(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+    CProbabilityDensityDistribution& _GeneralOperatorsFunctionAnalytical2(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
  
     /**
      * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan which keeps the integration path for an arithmetic operation for all target values of 
@@ -473,6 +519,22 @@ protected:
     void _SetConvolutionPlan(CProbabilityDensityDistribution& Other, const ProbDistOp Operation);
 
     /**
+     * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan which keeps the integration path for an arithmetic operation for all target values of 
+     *   the resulting distribution
+     * 
+     * @param[in] Other CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
+     * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
+     * 
+     */  
+    void _SetConvolutionPlan2(CProbabilityDensityDistribution& Other, const ProbDistOp Operation);
+ 
+    /**
+     * @brief sets the linear parameters (offset and slope) for each intervall of the distribution CProbabilityDensityDistribution::m_LinPars keeps these linear parameters
+     * 
+     */  
+    void _SetLinPars();
+
+    /**
      * @brief sets sub integration intervals in CProbabilityDensityDistribution::m_ConvolutionPlan for a single target value for a given of arithmetic operataion
      * 
      * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
@@ -482,6 +544,7 @@ protected:
      * 
      */  
     void _SetSubIntegrationIntervals4TargetValue(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other);
+     void _SetSubIntegrationIntervals4TargetValue2(const ProbDistOp Operation, const CDigFloat& dfActTargetValue, CProbabilityDensityDistribution& Other);
    
     /**
      * @brief returns the variable interval of this distribution  (x-variable) on which the determination of the total and sub integration intervals for arithmetic operation bases.
@@ -493,18 +556,20 @@ protected:
     void _GetXInterval4Operation(const ProbDistOp Operation, VectorPairDFType& vXIntervals);
     
     /**
-     * @brief returns total integration interval of this distribution (x-variable) for arithmetic operation.
+     * @brief returns total integration interval of this distribution (x-variable) and the complementary intervals for
+     *  the other distribution (y-variable) for arithmetic operation.
      * 
      * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
      * @param[in] dfActTargetValue CDigFloat given target value to derive integration intervals for
      * @param[in] Other CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
      * @param[in] vXIntervals interval(s) of x-variable
-     * @param[out] TotalIntervals4TargetValue total integration interval
+     * @param[out] TotalIntervals4TargetValue keeps total integration interval of this and other distributions with multiple offsets and slopes
      * 
      */
     void _GetTotalIntegrationInterval4TargetValue(const ProbDistOp& Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorPairDFType& vXIntervals, VectorSubIntLimitsType&  TotalIntervals4TargetValue);
+
     /**
-     * @brief returns total sub-integration interval of this distribution (x-variable) for arithmetic operation on the basis of the total integration interval.
+     * @brief returns total sub-integration interval of this (x-variable) and other (y-variable) distribution  for arithmetic operation on the basis of the total integration interval. It divides the total intervals into intervals with unique slope and offset for this AND the other distribution
      * 
      * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
      * @param[in] dfActTargetValue CDigFloat given target value to derive integration intervals for
@@ -513,6 +578,8 @@ protected:
      * 
      */
     void _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorSubIntLimitsType& SubIntervals4TargetValue);
+  
+    void _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue2(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorConvPlanElementType& SubIntervals4TargetValue);
   
     /**
      * @brief returns the complementary variable for a given operation, target value, and operation.
@@ -526,8 +593,28 @@ protected:
     CDigFloat _GetComplementaryVariable(const ProbDistOp Operation, const CDigFloat& dfTargetValue, const CDigFloat& dfVariable, bool bVarIsYVar);
 
    CDigFloat _GetConvolutionIntegralAnalytical4Operation(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const CDigFloat& dfTargetValue, const SubIntLimitsType& vXYLimits);
-   
+   CDigFloat _GetConvolutionIntegralAnalytical4Operation2(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const CDigFloat& dfTargetValue, const ConvPlanElement& planEl);
+ 
+     
+    /**
+     * @brief returns the value of the definite integral for convolution of addition: the results are optimized 
+     *        providing good numerical accuracy minimizing the use of higher order differences
+     * 
+     * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
+     * @param[in] dfActTargetValue CDigFloat given target value to derive integration intervals for
+     * @param[in] dfVariable CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
+     * @param[in] bVarIsYVar flag for variable type: true --> y variable (other distri)  
+     * 
+     */
+   CDigFloat _Integral4TargetValue4Addition(const CDigFloat& dfOffsetX, const CDigFloat& dfSlopeX, const CDigFloat& dfOffsetY, const CDigFloat& dfSlopeY, const CDigFloat& dfTargetValue, const CDigFloat& dfX1, const CDigFloat& dfX2);
+
+   CDigFloat _Integral4TargetValue4Addition2(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
+   CDigFloat _Integral4TargetValue4Subtraction2(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
+   CDigFloat _Integral4TargetValue4Multiplication2(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
+   CDigFloat _Integral4TargetValue4Division2(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
+  
    CDigFloat _PrimitiveIntegral4TargetValue4Addition(const CDigFloat dfOffsetX, const CDigFloat dfSlopeX, const CDigFloat dfOffsetY, const CDigFloat dfSlopeY, const CDigFloat dfTargetValue, const CDigFloat dfX);
+   
    
    CDigFloat _PrimitiveIntegral4TargetValue4Subtraction(const CDigFloat dfOffsetX, const CDigFloat dfSlopeX, const CDigFloat dfOffsetY, const CDigFloat dfSlopeY, const CDigFloat dfTargetValue, const CDigFloat dfX);
    
@@ -546,6 +633,8 @@ protected:
     int m_nIntegrationSteps;
     int m_nSubIntegrationSteps;
     ConvolutionPlanType m_ConvolutionPlan;
+    ConvolutionPlanType2 m_ConvolutionPlan2;
+    UMapPDFType m_LinPars;
 
 };
 

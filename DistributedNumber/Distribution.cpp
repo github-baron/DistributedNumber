@@ -97,22 +97,23 @@ void CDistribution::Shift(const CDigFloat& shift)
 {
     LOGTRACE(LS_Dist+"Shift", "called with arg:");
     LOGTRACE(LS_Dist+"Shift", string("CDigFloat shift = ") + shift.RawPrint(10));
+    CDigFloat dfShiftReset(shift.RawValue());
+    LOGTRACE(LS_Dist+"Shift", string("CDigFloat shift reset = ") + dfShiftReset.RawPrint(10));
     LOGTRACE(LS_Dist+"Shift", string("distri before \n") + Print(10));
     
      // generate map to copy from
     MapDFDFType ShiftedDistribution;
+    ShiftedDistribution.clear();
+    
     for(auto iel: mDistribution)
     {
-        ShiftedDistribution[iel.first] = iel.second;
-//         LOGTRACE(LS_Dist+"Shift", string("copy and shift: ShiftedDistribution[") + (iel.first+shift).RawPrint(10) + "] = " + ShiftedDistribution[iel.first+shift].RawPrint(10) );
+        CDigFloat dfIndex = iel.first + dfShiftReset;
+        ShiftedDistribution[dfIndex] = iel.second;
+        LOGTRACE(LS_Dist+"Shift", string("dfIndex = ") + dfIndex.RawPrint(10));
+        LOGTRACE(LS_Dist+"Shift", string("ShiftedDistribution size = ") + to_string(ShiftedDistribution.size() ));
+    
     }
- 
-    // debug
-//     for(MapDFDFType::iterator iel= ShiftedDistribution.begin(); iel != ShiftedDistribution.end(); iel++)
-//     {
-//         LOGTRACE(LS_Dist+"Shift", string("before clear ShiftedDistribution[") + (iel->first).RawPrint(10) + "] = " + ShiftedDistribution[iel->first].RawPrint(10) );
-//     }
- 
+    
     // copy
     mDistribution.clear();
  
@@ -120,6 +121,8 @@ void CDistribution::Shift(const CDigFloat& shift)
     for(auto iel: ShiftedDistribution)
     {
         mDistribution[iel.first] = iel.second;
+        
+        LOGTRACE(LS_Dist+"Shift", string("copy ShiftedDistribution back [") + iel.first.RawPrint(10) + "] = " + mDistribution[iel.first].RawPrint(10) );
     }
  
     
@@ -241,10 +244,20 @@ void CDistribution::GetInterval(const CDigFloat& variable, MapDFDFType::const_it
             if(iact == Distribution().end())
             {
                 LOGWARN("WarningLogger", LS_Dist + "GetInterval:\niterator exceeds distribution!!");
-                //decrement and leave this loop
-                iact--;
+                
+                // leave loop if we were at the end already 
+                if(istep == 0)
+                    break;
+                
                 // halfen the interval
-                nInterval = (nInterval+1)/2;
+                nInterval = (istep+1) / 2.;
+                
+                //decrement 
+                for(int backStep = 0; backStep < nInterval; backStep++)
+                    iact--;
+                
+                
+                LOGTRACE(LS_Dist + "GetInterval", string("... end of distri reached: backStep = ") + to_string(nInterval));
                 
             }   // endif(iact == Distribution().end())
         }
@@ -263,6 +276,22 @@ void CDistribution::GetInterval(const CDigFloat& variable, MapDFDFType::const_it
         LOGTRACE(LS_Dist + "GetInterval", string("... iact(after)          = ") + ::Print(iact));
             
     }   
+    
+    // do a final iteration: check if left could be incremented by one and is still larger equal than the variable
+    iact = VariableLeft; iact++;
+    
+    // only do if not already the tightest interval
+    if(variable >= iact->first && VariableRight->first > iact->first)
+        VariableLeft = iact;
+ 
+    // do a final iteration: check if right could be decremented by one and is still less equal than the variable
+    iact = VariableRight; iact--;
+    if(variable <= iact->first && VariableLeft->first < iact->first)
+        VariableRight = iact;
+    
+    // trace: can be controlled by project::class::function
+    LOGTRACE(LS_Dist + "GetInterval", string("... VariableLeft(final)  = ") + ::Print(VariableLeft));
+    LOGTRACE(LS_Dist + "GetInterval", string("... VariableRight(final) = ") + ::Print(VariableRight));
 }
 
 
@@ -291,8 +320,11 @@ CDigFloat CDistribution::DistriValue(const CDigFloat& variable)
     }    
     else        
     {
-        // now we got the min max --> get the linearily interpolated value
-        dfDistriValue = CDigFloat(imin->second) + (CDigFloat(imax->second) - imin->second) / (CDigFloat(imax->first) - imin->first) * (CDigFloat(variable) - imin->first);
+        if(imin->first == imax->first)
+            dfDistriValue = imin->second;
+        else
+            // now we got the min max --> get the linearily interpolated value
+            dfDistriValue = CDigFloat(imin->second) + (CDigFloat(imax->second) - imin->second) / (CDigFloat(imax->first) - imin->first) * (CDigFloat(variable) - imin->first);
     }
     
     LOGTRACE(LS_Dist + "DistriValue", string("interpolated value =") + dfDistriValue.RawPrint(20));
@@ -315,7 +347,7 @@ CDigFloat CDistribution::LinearOffset(const CDigFloat& Variable)
     LOGTRACE(LS_Dist + "LinearOffset", string("left iterator :") + ::Print(Left));
     LOGTRACE(LS_Dist + "LinearOffset", string("right iterator :") + ::Print(Right));
     
-    return _LinearOffset(Left, Right);
+    return _LinearOffset(Left);
 }
 
 CDigFloat CDistribution::LinearSlope(const CDigFloat& Variable)
@@ -327,7 +359,7 @@ CDigFloat CDistribution::LinearSlope(const CDigFloat& Variable)
     MapDFDFType::const_iterator Left, Right;
     GetInterval(Variable, Left, Right);
 
-    return _LinearSlope(Left,Right);
+    return _LinearSlope(Left);
 }
 
 
@@ -577,7 +609,7 @@ void CDistribution::Reset()
 }
 std::__cxx11::string CDistribution::PrintMetaInfo()
 {
-    return string("Distribution: nPoints = ") + to_string(Distribution().size()) + ", x-interval:[ " + firstVariable().RawPrint(15) + ", " + lastVariable().RawPrint(15) + " ]";
+    return string("Distribution: nPoints = ") + to_string(Distribution().size()) + ", x-interval:[ " + firstVariable().RawPrint(10) + ", " + lastVariable().RawPrint(10) + " ]";
     
 }
 
@@ -652,7 +684,7 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
         LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated slope =") + a.RawPrint(20));
         LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated offset=") + b.RawPrint(20));
         
-        dfIntegral = _nthOrderWeightedPrimitiveIntegral(x2,a,b,nthOrder)  - _nthOrderWeightedPrimitiveIntegral(x1,a,b,nthOrder);
+        dfIntegral = _nthOrderWeightedIntegral(x1,x2,a,b,nthOrder);
         
         LOGTRACE(LS_Dist + "_IntegralOfTwoPoints", string("calculated specific integral=") + dfIntegral.RawPrint(20));
         
@@ -661,29 +693,47 @@ CDigFloat CDistribution::_IntegralOfTwoPoints(const CDigFloat& x1, const CDigFlo
     return dfIntegral;    
     
 }
-
-CDigFloat CDistribution::_nthOrderWeightedPrimitiveIntegral(const CDigFloat& x, const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder)
+CDigFloat CDistribution::_nthOrderWeightedIntegral(const CDigFloat& dfX1, const CDigFloat& dfX2, const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder)
 {
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", "called with args:");
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat x      =") + x.RawPrint(20));
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat dfX1 =") + dfX1.RawPrint(20));
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat dfX2 =") + dfX2.RawPrint(20));
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat slope  =") + slope.RawPrint(20));
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("CDigFloat offset =") + offset.RawPrint(20));
     LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("int order        =") + to_string(nthOrder));
-    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("result =") + (slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1)).RawPrint(20) );
+    LOGTRACE(LS_Dist + "_nthOrderWeightedPrimitiveIntegral", string("result =") + (slope/(nthOrder+2.) * DifferenceNthOrder(dfX1, dfX2,nthOrder+2) + offset/(nthOrder+1.) * DifferenceNthOrder(dfX1,dfX2 ,nthOrder+1)).RawPrint(20) );
     
         // calculation of the weighted integral of a linear function y = a*x + b
         // calculates : int( x^n * (a*x + b) )dx within the limits [x1, x2]
         // solution: [ a/(n+2)*x^(n+2) + b/(n+1)*x^(n+1) ] 
-    return slope/(nthOrder+2.) * pow(x,nthOrder+2) + offset/(nthOrder+1.) * pow(x,nthOrder+1);
+    return slope/(nthOrder+2.) * DifferenceNthOrder(dfX1, dfX2,nthOrder+2) + offset/(nthOrder+1.) * DifferenceNthOrder(dfX1,dfX2 ,nthOrder+1);
 }
 
-CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right)
+CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left)
 {   
      // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearOffset", string("called with argument :"));
     LOGTRACE(LS_Dist + "_LinearOffset", string("left iterator  (x1,y1) :") + ::Print(Left));
-    LOGTRACE(LS_Dist + "_LinearOffset", string("right iterator (x2,y2) :") + ::Print(Right));
-   
+    
+    // check if is outside the distri 
+    if(Left == Distribution().end() )
+    {
+            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            return 0;
+
+    }   // endif(Left == Distribution().end())
+    
+    MapDFDFType::const_iterator Right = Left;
+    Right++;
+ 
+    // check if is outside the distri 
+    if(Right == Distribution().end() )
+    {
+            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            return 0;
+
+    }   // endif(Left == Distribution().end())
+  
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearOffset", "calculation offset: (x2*y1 - x1*y2) / (x2 - x1)");
     LOGTRACE(LS_Dist + "_LinearOffset", string("(x2*y1 - x1*y2) = ") + (Right->first*Left->second - Left->first*Right->second).RawPrint(20)); 
@@ -691,16 +741,36 @@ CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left, MapDFD
     LOGTRACE(LS_Dist + "_LinearOffset", string(" result = ") + ((Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first)        
     ).RawPrint(20)); 
     
+    
     return (Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first);
     
 }
 
-CDigFloat CDistribution::_LinearSlope(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right)
+
+CDigFloat CDistribution::_LinearSlope(MapDFDFType::const_iterator& Left)
 {
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearSlope", string("called with argument :"));
     LOGTRACE(LS_Dist + "_LinearSlope", string("left iterator  (x1,y1) :") + ::Print(Left));
-    LOGTRACE(LS_Dist + "_LinearSlope", string("right iterator (x2,y2) :") + ::Print(Right));
+    
+    // check if is outside the distri 
+    if(Left == Distribution().end() )
+    {
+            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            return 0;
+
+    }   // endif(Left == Distribution().end())
+    
+    MapDFDFType::const_iterator Right = Left;
+    Right++;
+ 
+    // check if is outside the distri 
+    if(Right == Distribution().end() )
+    {
+            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            return 0;
+
+    }   // endif(Left == Distribution().end())
     
     // trace: can be controlled by project::class::function
     LOGTRACE(LS_Dist + "_LinearSlope", "calculation offset: (y2-y1) / (x2 - x1)");

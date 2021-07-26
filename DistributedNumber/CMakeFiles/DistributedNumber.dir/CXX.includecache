@@ -58,12 +58,6 @@ Log4cplusWrapper.h
 LoggingStrings.h
 ../FloatingMeasure/build/CMake/include/Utils/LoggingStrings.h
 
-/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.cpp
-Distribution.h
-/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
-iostream
--
-
 /home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
 LoggingStrings.h
 /home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
@@ -71,4 +65,18 @@ DigFloat/DigFloat.h
 /home/michae/projects/DistributedNumber/DistributedNumber/DigFloat/DigFloat.h
 
 /home/michae/projects/DistributedNumber/DistributedNumber/LoggingStrings.h
+
+/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.cpp
+ProbabilityDensityDistribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
+iostream
+/home/michae/projects/DistributedNumber/DistributedNumber/iostream
+
+/home/michae/projects/DistributedNumber/DistributedNumber/ProbabilityDensityDistribution.h
+Distribution.h
+/home/michae/projects/DistributedNumber/DistributedNumber/Distribution.h
+unordered_map
+-
+iostream
+-
 

@@ -388,34 +388,34 @@ protected:
     CDigFloat _IntegralOfTwoPoints(const CDigFloat& x1, const CDigFloat& y1, const CDigFloat& x2, const CDigFloat& y2 , const int &nthOrder =0);
     
     /**
-     * @brief calculates the value of the n'th order weighed primitve integral over a linear function f (x) = slope * x + offset, i.e. Integral ( x^n*f(x)). This function is neede for all integral calculations done within this class. (see ::AbsIntegral, ::CoverageFromTo, ::CoverageInterval)
+     * @brief calculates the value of the n'th order weighed determined integral over a linear function f (x) = slope * x + offset, i.e. Integral ( x^n*f(x)). This function is needed for all integral calculations done within this class. (see ::AbsIntegral, ::CoverageFromTo, ::CoverageInterval)
      *
-     * @param[in] x CDigFloat the value to calculate the primitve integral for
+     * @param[in] dfX1 CDigFloat the lower value to calculate the integral for
+     * @param[in] dfX2 CDigFloat the upper value to calculate the integral for
      * @param[in] slope, CDigFloat the slope of the integrated and weighed linear function
      * @param[in] offset CDigFloat the offset of the integrated and weighed linear function
      * @param[in] nthOrder int the order of the weighing of the linear function
      * @return CDigFloat the value of the primitive integral at x
      */
-    CDigFloat _nthOrderWeightedPrimitiveIntegral(const CDigFloat& x,const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder);    
+    CDigFloat _nthOrderWeightedIntegral(const CDigFloat& dfX1, const CDigFloat& dfX2,const CDigFloat& slope, const CDigFloat& offset, const int& nthOrder);    
     
     /**
      * @brief returns the offset of the linear function defined by the distribution \ref def-distri-point "points" 
      * for the given interval
      *
      * @param[in] Left MapDFDFType::const_iterator& iterator pointing to the left limit of this distribution
-     * @param[in] Right MapDFDFType::const_iterator% iterator pointing to the right limit of this distribution
      * @return the linear offset
      */
-    CDigFloat _LinearOffset(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right);
+    CDigFloat _LinearOffset(MapDFDFType::const_iterator& Left);   
+    
     /**
      * @brief returns the slope of the linear function defined by the distribution \ref def-distri-point "points" 
      * for the given interval
      *
      * @param[in] Left MapDFDFType::const_iterator& iterator pointing to the left limit of this distribution
-     * @param[in] Right MapDFDFType::const_iterator% iterator pointing to the right limit of this distribution
      * @return the linear offset
      */
-    CDigFloat _LinearSlope(MapDFDFType::const_iterator& Left, MapDFDFType::const_iterator& Right);
+    CDigFloat _LinearSlope(MapDFDFType::const_iterator& Left);
     
     /**
      * @brief initializes member

@@ -407,6 +407,38 @@ public:
 
     }
        
+    void Distribution_Shift()
+    {
+        CDistribution d1;
+        
+        d1.Add(-1,3);
+        d1.Add(1,3);
+        d1.Add(-0.1, d1.DistriValue(-0.1));
+        d1.Add(-0.2, d1.DistriValue(-0.2));
+        d1.Add(-0.3, d1.DistriValue(-0.3));
+        d1.Add(-0.4, d1.DistriValue(-0.4));
+        d1.Add(-0.5, d1.DistriValue(-0.5));
+        d1.Add(-0.6, d1.DistriValue(-0.6));
+        
+        
+        d1.Add(0.1, d1.DistriValue(0.1));
+        d1.Add(0.2, d1.DistriValue(0.2));
+        d1.Add(0.3, d1.DistriValue(0.3));
+        d1.Add(0.5, d1.DistriValue(0.5));
+        d1.Add(0.6, d1.DistriValue(0.6)); 
+        
+        CDigFloat dfMean = d1.Mean();
+        CDigFloat dfShift = 0.012341234;
+        
+        d1.Shift(-dfShift);
+        CDigFloat dfShiftedMean = d1.Mean();
+        
+        CPPUNIT_ASSERT_MESSAGE( "Mean should be " + (dfMean - dfShift).RawPrint(10) + " but is: " + dfShiftedMean.Print(10),
+        dfShiftedMean == dfMean -dfShift);
+
+        
+     
+    }   
     void Distribution_Coverage()
     {
         CDistribution d1,pd1;
