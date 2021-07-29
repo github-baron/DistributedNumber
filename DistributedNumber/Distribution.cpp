@@ -782,6 +782,70 @@ CDigFloat CDistribution::_LinearSlope(MapDFDFType::const_iterator& Left)
 
 }
 
+bool CDistribution::_GetInterval(const CDigFloat& dfVariable, MapDFDFType::const_iterator& itVariableLeft, unsigned int uiSteps)
+{
+    LOGTRACE(LS_Dist+"_GetInterval", string("called with args:"));
+    LOGTRACE(LS_Dist+"_GetInterval", string("dfVariable =") + dfVariable.RawPrint(10));
+    LOGTRACE(LS_Dist+"_GetInterval", string("iterator left start :") + itVariableLeft->first.RawPrint(10));
+    LOGTRACE(LS_Dist+"_GetInterval", string("steps :") + to_string(uiSteps));
+    
+    // set the searching direction
+    bool bIncrement = dfVariable > itVariableLeft->first;
+    LOGTRACE(LS_Dist+"_GetInterval", string("direction is :") + (bIncrement ? "incrementing" : "decrementing"));
+    
+    // initialize the number of steps and old iterator 
+    unsigned int uiStepCount = 0;
+    
+    // initialize the old iterator defining the right edge of the interval
+    MapDFDFType::const_iterator itVariableLeftOld = itVariableLeft;
+    itVariableLeftOld++;
+    CDigFloat dfLeft = itVariableLeft->first;
+    CDigFloat dfRight = itVariableLeftOld->first;
+    
+    // set the breaking condition variable 
+    bool bFound = (dfVariable >= dfLeft && dfVariable <= dfRight);
+    
+    
+    // start iteration step by step
+    LOGTRACE(LS_Dist+"_GetInterval", string("starting iteration ..."));
+    while( !bFound && uiStepCount < uiSteps)
+    {
+        // set old iterator
+        itVariableLeftOld= itVariableLeft;
+        
+        // do in/decrementation
+        if(bIncrement)
+            itVariableLeft++;
+        else 
+            itVariableLeft--;
+        
+        dfLeft =  bIncrement ? itVariableLeftOld->first : itVariableLeft->first;
+        dfRight = bIncrement ? itVariableLeft->first : itVariableLeftOld->first;
+        
+        bFound = (dfVariable >= dfLeft && dfVariable <= dfRight);
+        
+        // increment step count
+        uiStepCount++;
+        
+        LOGTRACE(LS_Dist+"_GetInterval", string("interval( ") + to_string(uiStepCount) + ") = [" + dfLeft.RawPrint(10) + ", " + dfRight.RawPrint(10) + "]");
+        
+    }        
+
+    LOGTRACE(LS_Dist+"_GetInterval", string("final interval( ") + to_string(uiStepCount) + ") = [" + dfLeft.RawPrint(10) + ", " + dfRight.RawPrint(10) + "]");
+    
+    // set the result correctly: when incrementing the itVariableLeft kept the right edge during search
+    // mode
+    if(bIncrement && uiStepCount > 0)
+        itVariableLeft = itVariableLeftOld;
+    
+    LOGTRACE(LS_Dist+"_GetInterval", string("left interval limit is  ") + itVariableLeft->first.RawPrint(10) );
+    // return result
+    LOGTRACE(LS_Dist+"_GetInterval", string("interval found:  ") + Bool2String(bFound));
+    return bFound;
+            
+}
+
+
 void CDistribution::_Init()
 {
     mDistribution.clear();

@@ -156,7 +156,117 @@ public:
         
     }
 
-    void ProbabilityDensityDistribution_Operators()
+    void ProbabilityDensityDistribution_Addition()
+    {
+        
+        CProbabilityDensityDistribution d1,d2, d3;
+        
+        ////////////////////////////////////
+        // squared distributions
+        ////////////////////////////////////
+        d1.Add(-3,1); // --> (-3, 0.5)
+        d1.Add(-1,1); // --> (-1, 0.5)
+        d2.Add(1,0);  // --> (+1, 0)
+        d2.Add(3,1);  // --> (+3, 1)
+        d1.NormalDistribution(2,1,150);
+        d2.NormalDistribution(0,10,150);
+        
+        // work with high resolution to minimize integration errors
+        d1.IntegrationSteps(400);
+                
+        ///////////////////////////////////
+        // Addition
+        ///////////////////////////////////        
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", "starting addition operation");
+        d3 = d1 + d2;
+        
+        // Mean:
+        // -> d3.Mean == d1.Mean + d2.Mean
+        ostringstream oss;
+        CDigFloat dfTheoreticalValue = d1.Mean() + d2.Mean();
+        oss << endl
+            << "****************************************" << endl
+            << "*********** checking addition **********" << endl 
+            << "****************************************" << endl
+            << "**** means sum up: " << endl
+            << "d3.Mean() == d1.Mean()+d2.Mean() : "   << endl 
+            << "d3.Mean = " << d3.Mean().RawPrint(10) << endl  
+            << "d1.Mean = " << d1.Mean().RawPrint(10) << endl 
+            << "d2.Mean = " << d2.Mean().RawPrint(10) << endl 
+            << "d1.Mean + d2.Mean =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  (d1.Mean()+d2.Mean()).RawPrint(10), d3.Mean() == d1.Mean()+d2.Mean());
+        
+        // Variance:
+        // -> d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2)
+        dfTheoreticalValue = d1.Variance() + d2.Variance() + 2* d1.Covariance(d2);
+        oss << endl 
+            << "**** variances sum up (if independent: covar == 0): " << endl
+            << "d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2): " << endl 
+            << "d3.Var = " << d3.Variance().RawPrint(10) << endl 
+            << "d1.Var = " << d1.Variance().RawPrint(10) << endl
+            << "d2.Var = " << d2.Variance().RawPrint(10) << endl
+            << "d1.Covar(d2) = " << d1.Covariance(d2).RawPrint(10) << endl 
+            << "d1.var + d2.var + 2*d1.covar(d2) =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
+    }
+    void ProbabilityDensityDistribution_Subtraction()
+    {
+        
+        CProbabilityDensityDistribution d1,d2, d3;
+        
+        ////////////////////////////////////
+        // squared distributions
+        ////////////////////////////////////
+        d1.Add(-3,1); // --> (-3, 0.5)
+        d1.Add(-1,1); // --> (-1, 0.5)
+        d2.Add(1,0);  // --> (+1, 0)
+        d2.Add(3,1);  // --> (+3, 1)
+        d1.NormalDistribution(2,1,150);
+        d2.NormalDistribution(0,10,150);
+        
+        // work with high resolution to minimize integration errors
+        d1.IntegrationSteps(400);
+                
+        ///////////////////////////////////
+        // Subtraction
+        ///////////////////////////////////        
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", "starting subtraction operation");
+        d3 = d1 - d2;
+        
+        // Mean:
+        // -> d3.Mean == d1.Mean + d2.Mean
+        ostringstream oss;
+        CDigFloat dfTheoreticalValue = d1.Mean() - d2.Mean();
+        oss << endl
+            << "****************************************" << endl
+            << "*********** checking addition **********" << endl 
+            << "****************************************" << endl
+            << "**** means sum up: " << endl
+            << "d3.Mean() == d1.Mean()-d2.Mean() : "   << endl 
+            << "d3.Mean = " << d3.Mean().RawPrint(10) << endl  
+            << "d1.Mean = " << d1.Mean().RawPrint(10) << endl 
+            << "d2.Mean = " << d2.Mean().RawPrint(10) << endl 
+            << "d1.Mean - d2.Mean =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Mean() == dfTheoreticalValue);
+        
+        // Variance:
+        // -> d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2)
+        dfTheoreticalValue = d1.Variance() + d2.Variance() - 2* d1.Covariance(d2);
+        oss << endl 
+            << "**** variances sum up (if independent: covar == 0): " << endl
+            << "d3.Var == d1.Var + d2.Var - 2*d1.Covar(d2): " << endl 
+            << "d3.Var = " << d3.Variance().RawPrint(10) << endl 
+            << "d1.Var = " << d1.Variance().RawPrint(10) << endl
+            << "d2.Var = " << d2.Variance().RawPrint(10) << endl
+            << "d1.Covar(d2) = " << d1.Covariance(d2).RawPrint(10) << endl 
+            << "d1.var + d2.var - 2*d1.covar(d2) =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
+    }
+    void ProbabilityDensityDistribution_Multiplication()
     {
         
         CProbabilityDensityDistribution d1,d2, d3;
@@ -171,99 +281,139 @@ public:
         d1.NormalDistribution(2,1,200);
         d2.NormalDistribution(0,10,200);
         
-        
-        // summation results in 3 elements:
-        // (-2,0.25) 
-        // ( 0,0.25)
-        // ( 0,0.25)
-        // ( 2,0.25)
-        // resulting in:
-        // (-2,0.25) --> (-2, 0.25 / 1.5)
-        // ( 0,0.50) --> ( 0, 0.50 / 1.5)
-        // ( 2,0.25) --> (+2, 0.25 / 1.5)
-//         d1.TriangleDistribution(-3,-1);
-//         d2.TriangleDistribution(1,3);
-//         d1 = d2;
-        
         // work with high resolution to minimize integration errors
-        d1.IntegrationSteps(1000);
-        
-        // checking variable 
-        CDigFloat dfTheoreticalValue=d2.Variance() * d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
-        
-        
-        ///////////////////////////////////
-        // Addition
-        ///////////////////////////////////
-//         d3 = d1 + d2;
-        
-        // Mean:
-        // -> d3.Mean == d1.Mean + d2.Mean
-        //DEBUG
-//         cout << endl;
-//         dfTheoreticalValue = d1.Mean() + d2.Mean();
-//         cout << "d3.Mean() == d1.Mean()+d2.Mean() : " << endl <<
-//                 "d3.Mean = " << d3.Mean().RawPrint(10) << endl << 
-//                 "d1.Mean = " << d1.Mean().RawPrint(10) << endl <<
-//                 "d2.Mean = " << d2.Mean().RawPrint(10) << endl <<
-//                 "d1.Mean + d2.Mean =" << dfTheoreticalValue.RawPrint(10) << endl << endl;
-//         CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  (d1.Mean()+d2.Mean()).RawPrint(10), d3.Mean() == d1.Mean()+d2.Mean());
-        
-        // Variance:
-        // -> d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2)
-        // DEBUG
-//         cout << endl;
-//         dfTheoreticalValue = d1.Variance() + d2.Variance() + 2* d1.Covariance(d2);
-        //DEBUG
-//         cout << "d3.Var == d1.Var + d2.Var + 2*d1.Covar(d2): " << endl <<
-//                 "d3.Var = " << d3.Variance().RawPrint(10) << endl << 
-//                 "d1.Var = " << d1.Variance().RawPrint(10) << endl <<
-//                 "d2.Var = " << d2.Variance().RawPrint(10) << endl <<
-//                 "d1.Covar(d2) = " << d1.Covariance(d2).RawPrint(10) << endl <<
-//                 "d1.var + d2.var + 2*d1.covar(d2) =" << dfTheoreticalValue.RawPrint(10) << endl << endl;
-//         CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Mean().Print(10) + "=" +  (d1.Mean()+d2.Mean()).RawPrint(10), d3.Mean() == d1.Mean()+d2.Mean());
-        
+        d1.IntegrationSteps(900);      
         ///////////////////////////////////
         // Multiplication
         ///////////////////////////////////
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", "starting multiplication operation");
         d3 = d1 * d2;
-        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor1 distri :\n")+d1.Print(10,false));
         
-        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor2 distri:\n")+d2.Print(10,false));
+        // tracing: comment in if you want the data of the distributions
+//         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor1 distri :\n")+d1.Print(10,false));        
+//         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor2 distri:\n")+d2.Print(10,false));        
+//         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("resulting distri:\n")+d3.Print(10,false));
+        // Variance:
+        // -> d3.Mean == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²
+        //DEBUG       
+        ostringstream oss; 
+        CDigFloat dfTheoreticalValue=d1.Mean() * d2.Mean();
+        oss << endl 
+            << "**********************************************" << endl
+            << "*********** checking multiplication **********" << endl 
+            << "**********************************************" << endl
+            << "**** means multiply: " << endl
+            << "d3.Mean() == d1.Mean()*d2.Mean() : "   << endl 
+            << "d3.Mean = " << d3.Mean().RawPrint(10) << endl  
+            << "d1.Mean = " << d1.Mean().RawPrint(10) << endl 
+            << "d2.Mean = " << d2.Mean().RawPrint(10) << endl 
+            << "d1.Mean * d2.Mean =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means should multiply: " + d3.Mean().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Mean() == dfTheoreticalValue);
         
+        dfTheoreticalValue=d2.Variance() * d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
+        oss << endl 
+            << "**** variance: " << endl
+            << "d3.Var == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²: " << endl 
+            << "d3.Var  = " << d3.Variance().RawPrint(10) << endl 
+            << "d1.Mean = " << d1.Mean().RawPrint(10) << endl 
+            << "d1.Var  = " << d1.Variance().RawPrint(10) << endl 
+            << "d2.Mean = " << d2.Mean().RawPrint(10) << endl 
+            << "d2.Var  = " << d2.Variance().RawPrint(10) << endl 
+            << "d1.Var * d2.Var =" << (d1.Variance()*d2.Variance()).RawPrint(10) << endl 
+            << "d2.Var * d2.Mean² =" << (d2.Variance()*d1.Mean()*d1.Mean()).RawPrint(10) << endl 
+            << "d1.Var * d1.Mean² =" << (d1.Variance()*d2.Mean()*d2.Mean()).RawPrint(10) << endl 
+            << "d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean² =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "variances should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
+
+
+    }
+    void ProbabilityDensityDistribution_Division()
+    {
+        
+        CProbabilityDensityDistribution d1,d2, d3;
+        
+        ////////////////////////////////////
+        // squared distributions
+        ////////////////////////////////////
+        d1.Add(-3,1); // --> (-3, 0.5)
+        d1.Add(-1,1); // --> (-1, 0.5)
+        d2.Add(1,0);  // --> (+1, 0)
+        d2.Add(3,1);  // --> (+3, 1)
+        d1.NormalDistribution(-10,1,200);
+        d2.NormalDistribution(30,5,200); 
+        d1.IntegrationSteps(800);
+        ///////////////////////////////////
+        // Division
+        ///////////////////////////////////
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", "starting division operation");
+        d3 = d1 / d2;
+        CProbabilityDensityDistribution d2Inv; d2Inv = 1/d2;
+        
+        // tracing: comment in if you want the data of the distributions
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor1 distri :\n")+d1.Print(10,false));        
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor2 distri:\n")+d2.Print(10,false));        
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("factor2 inv distri:\n")+d2Inv.Print(10,false));        
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators",string("resulting distri:\n")+d3.Print(10,false));
         // Variance:
         // -> d3.Mean == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²
-        //DEBUG
-        dfTheoreticalValue=d2.Variance() * d1.Variance() + d1.Variance()*d2.Mean()*d2.Mean() + d2.Variance() * d1.Mean() * d1.Mean();
-        cout << "d3.Var == d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean²: " << endl <<
-                "d3.Var  = " << d3.Variance().RawPrint(10) << endl << 
-                "d1.Mean = " << d1.Mean().RawPrint(10) << endl <<
-                "d1.Var  = " << d1.Variance().RawPrint(10) << endl <<
-                "d2.Mean = " << d2.Mean().RawPrint(10) << endl <<
-                "d2.Var  = " << d2.Variance().RawPrint(10) << endl <<
-                "d1.Var * d2.Var =" << (d1.Variance()*d2.Variance()).RawPrint(10) << endl << 
-                "d2.Var * d2.Mean² =" << (d2.Variance()*d1.Mean()*d1.Mean()).RawPrint(10) << endl <<
-                "d1.Var * d1.Mean² =" << (d1.Variance()*d2.Mean()*d2.Mean()).RawPrint(10) << endl <<
-                "d2.Var* d1.Var + d1.Var*d2.Mean² + d2.Var*d1.Mean² =" << dfTheoreticalValue.RawPrint(10) << endl<< endl;
-        CPPUNIT_ASSERT_MESSAGE( "variances should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
+        //DEBUG     
+        ostringstream oss;   
+        CDigFloat dfTheoreticalValue=d1.Mean() * d2Inv.Mean();
+        oss << endl 
+            << "***************************** **********" << endl
+            << "*********** checking Division **********" << endl 
+            << "****************************************" << endl
+            << "**** means : " << endl
+            << "d3.Mean()  == d1.Mean()* (1/d2).Mean() : "   << endl 
+            << "d3.Mean     = " << d3.Mean().RawPrint(10) << endl  
+            << "d1.Mean     = " << d1.Mean().RawPrint(10) << endl 
+            << "(1/d2).Mean = " << d2Inv.Mean().RawPrint(10) << endl 
+            << "d2.Mean     = " << d2.Mean().RawPrint(10) << endl 
+            << "d1.Mean * (1/d2).Mean =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "means d1 and 1/d2 should multiply: " + d3.Mean().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Mean() == dfTheoreticalValue);
+        
+        dfTheoreticalValue=d2Inv.Variance() * d1.Variance() + d1.Variance()*d2Inv.Mean()*d2Inv.Mean() + d2Inv.Variance() * d1.Mean() * d1.Mean();
+        oss << endl 
+            << "**** variance: " << endl
+            << "d3.Var                 == (1/d2).Var* d1.Var + d1.Var*(1/d2).Mean² + (1/d2).Var*d1.Mean²: " << endl 
+            << "d3.Var                  = " << d3.Variance().RawPrint(10) << endl 
+            << "d1.Mean                 = " << d1.Mean().RawPrint(10) << endl 
+            << "d1.Var                  = " << d1.Variance().RawPrint(10) << endl 
+            << "(1/d2).Mean             = " << d2Inv.Mean().RawPrint(10) << endl 
+            << "(1/d2).Var              = " << d2Inv.Variance().RawPrint(10) << endl 
+            << "d1.Var * d2.Var         =" << (d1.Variance()*d2Inv.Variance()).RawPrint(10) << endl 
+            << "(1/d2).Var * d2.Mean²   =" << (d2Inv.Variance()*d1.Mean()*d1.Mean()).RawPrint(10) << endl 
+            << "d1.Var * d1.Mean²       =" << (d1.Variance()*d2Inv.Mean()*d2Inv.Mean()).RawPrint(10) << endl 
+            << "(1/d2).Var* d1.Var + d1.Var*(1/d2).Mean² + (1/d2).Var*d1.Mean² =" << dfTheoreticalValue.RawPrint(10) << endl;
+        LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
+        CPPUNIT_ASSERT_MESSAGE( "variances check: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
 
- 
     }
     
     void ProbabilityDensityDistribution_GUMSumOfNormal()
     {
         
-        CProbabilityDensityDistribution d1, dRes;
+        CProbabilityDensityDistribution d1,d2,d3,d4, dRes;
         // expectation value = 0
         // sigma = 1;
-        d1.NormalDistribution(0,1,200);
-        d1.IntegrationSteps(200);
+        int nDistriPoints = 1000;
+        int nIntegrationSteps=1500;
+        d1.NormalDistribution(0,1,nDistriPoints );
+        d1.IntegrationSteps(nIntegrationSteps);
+        d2.NormalDistribution(0,1,nDistriPoints );
+        d2.IntegrationSteps(nIntegrationSteps);
+        d3.NormalDistribution(0,1,nDistriPoints );
+        d3.IntegrationSteps(nIntegrationSteps);
+        d4.NormalDistribution(0,1,nDistriPoints );
+        d4.IntegrationSteps(nIntegrationSteps);
         
 //         dTemp1 = d1 + d2;
 //         dTemp2 = d3 + d4;
 //         dRes = dTemp1 + dTemp2;
-        dRes = d1+d1+d1+d1;
+        dRes = d1 +d2 + d3 + d4;
         
         CDigFloat dfMean, dfVariance, dfFrom,dfTo;
         dfMean = dRes.Mean();

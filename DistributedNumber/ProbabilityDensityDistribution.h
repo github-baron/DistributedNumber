@@ -580,6 +580,8 @@ protected:
     void _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorSubIntLimitsType& SubIntervals4TargetValue);
   
     void _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue2(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorConvPlanElementType& SubIntervals4TargetValue);
+    // optimized version: avoiding binary searches where ever possible
+    void _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue3(const ProbDistOp Operation, const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const VectorSubIntLimitsType& TotalIntervals4TargetValue, VectorConvPlanElementType& SubIntervals4TargetValue);
   
     /**
      * @brief returns the complementary variable for a given operation, target value, and operation.
@@ -642,6 +644,19 @@ protected:
 ////////////////////////////////////////////////////////
 // external functions
 ////////////////////////////////////////////////////////
+/**
+    * @brief returns a distri with x(new distri)=dfValue/x(pdDistri) keeping the probability values
+    * 
+    * @param[in] dfValue CDigFloat as numerator of x-values of new distri
+    * @param[in] CProbabilityDensityDistribution distribution which x-values are the denominator of the x-values of the new distri
+    * @return CProbabilityDensityDistribution with new x-values = dfValue / x(pdDistri)
+    * 
+    */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator/(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
 
 string
 #ifdef _WIN32

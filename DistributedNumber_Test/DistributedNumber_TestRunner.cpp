@@ -159,11 +159,29 @@ int main( int argc, char* argv[] )
 //                     )
 //                   );
     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Operators",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Operators,
+                    "ProbabilityDensityDistribution: Addition",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Addition,
                     &ProbabilityDensityDistribution_Test
                     )
                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: subtraction",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Subtraction,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Multiplication",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Multiplication,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Division",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Division,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
 //     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
 //                     "ProbabilityDensityDistribution: Generate constant distribution",
 //                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GenerateConstant,
