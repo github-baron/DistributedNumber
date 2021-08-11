@@ -158,12 +158,12 @@ int main( int argc, char* argv[] )
 //                     &ProbabilityDensityDistribution_Test
 //                     )
 //                   );
-    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: Addition",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Addition,
-                    &ProbabilityDensityDistribution_Test
-                    )
-                  );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: Addition",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Addition,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
 //     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
 //                     "ProbabilityDensityDistribution: subtraction",
 //                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_Subtraction,
@@ -206,12 +206,12 @@ int main( int argc, char* argv[] )
 //                     &ProbabilityDensityDistribution_Test
 //                     )
 //                   );
-//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-//                     "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(<x>=0,sigma=1):",
-//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,
-//                     &ProbabilityDensityDistribution_Test
-//                     )
-//                   );
+    runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+                    "ProbabilityDensityDistribution: GUM comparison: sum of 4 normals(<x>=0,sigma=1):",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfNormal,
+                    &ProbabilityDensityDistribution_Test
+                    )
+                  );
 //     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
 //                     "ProbabilityDensityDistribution: GUM comparison: sum of 4 constant distris (<x>=0,sigma=1):",
 //                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMSumOfConstant,

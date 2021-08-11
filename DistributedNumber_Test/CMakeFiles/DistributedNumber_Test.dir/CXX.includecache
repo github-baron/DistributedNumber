@@ -113,6 +113,10 @@ unordered_map
 -
 iostream
 -
+functional
+-
+thread
+-
 
 /home/michae/projects/DistributedNumber/DistributedNumber_Test/CartesianCoordinate_Test.cpp
 ../DistributedNumber/CartesianCoordinate.h

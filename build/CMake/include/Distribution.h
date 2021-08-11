@@ -28,6 +28,9 @@
 
 #include "LoggingStrings.h"
 
+// use threads for logging 
+#undef LOG4CPLUS_SINGLE_THREADED
+
 // includes 
 #include "DigFloat/DigFloat.h"
 
@@ -218,7 +221,7 @@ public:
      * @param[out] VariableLeft MapDFDFType::iterator& iterator for left \ref def-distri-point "point" (see ::MapDFDFType)
      * @param[out] VariableRight MapDFDFType::iterator& iterator for right \ref def-distri-point "point" (see ::MapDFDFType)
      */
-    void GetInterval(const CDigFloat& variable, MapDFDFType::const_iterator& VariableLeft, MapDFDFType::const_iterator& VariableRight);     
+    void GetInterval(const CDigFloat& variable, MapDFDFType::const_iterator& VariableLeft, MapDFDFType::const_iterator& VariableRight);
     
     /**
      * @brief returns (interpolated) value at the given variable
@@ -416,7 +419,18 @@ protected:
      * @return the linear offset
      */
     CDigFloat _LinearSlope(MapDFDFType::const_iterator& Left);
-    
+     
+    /**
+     * @brief returns the left distribution \ref def-distri-point "points" of the interval including the given variable without binary search (see CDistribution::GetInterval)
+     *
+     * @param[in] dfVariable CDigFloat& variable to search the left \ref def-distri-point "point" of the enclosing interval
+     * @param[out] itVariableLeft MapDFDFType::iterator& iterator for left \ref def-distri-point "point" (see ::MapDFDFType): is taken as starting point and determines the search direction: dfVariable < itVariableLeft.first --> incrementing
+     * @param[in] uiSteps unsinged int the number of steps to search for the left \ref def-distri-point "point" 
+     * @return bool which is true if the left \ref def-distri-point "point" of the enclosing interval for variable is found is found
+     * 
+     */
+    bool _GetInterval(const CDigFloat& dfVariable, MapDFDFType::const_iterator& itVariableLeft, unsigned int uiSteps = 10);     
+   
     /**
      * @brief initializes member
      *

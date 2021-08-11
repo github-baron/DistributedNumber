@@ -73,7 +73,7 @@ CProbabilityDensityDistribution& CProbabilityDensityDistribution::operator=(cons
 ////////////////////////////////////////////
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator+=(CProbabilityDensityDistribution& other)
 {
-    return _GeneralOperatorsFunctionAnalytical2(other, ProbDistOp::pdoPlus );
+    return _GeneralOperatorsFunctionAnalytical3(other, ProbDistOp::pdoPlus );
 }
 
 CProbabilityDensityDistribution CProbabilityDensityDistribution::operator+(CProbabilityDensityDistribution& other)
@@ -85,7 +85,7 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator+(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator-=(CProbabilityDensityDistribution& other)
 {
-    return _GeneralOperatorsFunctionAnalytical2(other, ProbDistOp::pdoMinus );
+    return _GeneralOperatorsFunctionAnalytical3(other, ProbDistOp::pdoMinus );
 }
 
 CProbabilityDensityDistribution CProbabilityDensityDistribution::operator-(CProbabilityDensityDistribution& other)
@@ -98,7 +98,7 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator-(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator*=(CProbabilityDensityDistribution& other)
 {
-    return _GeneralOperatorsFunctionAnalytical2(other, ProbDistOp::pdoMult );
+    return _GeneralOperatorsFunctionAnalytical3(other, ProbDistOp::pdoMult );
 }
 CProbabilityDensityDistribution CProbabilityDensityDistribution::operator*(CProbabilityDensityDistribution& other)
 {
@@ -109,7 +109,7 @@ CProbabilityDensityDistribution CProbabilityDensityDistribution::operator*(CProb
 
 CProbabilityDensityDistribution & CProbabilityDensityDistribution::operator/=(CProbabilityDensityDistribution& other)
 {
-    return _GeneralOperatorsFunctionAnalytical2(other, ProbDistOp::pdoDiv);
+    return _GeneralOperatorsFunctionAnalytical3(other, ProbDistOp::pdoDiv);
 }
 
 CProbabilityDensityDistribution CProbabilityDensityDistribution::operator/(CProbabilityDensityDistribution& other)
@@ -632,8 +632,8 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution:: _GeneralOper
     // set all linear parameters for this and other
     _SetLinPars(); Other._SetLinPars();
     
-    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. this ... \n") + PrintLinPars() );
-    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. other ... \n") + Other.PrintLinPars() );
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. this (") + Address2String(this)+ ") ...\n" + PrintLinPars() );
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. other (") + Address2String(&Other)+ ") ...\n"+ Other.PrintLinPars() );
     
     
     // declare the result distri
@@ -704,6 +704,295 @@ CProbabilityDensityDistribution & CProbabilityDensityDistribution:: _GeneralOper
     
     return *this;
  
+}
+
+CProbabilityDensityDistribution & CProbabilityDensityDistribution::_GeneralOperatorsFunctionAnalytical3(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
+{   
+    
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("called with args:"));
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("probdist other:") + Other.PrintMetaInfo());
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("operation     : ") + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("probdist this :") + PrintMetaInfo());
+    
+
+    // generate plan : setting x-intervals and target values
+    VectorPairDFType vpdfXIntervals;
+    vector<CDigFloat> vdfTargetValues;
+    _PrepareConvolution(Other, Operation, vdfTargetValues, vpdfXIntervals);
+    
+    // set all linear parameters for this and other
+    _SetLinPars(); Other._SetLinPars();
+    
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. this (") + Address2String(this)+ ") ...\n" + PrintLinPars() );
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("lin par. other (") + Address2String(&Other)+ ") ...\n"+ Other.PrintLinPars() );
+       
+    // prepare threading: need a vector keeping the convolution threads 
+    map<unsigned int, std::thread*> vpConvolutionThreads;
+    
+    // declare the result distri
+    MapDFDFType TargetDistri;
+    unsigned int uiThreadID = 0;
+    
+    // need vector of vector of target values 
+    vector< vector<CDigFloat>*> vpvdfTargetValuePackages;
+    vector< vector<CDigFloat>*> vpvdfResultPackages;
+    vector<void*> vpFunctions;
+    vector < ProbDistOp*> vpOperationCopies;
+    vector < VectorPairDFType*> vpvpdfXIntervalCopies;
+    vector< CProbabilityDensityDistribution*> vpdThisCopies;
+    vector< CProbabilityDensityDistribution*> vpdOtherCopies;
+    unsigned int uiPackageCounter = 0;
+    unsigned int uiNoOfThreads = IntegrationSteps()*(Distribution().size()+Other.Distribution().size()) / PDD_SUB_INTERVALL_CALCULATIONS_PER_THREAD;
+    if(uiNoOfThreads > vdfTargetValues.size())
+        uiNoOfThreads = vdfTargetValues.size();
+    if(uiNoOfThreads == 0)
+        uiNoOfThreads = 1;
+    unsigned int uiTargetValuesPerThread = vdfTargetValues.size() / uiNoOfThreads;
+    
+    
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("target values per thread = ") + to_string(uiTargetValuesPerThread));
+    
+    
+    for(auto itarget: vdfTargetValues)
+    {
+        // handle init of new package:
+        if(uiPackageCounter == 0)
+        {
+            vpvdfTargetValuePackages.push_back(new vector<CDigFloat>);
+            vpvdfResultPackages.push_back(new vector<CDigFloat>);
+            
+        }   // endif(uiPackageCounter == 0)
+        
+        TargetDistri[itarget] = 0;
+        
+        // hand over target value and result to package vectors 
+        vpvdfTargetValuePackages.back()->push_back(itarget);
+//         vpvpdfResultPointerPackages.back()->push_back(&(TargetDistri[itarget]));
+        vpvdfResultPackages.back()->push_back(0);
+        
+        // increment package counter 
+        uiPackageCounter++;
+        
+        // handle finished package
+        if( uiPackageCounter == uiTargetValuesPerThread || itarget == vdfTargetValues.back() )
+        {
+            vpdThisCopies.push_back( new CProbabilityDensityDistribution( *this));
+            vpdThisCopies.back()->_SetLinPars();
+            vpdOtherCopies.push_back(new CProbabilityDensityDistribution( Other));
+            vpdOtherCopies.back()->_SetLinPars();
+            
+            // copy x intervals, too 
+            vpvpdfXIntervalCopies.push_back(new VectorPairDFType);
+            vpvpdfXIntervalCopies.back()->operator=(vpdfXIntervals);
+            
+            // copy operators
+            vpOperationCopies.push_back(new ProbDistOp(Operation));
+            
+            // threading call: generate thread objects
+            auto f = std::bind(&CProbabilityDensityDistribution::_Convolution4TargetValueThread, vpdThisCopies.back(), vpdOtherCopies.back(), vpOperationCopies.back(), vpvpdfXIntervalCopies.back(), vpvdfTargetValuePackages.back(), vpvdfResultPackages.back());
+            
+            LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("starting thread ") + to_string(uiThreadID) );
+            vpConvolutionThreads[uiThreadID] = new std::thread(f, vpdOtherCopies.back(), vpOperationCopies.back(), vpvpdfXIntervalCopies.back(), vpvdfTargetValuePackages.back(), vpvdfResultPackages.back());
+            uiThreadID++;
+            
+            // resetting package counter 
+            uiPackageCounter = 0;
+            
+        }   // endif( uiPackageCounter == PDD_TARGET_VALUES_PER_THREAD)
+        
+//         vpConvolutionThreads.push_back(std::thread( CConvolutionThread(),this, &Other, Operation, &vpdfXIntervals, itarget, &(TargetDistri[itarget])));
+        // call by member function:
+//         vpConvolutionThreads.push_back(std::thread( &CProbabilityDensityDistribution::_Convolution4TargetValue, this, Other, Operation, vpdfXIntervals, itarget, TargetDistri[itarget]));
+        
+        // non-threading call: simply call internal function
+//         _Convolution4TargetValue(Other, Operation, vpdfXIntervals, itarget, TargetDistri[itarget] );
+        
+    }   // endfor(auto itarget: vdfTargetValues)
+    
+    // now wait for threads to finish
+    for(auto ith: vpConvolutionThreads)
+    {
+        LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("waiting for thread ") + to_string(ith.first) + " to finish" );
+        ith.second->join();
+    }
+    // now delete threads 
+    for(auto ith: vpConvolutionThreads)
+    {
+        LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("handing over result for thread ") + to_string(ith.first) + "... ");
+           
+        for(int itv = 0; itv < vpvdfTargetValuePackages[ith.first]->size(); itv++)
+        {
+            LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("... [") + (*vpvdfTargetValuePackages[ith.first])[itv].RawPrint(10,false) + "] = " + (*vpvdfResultPackages[ith.first])[itv].RawPrint(10)   );
+            TargetDistri[(*vpvdfTargetValuePackages[ith.first])[itv]] = (*vpvdfResultPackages[ith.first])[itv];
+           
+        }   //endfor(int itv = 0; itv < vpvdfTargetValuePackages[ith.first]->size(); itv++)
+        LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical", string("deleting thread ") + to_string(ith.first) );
+        SecureDeleteObjectPointer( ith.second );
+        vpvdfTargetValuePackages[ith.first]->clear();
+        vpvdfResultPackages[ith.first]->clear();
+        SecureDeleteObjectPointer( vpvdfTargetValuePackages[ith.first]);
+        SecureDeleteObjectPointer( vpvdfResultPackages[ith.first]);
+        SecureDeleteObjectPointer( vpdThisCopies[ith.first]);
+        SecureDeleteObjectPointer( vpdOtherCopies[ith.first]);
+    }
+    
+    
+    // remember some things before init resets all the values 
+    int nMaxBinIter = MaxBinarySearchIterations();
+    int nIntegrationSteps = IntegrationSteps();
+    int nSubIntegrationSteps = SubIntegrationSteps();
+    
+    // now init: especially the integration step for convolution get lost
+    _Init();
+    
+    // reset to old values 
+    MaxBinarySearchIterations(nMaxBinIter);
+    IntegrationSteps(nIntegrationSteps);
+    SubIntegrationSteps(nSubIntegrationSteps);
+    
+    if(vdfTargetValues.size() > 0)
+    {
+        for(auto iel: TargetDistri)
+            mDistribution[iel.first] = iel.second;
+        
+        bNormalized=false;
+        Normalize();
+        
+        assert(AbsIntegral() == 1);
+        
+    }   // endif(!(TargetRangeStart == TargetRangeEnd && TargetRangeStart == 0))
+    
+    
+    LOGTRACE(LS_ProbDist+"_GeneralOperatorsFunctionAnalytical",string("************************************************************"));
+    
+    return *this;
+ 
+ 
+}
+void CProbabilityDensityDistribution::_Convolution4TargetValueThread(CProbabilityDensityDistribution* pOther, ProbDistOp *pOperation, VectorPairDFType* pvpdfXIntervals, vector<CDigFloat>* pvdfTargetValues, vector<CDigFloat>* pvdfResult)
+{
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("called with args:") );
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("this") + Address2String(this) );
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("other") + Address2String(pOther) );
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("operation ") + GetProbDistOpAsString(*pOperation) );
+        for(auto x: *pvpdfXIntervals)
+            LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("x in [") + x.first.RawPrint(10) + ", " + x.second.RawPrint(10) + "]" );
+        for(auto tv: *pvdfTargetValues)
+            LOGTRACE(LS_ProbDist+"_Convolution4TargetValueThread", string("tv = ") + tv.RawPrint(10) );
+        
+        
+        for(int itv=0; itv < pvdfTargetValues->size(); itv++)
+        _Convolution4TargetValue(*pOther, *pOperation, (*pvpdfXIntervals), (*pvdfTargetValues)[itv], (*pvdfResult)[itv]);
+}
+ 
+
+
+void CProbabilityDensityDistribution::_Convolution4TargetValue(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const VectorPairDFType& vpdfXIntervals, const CDigFloat& dfTargetValue, CDigFloat& dfResult)
+{
+    
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("called with args:"));
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("operation ") + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("dfTargetValue ") + dfTargetValue.RawPrint(10));
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("other distri ") + Other.PrintMetaInfo());
+    
+    /////////////////////////////////////////////////////
+    // General purpose ot this function:
+    //   Determine a valid total integration interval and
+    //   its subintervals
+    //
+    // Procedure:
+    //
+    //   I  derive closed intervals for x and y mapped 
+    //        onto each other bijectively by the calculation 
+    //        of the complementary variable
+    //   
+    //    II calcuations of the subintervals with constant
+    //       slope and offset for x and y for the all total
+    //       intervals
+    //
+    // Explanation of  notations:
+    //   - x-variable: variable of this distribution
+    //   - y-variable: variable of Other distribution
+    //   - tv: target value (see argument dfTargetValue)
+    //   - complementary variable: e.g. for multiplication
+    //     the following relation holds: xt*yt = tv
+    //     xt and yt are called complementary. 
+    //     "Complementarity" depends on the operation: e.g. 
+    //        summation xt+yt = tv
+    //        subraction: xt-yt = tv
+    //        division: xt/yt = tv
+    /////////////////////////////////////////////////////
+    
+    // keeps sub integration limits
+    VectorConvPlanElementType SubIntervals4TargetValue;
+    
+    // keeps the total integration interval(s) for a target value
+    VectorSubIntLimitsType TotalIntervals4TargetValue;
+    
+        
+    // I 2. derive closed intervals for x and y (kept in TotalIntervals4TargetValue) mapped onto each other bijectively
+    //      by the calculation of the complementary variable
+//     _GetTotalIntegrationInterval4TargetValue(Operation, dfTargetValue, Other, vpdXIntervals, TotalIntervals4TargetValue);
+    _GetTotalIntegrationInterval4TargetValue(Operation, dfTargetValue, Other, vpdfXIntervals, TotalIntervals4TargetValue);
+    
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("calculated complementary intervals with mixed slope and offset: "));
+    for(auto ix: TotalIntervals4TargetValue)
+    {
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("x in [") + ix.first.first.RawPrint(10) + ", " + ix.first.second.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("y in [") + ix.second.first.RawPrint(10) + ", " + ix.second.second.RawPrint(10));
+    }
+    
+    
+    _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue3(Operation, dfTargetValue, Other, TotalIntervals4TargetValue, SubIntervals4TargetValue);  
+    
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("calculated complementary intervals with unique slope and offset ... "));
+    for(auto planEl: SubIntervals4TargetValue)
+    {
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... x iterator points to [") + planEl.xDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... x in [") + planEl.xLimits.first.RawPrint(10) + ", " + planEl.xLimits.second.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... y iterator points to [") + planEl.yDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... y in [") + planEl.yLimits.first.RawPrint(10) + ", " + planEl.yLimits.second.RawPrint(10));
+    }
+    
+    
+    // init the result
+    dfResult = 0;
+    
+    LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("iterating over all sub intervals ...") );
+    LOGINFO(LS_ProbDist+"_Convolution4TargetValue",string("no. of sub intervals: ") + to_string(SubIntervals4TargetValue.size()) );
+
+    // now calculate 
+    for(auto planEl: SubIntervals4TargetValue)
+    {   
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... x iterator points to ")  + planEl.xDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... x in [") + planEl.xLimits.first.RawPrint(10) + ", " + planEl.xLimits.second.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... y iterator points to ") + planEl.yDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... y in [") + planEl.yLimits.first.RawPrint(10) + ", " + planEl.yLimits.second.RawPrint(10));
+
+        switch( Operation)
+        {
+            case ProbDistOp::pdoPlus:
+                    dfResult +=  _Integral4TargetValue4Addition2(dfTargetValue,Other, planEl);            
+                break;
+            case ProbDistOp::pdoMinus:
+                    dfResult +=  _Integral4TargetValue4Subtraction2(dfTargetValue, Other, planEl);            
+                break;
+            case ProbDistOp::pdoMult:
+                    dfResult +=  _Integral4TargetValue4Multiplication2(dfTargetValue, Other, planEl);            
+                break;
+            case ProbDistOp::pdoDiv:
+                    dfResult +=  _Integral4TargetValue4Division2(dfTargetValue, Other, planEl);            
+                break;
+            default:
+                break;
+        }   //endswitch( Operation)
+        
+        
+        LOGTRACE(LS_ProbDist+"_Convolution4TargetValue",string("... dfResult incremented ") + dfResult.RawPrint(10));
+        
+        
+    }   // endfor(auto interval: SubIntervals4TargetValue)
+
 }
 
 
@@ -968,6 +1257,76 @@ CDigFloat CProbabilityDensityDistribution::_GetConvolutionIntegralAnalytical4Ope
     
 }
 
+void CProbabilityDensityDistribution::_PrepareConvolution(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, vector<CDigFloat>& vdfTargetValues, VectorPairDFType& vpdfXIntervals)
+{
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution", string("called with args:"));
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution", string("probdist other :") + Other.PrintMetaInfo());
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution", string("operation      :") + GetProbDistOpAsString(Operation));
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution", string("probdist this  :") + PrintMetaInfo());
+    
+    //////////////////////////////
+    // x-intervals
+    //   must be unipolar (positive or negative) for 
+    //   multiplication and division
+    /////////////////////////////
+       
+    
+    // x-interval(s) for calculation: must be unipolar
+    // for division and multiplication
+    _GetXInterval4Operation(Operation, vpdfXIntervals);
+    
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("calculated unipolar x-intervals: "));
+    for(auto ix: vpdfXIntervals)
+        LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("x in [") + ix.first.RawPrint(10) + ", " + ix.second.RawPrint(10));
+        
+    //////////////////////////////
+    // target values:
+    // avoid zero for multiplication
+    // and division
+    /////////////////////////////
+       
+    // clear and set target values 
+    vdfTargetValues.clear();
+    
+    CDigFloat dfTargetStart, dfTargetEnd;
+    _GetRangeFromDistributionOperation(Other, Operation, dfTargetStart, dfTargetEnd);
+    
+    
+    // get the target step
+    CDigFloat dfTargetStep = (dfTargetEnd - dfTargetStart)/(CDigFloat(IntegrationSteps()));
+    for(int itv = 0; itv < IntegrationSteps(); itv++)
+        vdfTargetValues.push_back(dfTargetStart+itv*dfTargetStep);
+    
+    // take care to avoid zero in in case of multiplication and division
+    if( Operation == ProbDistOp::pdoDiv || Operation == ProbDistOp::pdoMult)
+    {
+        // do we have a zero ?
+        vector<CDigFloat>::iterator itTv = find( vdfTargetValues.begin(), vdfTargetValues.end(), 0);
+        if( itTv != vdfTargetValues.end())
+        {
+            // if it is the start of the distri ...
+            if(itTv == vdfTargetValues.begin())
+                // ... add half a step: avoid bipolarity for this case
+                *itTv = (dfTargetStep/2.);
+            else
+                // ... subtract half a step
+                *itTv -= (dfTargetStep/2.);
+        
+        }   // endif( itTv != vdfTargetValues.end())
+    
+    }   // endif( Operation == ProbDistOp::pdoDiv || Operation == ProbDistOp::pdoMult)
+    
+    
+    // trace 
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("calculated:"));    
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("target range = [") + dfTargetStart.RawPrint(10) + ", " + dfTargetEnd.RawPrint(10) + " ]");
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("step size = ") + dfTargetStep.RawPrint(10) + "( " + to_string(IntegrationSteps()) + " ) ");
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("target values ...") );
+    for(auto iel: vdfTargetValues)
+            LOGTRACE(LS_ProbDist+"_PrepareConvolution",string("... ") + iel.RawPrint(10) );
+    
+    LOGTRACE(LS_ProbDist+"_PrepareConvolution", string("********************************************************************"));
+}
 
 
 void CProbabilityDensityDistribution::_SetConvolutionPlan2(CProbabilityDensityDistribution& Other, const ProbDistOp Operation)
@@ -1144,13 +1503,13 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan2(CProbabilityDensityDi
     
     _GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue3(Operation, dfTargetValue, Other, TotalIntervals4TargetValue, SubIntervals4TargetValue);  
     
-    LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("calculated complementary intervals with unique slope and offset: "));
+    LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("calculated complementary intervals with unique slope and offset ... "));
     for(auto ix: SubIntervals4TargetValue)
     {
-        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("x iterator points to [") + ix.xDistriIter->first.RawPrint(10));
-        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("x in [") + ix.xLimits.first.RawPrint(10) + ", " + ix.xLimits.second.RawPrint(10));
-        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("y iterator points to [") + ix.yDistriIter->first.RawPrint(10));
-        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("y in [") + ix.yLimits.first.RawPrint(10) + ", " + ix.yLimits.second.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("... x iterator points to [") + ix.xDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("... x in [") + ix.xLimits.first.RawPrint(10) + ", " + ix.xLimits.second.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("... y iterator points to [") + ix.yDistriIter->first.RawPrint(10));
+        LOGTRACE(LS_ProbDist+"_SetSubIntegrationIntervals4TargetValue",string("... y in [") + ix.yLimits.first.RawPrint(10) + ", " + ix.yLimits.second.RawPrint(10));
     }
     
     // now add the sub integration limits and its corresponding target value as pair
@@ -1249,29 +1608,30 @@ void CProbabilityDensityDistribution::_SetConvolutionPlan(CProbabilityDensityDis
     
 }
 CDigFloat CProbabilityDensityDistribution::_Integral4TargetValue4Addition2(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl)
-{
-
+{    
     CDigFloat dfX1 = planEl.xLimits.first;
     CDigFloat dfX2 = planEl.xLimits.second;
-    CDigFloat dfOffsetX = Offset(planEl.xDistriIter);
-    CDigFloat dfSlopeX = Slope(planEl.xDistriIter);
-    CDigFloat dfOffsetY = Other.Offset(planEl.yDistriIter);
-    CDigFloat dfSlopeY = Other.Slope(planEl.yDistriIter);
-    CDigFloat dfYConst = dfSlopeY*dfTargetValue+dfOffsetY;
-    CDigFloat dfDiff1 = dfX2 -dfX1;
-    CDigFloat dfDiff2 = (dfX1+dfX2) * dfDiff1;
-    CDigFloat dfDiff3 = dfDiff1*(pow(dfX1,2) + pow(dfX2,2) +dfX1*dfX2);
-        
+ 
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", " called with args:");
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("target value =") + dfTargetValue.RawPrint(10));
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition",string("x iterator points to [") + planEl.xDistriIter->first.RawPrint(10));
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition",string("x in [") + dfX1.RawPrint(10) + ", " + dfX2.RawPrint(10));
-    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("XSlope  :") + dfSlopeX.RawPrint(20) );
-    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("XOffset :") + dfOffsetX.RawPrint(20) );
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition",string("y iterator points to [") + planEl.yDistriIter->first.RawPrint(10));
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition",string("y in [") + planEl.yLimits.first.RawPrint(10) + ", " + planEl.yLimits.second.RawPrint(10));
-    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("YSlope  :") + dfSlopeY.RawPrint(20) );
+
+
+    CDigFloat dfOffsetX =  Offset(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("XOffset :") + dfOffsetX.RawPrint(20) );
+    CDigFloat dfSlopeX =  Slope(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("XSlope  :") + dfSlopeX.RawPrint(20) );
+    CDigFloat dfOffsetY =  Other.Offset(planEl.yDistriIter);
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("YOffset :") + dfOffsetY.RawPrint(20) );
+    CDigFloat dfSlopeY =  Other.Slope(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", string("YSlope  :") + dfSlopeY.RawPrint(20) );
+    CDigFloat dfYConst = dfSlopeY*dfTargetValue+dfOffsetY;
+    CDigFloat dfDiff1 = dfX2 -dfX1;
+    CDigFloat dfDiff2 = (dfX1+dfX2) * dfDiff1;
+    CDigFloat dfDiff3 = dfDiff1*(pow(dfX1,2) + pow(dfX2,2) +dfX1*dfX2);
 
     
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Addition", "**************************************************************************");    
@@ -1336,10 +1696,14 @@ CDigFloat CProbabilityDensityDistribution::_Integral4TargetValue4Subtraction2(co
     MapDFDFType::const_iterator itY = planEl.yDistriIter;
     CDigFloat dfX1 = planEl.xLimits.first;
     CDigFloat dfX2 = planEl.xLimits.second;
-    CDigFloat dfOffsetX = Offset(itX);
-    CDigFloat dfSlopeX = Slope(itX);
-    CDigFloat dfOffsetY = Other.Offset(itY);
-    CDigFloat dfSlopeY = Other.Slope(itY);
+    CDigFloat dfOffsetX =  Offset(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Subtraction", string("XOffset :") + dfOffsetX.RawPrint(20) );
+    CDigFloat dfSlopeX =  Slope(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Subtraction", string("XSlope  :") + dfSlopeX.RawPrint(20) );
+    CDigFloat dfOffsetY =  Other.Offset(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Subtraction", string("YOffset :") + dfOffsetY.RawPrint(20) );
+    CDigFloat dfSlopeY =  Other.Slope(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Subtraction", string("YSlope  :") + dfSlopeY.RawPrint(20) );
     CDigFloat dfYConst = -dfSlopeY*dfTargetValue+dfOffsetY;
     CDigFloat dfDiff1 = dfX2 -dfX1;
     CDigFloat dfDiff2 = (dfX1+dfX2) * dfDiff1;
@@ -1370,10 +1734,14 @@ CDigFloat CProbabilityDensityDistribution::_Integral4TargetValue4Multiplication2
     MapDFDFType::const_iterator itY = planEl.yDistriIter;
     CDigFloat dfX1 = planEl.xLimits.first;
     CDigFloat dfX2 = planEl.xLimits.second;
-    CDigFloat dfOffsetX = Offset(itX);
-    CDigFloat dfSlopeX = Slope(itX);
-    CDigFloat dfOffsetY = Other.Offset(itY);
-    CDigFloat dfSlopeY = Other.Slope(itY);
+    CDigFloat dfOffsetX =  Offset(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Multiplication", string("XOffset :") + dfOffsetX.RawPrint(20) );
+    CDigFloat dfSlopeX =  Slope(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Multiplication", string("XSlope  :") + dfSlopeX.RawPrint(20) );
+    CDigFloat dfOffsetY =  Other.Offset(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Multiplication", string("YOffset :") + dfOffsetY.RawPrint(20) );
+    CDigFloat dfSlopeY =  Other.Slope(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Multiplication", string("YSlope  :") + dfSlopeY.RawPrint(20) );
     CDigFloat dfDiff1 = abs(dfX2) - abs(dfX1);
     
     LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Multiplication", "**************************************************************************");
@@ -1400,10 +1768,14 @@ CDigFloat CProbabilityDensityDistribution::_Integral4TargetValue4Division2(const
     MapDFDFType::const_iterator itY = planEl.yDistriIter;
     CDigFloat dfX1 = planEl.xLimits.first;
     CDigFloat dfX2 = planEl.xLimits.second;
-    CDigFloat dfOffsetX = Offset(itX);
-    CDigFloat dfSlopeX = Slope(itX);
-    CDigFloat dfOffsetY = Other.Offset(itY);
-    CDigFloat dfSlopeY = Other.Slope(itY);
+    CDigFloat dfOffsetX =  Offset(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Division", string("XOffset :") + dfOffsetX.RawPrint(20) );
+    CDigFloat dfSlopeX =  Slope(planEl.xDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Division", string("XSlope  :") + dfSlopeX.RawPrint(20) );
+    CDigFloat dfOffsetY =  Other.Offset(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Division", string("YOffset :") + dfOffsetY.RawPrint(20) );
+    CDigFloat dfSlopeY =  Other.Slope(planEl.yDistriIter);
+    LOGTRACE(LS_ProbDist+"_Integral4TargetValue4Division", string("YSlope  :") + dfSlopeY.RawPrint(20) );
     CDigFloat dfDiff2 =  DifferenceNthOrder(dfX1,dfX2,2);// (dfX1+dfX2) * dfDiff1;
     CDigFloat dfDiff3 =  DifferenceNthOrder(dfX1,dfX2,3);//dfDiff1*(pow(dfX1,2) + pow(dfX2,2) +dfX1*dfX2);
     CDigFloat dfDiff4 =  DifferenceNthOrder(dfX1,dfX2,4); //dfDiff3*(dfX1+dfX2);
@@ -1706,6 +2078,8 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
             
             
             LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... interval iterator x points to ") +PlanElement.xDistriIter->first.RawPrint(10) );
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... with offset ") + Other.Offset(PlanElement.xDistriIter).RawPrint(10));
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... with slope ") + Other.Slope(PlanElement.xDistriIter).RawPrint(10));
 
             
             // derive the y limits
@@ -1718,7 +2092,7 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
             if(PlanElement.yLimits.second < PlanElement.yLimits.first )
                 swap(PlanElement.yLimits.first, PlanElement.yLimits.second); 
             
-            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... other interval [") +PlanElement.xLimits.first.RawPrint(10) + ", " +PlanElement.xLimits.second.RawPrint(10));
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... other interval [") +PlanElement.yLimits.first.RawPrint(10) + ", " +PlanElement.yLimits.second.RawPrint(10));
             
             // set the iterator x/yDistriIter pointing to the first iterator of the correct interval:
             Other.GetInterval(PlanElement.yLimits.first,PlanElement.yDistriIter,itDummy);
@@ -1938,7 +2312,8 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
             
             
             LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... interval iterator x points to ") +PlanElement.xDistriIter->first.RawPrint(10) );
-
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... xOffset(pre calc.)  = ") + Offset(PlanElement.xDistriIter).RawPrint(10) );
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... xSlope(pre calc.)  = ") + Slope(PlanElement.xDistriIter).RawPrint(10) );
             
             // derive the y limits
             PlanElement.yLimits.first = _GetComplementaryVariable(Operation, dfTargetValue,PlanElement.xLimits.first,false);
@@ -1961,8 +2336,8 @@ void CProbabilityDensityDistribution::_GetSubIntegrationIntervalFromTotalIntegra
             }   // endif(!_GetInterval(PlanElement.yLimits.first,PlanElement.yDistriIter, uiMaxSearchStepsY))
             
             LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... interval iterator y points to ") +PlanElement.yDistriIter->first.RawPrint(10));
-            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... with offset ") + Other.Offset(PlanElement.yDistriIter).RawPrint(10));
-            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... with slope ") + Other.Slope(PlanElement.yDistriIter).RawPrint(10));
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... yOffset(pre calc.)  = ") + Other.Offset(PlanElement.yDistriIter).RawPrint(10) );
+            LOGTRACE(LS_ProbDist+"_GetSubIntegrationIntervalFromTotalIntegrationInterval4TargetValue",string("...... ySlope(pre calc.)  = ") + Other.Slope(PlanElement.yDistriIter).RawPrint(10) );
             
             
             // do some checks:

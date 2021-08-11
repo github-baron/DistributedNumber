@@ -28,6 +28,9 @@
 
 #include "LoggingStrings.h"
 
+// use threads for logging 
+#undef LOG4CPLUS_SINGLE_THREADED
+
 // includes 
 #include "DigFloat/DigFloat.h"
 

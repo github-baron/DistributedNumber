@@ -8,6 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 # need compile commands for clazy analyzing the code
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_FLAGS -pthread)
 
 # the source files that will create the library,
 set(distributednumber_lib
@@ -38,3 +39,6 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/build/CMake/)
 install(TARGETS DistributedNumber DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/DistributedNumber/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include
         FILES_MATCHING PATTERN "*.h")
+
+# finally set build typ
+set(CMAKE_BUILD_TYPE Debug)

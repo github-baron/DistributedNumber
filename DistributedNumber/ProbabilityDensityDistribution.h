@@ -61,10 +61,17 @@
 #include "Distribution.h"
 #include <unordered_map>
 #include <iostream>
+#include <functional>
+#include <thread>
 
 // hasher class for distri map iterator: is needed for unordered_map keeping the linear parameters 
 // of the distribution intervals
-class DistriIterHasher
+class
+
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+DistriIterHasher
 {
 public:
     size_t operator() (MapDFDFType::const_iterator const& key) const 
@@ -80,7 +87,7 @@ public:
             
     }
 };
-// typedefs
+// typedef
 typedef pair< PairDFType, PairDFType >SubIntLimitsType;
 typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
 //  { (targetValue,{ ((minthis,maxthis),(minother,maxother)) }) }
@@ -109,6 +116,7 @@ typedef unordered_map<MapDFDFType::const_iterator,PairDFType, DistriIterHasher> 
 // macros
 #define PDD_DEFAULT_INTEGRATION_STEPS 50
 #define PDD_DEFAULT_SUBINTEGRATION_STEPS 10
+#define PDD_SUB_INTERVALL_CALCULATIONS_PER_THREAD 300000
 
 // enums
 enum class ProbDistOp
@@ -130,6 +138,10 @@ _WIN_DLL_API
 #endif
 CProbabilityDensityDistribution : public CDistribution
 {
+
+// needs access to protected members    
+friend class CConvolutionThread;
+
 public:
     
     ////////////////////////////////////////////
@@ -465,8 +477,24 @@ public:
      */
     int SubIntegrationSteps() const { return m_nSubIntegrationSteps;}
     
-    CDigFloat& Offset(MapDFDFType::const_iterator it){assert(m_LinPars.find(it) != m_LinPars.end()); return m_LinPars[it].first;};
-    CDigFloat& Slope(MapDFDFType::const_iterator it){assert(m_LinPars.find(it) != m_LinPars.end()); return m_LinPars[it].second;};
+    CDigFloat& Offset(MapDFDFType::const_iterator it)
+    {
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("called with ")+it->first.RawPrint(10));
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("from ")+ Address2String(this));  
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("offset ")+m_LinPars[it].first.RawPrint(10));   
+        assert(m_LinPars.find(it) != m_LinPars.end()); 
+        return m_LinPars[it].first;
+        
+    };
+    CDigFloat& Slope(MapDFDFType::const_iterator it)
+    {
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("called with ")+it->first.RawPrint(10));  
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("from ")+ Address2String(this));  
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("Slope ")+m_LinPars[it].second.RawPrint(10));    
+        assert(m_LinPars.find(it) != m_LinPars.end()); 
+        return m_LinPars[it].second;
+        
+    };
     
     /**
      * @brief returns the linear parameters for all intervalls as string
@@ -507,7 +535,14 @@ protected:
     */     
     CProbabilityDensityDistribution& _GeneralOperatorsFunctionAnalytical(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
     CProbabilityDensityDistribution& _GeneralOperatorsFunctionAnalytical2(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+    // without making a plan : prepares x-intervals and vector of target values
+    CProbabilityDensityDistribution& _GeneralOperatorsFunctionAnalytical3(CProbabilityDensityDistribution& other, const ProbDistOp Operation);
+    
+    
+    void _Convolution4TargetValue(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, const VectorPairDFType& vpdfXIntervals, const CDigFloat& dfTargetValue, CDigFloat& dfResult);
  
+    void _Convolution4TargetValueThread(CProbabilityDensityDistribution* pOther, ProbDistOp *pOperation, VectorPairDFType* pvpdfXIntervals, vector<CDigFloat>* pvdfTargetValues, vector<CDigFloat>* pvdfResultPointer);
+  
     /**
      * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan which keeps the integration path for an arithmetic operation for all target values of 
      *   the resulting distribution
@@ -527,6 +562,18 @@ protected:
      * 
      */  
     void _SetConvolutionPlan2(CProbabilityDensityDistribution& Other, const ProbDistOp Operation);
+    
+    /**
+     * @brief set CProbabilityDensityDistribution::m_ConvolutionPlan which keeps the integration path for an arithmetic operation for all target values of 
+     *   the resulting distribution
+     * 
+     * @param[in] Other CProbabilityDensityDistribution distribution the arithmetic operation is performed with this distri
+     * @param[in] Operation ProbDistOp the arithmetic operation (e.g. sum , subtration, ..)
+     * @param[out] vdfTargetValues vector of target values of type CDigFloat
+     * @param[out] vpdfXIntervals vector of x-intervals of type pair<CDigFloat, CDigFloat>
+     * 
+     */  
+    void _PrepareConvolution(CProbabilityDensityDistribution& Other, const ProbDistOp Operation, vector<CDigFloat>& vdfTargetValues, VectorPairDFType& vpdfXIntervals);
  
     /**
      * @brief sets the linear parameters (offset and slope) for each intervall of the distribution CProbabilityDensityDistribution::m_LinPars keeps these linear parameters
@@ -663,5 +710,8 @@ string
 _WIN_DLL_API
 #endif
 GetProbDistOpAsString( ProbDistOp op );
-
+   
+////////////////////////////////////////////////////////
+// thread class for convolution
+////////////////////////////////////////////////////////
 #endif // CPROBABILITYDENSITYDISTRIBUTION_H
