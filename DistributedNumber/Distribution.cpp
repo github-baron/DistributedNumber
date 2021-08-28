@@ -37,6 +37,9 @@ CDistribution::CDistribution()
 
 CDistribution::CDistribution(const CDistribution& other)
 {
+    LOGTRACE(LS_Dist+"ConstructorConstRef", string("called with args:"));
+    LOGTRACE(LS_Dist+"ConstructorConstRef", string("other \n") + PrintMetaInfo() );
+    
     mDistribution = other.mDistribution;
 }
 
@@ -66,28 +69,59 @@ bool CDistribution::operator!=(const CDistribution& other) const
     /////////////////////////////////// 
 CDistribution & CDistribution::operator*=(const CDigFloat& Value)
 {
-    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
-        iel->second*=Value; 
+
+    CDistribution Copy(*this);
+    mDistribution.clear();
+    for(auto iel : Copy.Distribution()) 
+        Add(iel.first*Value,iel.second);
     return *this;
 }
 CDistribution & CDistribution::operator/=(const CDigFloat& Value)
 {
-    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
-        iel->second/=Value; 
+    CDistribution Copy(*this);
+    mDistribution.clear();
+    for(auto iel : Copy.Distribution()) 
+        Add(iel.first/Value,iel.second);
     return *this;
 }
 
 CDistribution & CDistribution::operator+=(const CDigFloat& Value)
 {
-    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
-        iel->second+=Value; 
+    Shift(Value);
     return *this;
 }
 CDistribution & CDistribution::operator-=(const CDigFloat& Value)
 {
-    for(auto iel = mDistribution.begin(); iel != mDistribution.end(); iel++) 
-        iel->second-=Value; 
+    Shift(-Value);
     return *this;
+}
+
+CDistribution CDistribution::operator+(const CDigFloat& Value)
+{
+    CDistribution Result(*this);
+    Result+=Value;
+    return Result;
+}
+
+CDistribution CDistribution::operator-(const CDigFloat& Value)
+{
+    CDistribution Result(*this);
+    Result-=Value;
+    return Result;
+}
+
+CDistribution CDistribution::operator*(const CDigFloat& Value)
+{
+    CDistribution Result(*this);
+    Result*=Value;
+    return Result;
+}
+
+CDistribution CDistribution::operator/(const CDigFloat& Value)
+{
+    CDistribution Result(*this);
+    Result/=Value;
+    return Result;
 }
 
 ///////////////////////////////////
@@ -150,14 +184,18 @@ void CDistribution::Scale(const CDigFloat& scale)
 ////////////////////////////////////////
 // functions
 ////////////////////////////////////////
-bool CDistribution::Add(const CDigFloat& variable, const CDigFloat value)
+bool CDistribution::Add(const CDigFloat& variable, const CDigFloat value, bool bWithError /*=false*/)
 {   
     // negative values are not allowed
     if( value < 0 )
         return false;
     
     // now add the value
-    mDistribution[variable] = value;
+    if(bWithError)
+        mDistribution[variable] = value;
+    else
+        mDistribution[variable.RawValue()] = value.RawValue();
+    
     return true;
 }
 
@@ -607,9 +645,9 @@ void CDistribution::Reset()
 {
     _Init();
 }
-std::__cxx11::string CDistribution::PrintMetaInfo()
+std::__cxx11::string CDistribution::PrintMetaInfo() const
 {
-    return string("Distribution: nPoints = ") + to_string(Distribution().size()) + ", x-interval:[ " + firstVariable().RawPrint(10) + ", " + lastVariable().RawPrint(10) + " ]";
+    return string("Distribution: nPoints = ") + to_string(mDistribution.size()) + "\n x-interval:[ " + firstVariable().RawPrint(10) + ", " + lastVariable().RawPrint(10) + " ]";
     
 }
 
@@ -725,6 +763,8 @@ CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left)
     
     MapDFDFType::const_iterator Right = Left;
     Right++;
+    
+    LOGTRACE(LS_Dist + "_LinearOffset", string("right iterator  (x2,y2) :") + ::Print(Right));
  
     // check if is outside the distri 
     if(Right == Distribution().end() )
@@ -756,18 +796,20 @@ CDigFloat CDistribution::_LinearSlope(MapDFDFType::const_iterator& Left)
     // check if is outside the distri 
     if(Left == Distribution().end() )
     {
-            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            LOGTRACE(LS_Dist + "_LinearSlope", string("iterator exceeds distri limits: returning 0"));
             return 0;
 
     }   // endif(Left == Distribution().end())
     
     MapDFDFType::const_iterator Right = Left;
     Right++;
+    
+    LOGTRACE(LS_Dist + "_LinearSlope", string("right iterator  (x2,y2) :") + ::Print(Right));
  
     // check if is outside the distri 
     if(Right == Distribution().end() )
     {
-            LOGTRACE(LS_Dist + "_LinearOffset", string("iterator exceeds distri limits: returning 0"));
+            LOGTRACE(LS_Dist + "_LinearSlope", string("iterator exceeds distri limits: returning 0"));
             return 0;
 
     }   // endif(Left == Distribution().end())
@@ -856,7 +898,64 @@ void CDistribution::_Init()
 /////////////////////////////////////////
 // external functions
 //////////////////////////////////////
-string Print(const MapDFDFType::const_iterator& it)
+CDistribution operator+(const CDigFloat& dfValue, CDistribution& Distri)
 {
-    return string("( ") + it->first.RawPrint(20) + ", " + it->second.RawPrint(20) + " )";
+    // do the operation
+    CDistribution Result;
+    for(auto iel: Distri.Distribution())
+        Result.Add(dfValue+iel.first, iel.second);
+    
+    // hand over peripherial parameters
+    Result.MaxBinarySearchIterations(Distri.MaxBinarySearchIterations());
+    
+    // hand over result
+    return Result;
+}
+
+CDistribution operator-(const CDigFloat& dfValue, CDistribution& Distri)
+{
+    // do the operation
+    CDistribution Result;
+    for(auto iel: Distri.Distribution())
+        Result.Add(dfValue-iel.first, iel.second);
+    
+    // hand over peripherial parameters
+    Result.MaxBinarySearchIterations(Distri.MaxBinarySearchIterations());
+    
+    // hand over result
+    return Result;
+}
+
+CDistribution operator*(const CDigFloat& dfValue, CDistribution& Distri)
+{
+    // do the operation
+    CDistribution Result;
+    for(auto iel: Distri.Distribution())
+        Result.Add(dfValue*iel.first, iel.second);
+    
+    // hand over peripherial parameters
+    Result.MaxBinarySearchIterations(Distri.MaxBinarySearchIterations());
+    
+    // hand over result
+    return Result;
+}
+
+CDistribution operator/(const CDigFloat& dfValue, CDistribution& Distri)
+{
+    // do the operation:
+    CDistribution Result;
+    for(auto iel: Distri.Distribution())
+        if(iel.first.RawValue() != 0)
+            Result.Add(dfValue/iel.first, iel.second);
+    
+    // hand over peripherial parameters
+    Result.MaxBinarySearchIterations(Distri.MaxBinarySearchIterations());
+    
+    // hand over result
+    return Result;
+}
+
+string Print(const MapDFDFType::const_iterator& it, unsigned int uiPrecision /*=20*/)
+{
+    return string("( ") + it->first.RawPrint(uiPrecision) + ", " + it->second.RawPrint(uiPrecision) + " )";
 }

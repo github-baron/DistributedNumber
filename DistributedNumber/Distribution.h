@@ -124,7 +124,7 @@ public:
     // arithmetic operators
     ///////////////////////////////////
     /**
-     * @brief multiplication assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     * @brief multiplication assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
      *
      * @param[in] Value CDigFloat factor
      * @return CDistribution
@@ -132,7 +132,7 @@ public:
     CDistribution& operator*=(const CDigFloat& Value);
 
     /**
-     * @brief division assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     * @brief division assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
      *
      * @param[in] Value CDigFloat divisor
      * @return CDistribution
@@ -140,7 +140,7 @@ public:
     CDistribution& operator/=(const CDigFloat& Value);
     
     /**
-     * @brief summation assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     * @brief summation assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
      *
      * @param[in] Value CDigFloat summand
      * @return CDistribution
@@ -148,12 +148,45 @@ public:
     CDistribution& operator+=(const CDigFloat& Value);
     
     /**
-     * @brief subtraction assingment operator with factor: is applied on \ref def-distri-value "distribution values"
+     * @brief subtraction assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
      *
      * @param[in] Value CDigFloat subtrahend
      * @return CDistribution
      */
     CDistribution& operator-=(const CDigFloat& Value);
+
+    
+    /**
+     * @brief multiplication assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat factor
+     * @return CDistribution
+     */
+    CDistribution operator*(const CDigFloat& Value);
+
+    /**
+     * @brief division assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat divisor
+     * @return CDistribution
+     */
+    CDistribution operator/(const CDigFloat& Value);
+
+    /**
+     * @brief summation assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat summand
+     * @return CDistribution
+     */
+    CDistribution operator+(const CDigFloat& Value);
+
+    /**
+     * @brief subtraction assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
+     *
+     * @param[in] Value CDigFloat subtrahend
+     * @return CDistribution
+     */
+    CDistribution operator-(const CDigFloat& Value);
     
     ///////////////////////////////////
     // getter 
@@ -163,26 +196,26 @@ public:
      * 
      * @return MapDFDFType:const_iterator
      */
-    inline MapDFDFType::const_iterator front() { return Distribution().begin();}  
+    inline MapDFDFType::const_iterator front() const { return mDistribution.begin();}  
     /**
      * @brief return the last valid iterator of the distribution
      * 
      * @return MapDFDFType:const_iterator
      */
-    inline MapDFDFType::const_iterator back() { return prev(Distribution().end());}
+    inline MapDFDFType::const_iterator back() const { return prev(mDistribution.end());}
     
     /**
      * @brief return the first variable of the distribution
      * 
      * @return CDigFloat
      */
-    inline CDigFloat firstVariable() { return front()->first;}  
+    inline CDigFloat firstVariable() const { return front()->first;}  
     /**
      * @brief return the last  varibale of the distribution
      * 
      * @return CDigFloat
      */
-    inline CDigFloat lastVariable() { return back()->first;}
+    inline CDigFloat lastVariable() const { return back()->first;}
     
     
     
@@ -211,8 +244,9 @@ public:
      *
      * @param[in] variable CDigFloat as distribution variable of the new point
      * @param[in] value CDigFloat as distribution value of the new point
+     * @param[in] bWithError bool adds the point with error history
      */
-    bool Add(const CDigFloat& variable, const CDigFloat value); 
+    bool Add(const CDigFloat& variable, const CDigFloat value, bool bWithError=false); 
     
     /**
      * @brief returns the distribution \ref def-distri-point "points" around the given variable
@@ -279,7 +313,7 @@ public:
      *
      * @return map<CDigFloat, CDigFloat> 
      */
-    const MapDFDFType& Distribution(){return mDistribution;}   
+    const MapDFDFType& Distribution() {return mDistribution;}
     
     /**
      * @brief calculates the integral of the absolute value of this distribution
@@ -350,7 +384,7 @@ public:
      * @param nPrecision int
      * @return string
      */
-    string PrintMetaInfo();
+    virtual string  PrintMetaInfo() const;
     
     /**
      * @brief returns string of all element pairs with given precision
@@ -358,7 +392,7 @@ public:
      * @param nPrecision int
      * @return string
      */
-    string Print(int nPrecision, bool bWithError = true);
+    string Print(int nPrecision, bool bWithError = true) ;
     
     ///////////////////////////////
     // getter / setter
@@ -368,7 +402,7 @@ public:
      * 
      * @return unsigned int
      */
-    unsigned int MaxBinarySearchIterations() { return uiMaxBinarySearchIterations;}
+    unsigned int MaxBinarySearchIterations() const { return uiMaxBinarySearchIterations;}
    /**
      * @brief sets the maximal number used for binary search: is used for ::CoverageFromTo
      * @param uiIterations unsigned int maximal number of iterations
@@ -444,14 +478,80 @@ protected:
     MapDFDFType mDistribution;
 };
 
-
-/////////////////////////////////////////
+////////////////////////////////////////////////////////
 // external functions
-//////////////////////////////////////
+////////////////////////////////////////////////////////
+/**
+    * @brief the operator is applied on \ref def-distri-variable "distribution variables" and returns a distri with x(new distri)=dfValue+\ref def-distri-variable "variable"(Distri) where
+    * the \ref def-distri-values "distribution values" are unchanged.
+    * 
+    * @param[in] dfValue CDigFloat as numerator of every \ref def-distri-variable "distribution variable"
+    * @param[in] CDistribution distribution which \ref def-distri-variable "distribution variables" are the denominator of the \ref def-distri-variable "distribution variables" of the new distri
+    * @return CProbabilityDensityDistribution with new \ref def-distri-variable "distribution variables" = dfValue / \ref def-distri-variable "variable" (Distri)
+    * 
+    */
+CDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator+(const CDigFloat& dfValue, CDistribution& Distri);
+
+/**
+    * @brief the operator is applied on \ref def-distri-variable "distribution variables" and returns a distri with x(new distri)=dfValue-\ref def-distri-variable "variable"(Distri) where
+    * the \ref def-distri-values "distribution values" are unchanged.
+    * 
+    * @param[in] dfValue CDigFloat as numerator of every \ref def-distri-variable "distribution variable"
+    * @param[in] CDistribution distribution which \ref def-distri-variable "distribution variables" are the denominator of the \ref def-distri-variable "distribution variables" of the new distri
+    * @return CProbabilityDensityDistribution with new \ref def-distri-variable "distribution variables" = dfValue / \ref def-distri-variable "variable" (Distri)
+    * 
+    */
+CDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator-(const CDigFloat& dfValue, CDistribution& Distri);
+
+/**
+    * @brief the operator is applied on \ref def-distri-variable "distribution variables" and returns a distri with x(new distri)=dfValue*\ref def-distri-variable "variable"(Distri) where
+    * the \ref def-distri-values "distribution values" are unchanged.
+    * 
+    * @param[in] dfValue CDigFloat as numerator of every \ref def-distri-variable "distribution variable"
+    * @param[in] CDistribution distribution which \ref def-distri-variable "distribution variables" are the denominator of the \ref def-distri-variable "distribution variables" of the new distri
+    * @return CProbabilityDensityDistribution with new \ref def-distri-variable "distribution variables" = dfValue / \ref def-distri-variable "variable" (Distri)
+    * 
+    */
+CDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator*(const CDigFloat& dfValue, CDistribution& Distri);
+
+/**
+  * @brief the operator is applied on \ref def-distri-variable "distribution variables" and returns a distri with x(new distri)=dfValue/\ref def-distri-variable "variable"(Distri) where
+  * the \ref def-distri-values "distribution values" are unchanged.
+  * 
+  * @param[in] dfValue CDigFloat as numerator of every \ref def-distri-variable "distribution variable"
+  * @param[in] CDistribution distribution which \ref def-distri-variable "distribution variables" are the denominator of the \ref def-distri-variable "distribution variables" of the new distri
+  * @return CProbabilityDensityDistribution with new \ref def-distri-variable "distribution variables" = dfValue / \ref def-distri-variable "variable" (Distri)
+  * 
+  */
+CDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator/(const CDigFloat& dfValue, CDistribution& Distri);
+
+/**
+  * @brief returns a string of the \ref def-distri-point "point"
+  * 
+  * @param[in] it as MapDFDFType::const_iterator pointing to the \ref def-distri-point "distribution point"
+  * @return string of the \ref def-distri-point "point" in the form \ref def-distri-variable "variable" , \ref def-distri-value "value"
+  * 
+  */
 string 
 #ifdef _WIN32
 _WIN_DLL_API
 #endif
-Print(const MapDFDFType::const_iterator& it);
+Print(const MapDFDFType::const_iterator& it, unsigned int uiPrecision = 20);
 
 #endif // CDISTRIBUTION_H

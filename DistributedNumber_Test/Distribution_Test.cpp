@@ -49,9 +49,9 @@ public:
        
         // now check the single elements:
         MapDFDFType::const_iterator iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
         
         // newly add an element in between
         d1.Add(0.3,6);
@@ -69,38 +69,122 @@ public:
     }
     void DistributionOperations()
     {
-        CDistribution d1;
+        CDistribution d1,d2;
         d1.Add(-1,3);
         d1.Add( 1,3);
+        d2=d1;
         
         // operator *=:
         d1 *= 2;        
         MapDFDFType::const_iterator iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 6) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : " + Print(iel,10) , iel->first == -2 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 6) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 3) ;
+        
+        // operator *:
+        d1 = d2*2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : " + Print(iel,10) , iel->first == -2 && iel->second == 3) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 3) ;
+        // needed for next test
+        d2 = d1;
         
         // operator /=:
         d1 /= 2;        
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
+        
+        // operator /:
+        d1 = d2 / 2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
+        // needed for next test
+        d2 = d1;
         
         // operator +=:
         d1 += 1.5;        
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 4.5) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[0.5] should be 3 but is : "+ Print(iel,10) , iel->first == 0.5 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 4.5) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[2.5] should be 3 but is : "+ Print(iel,10) , iel->first == 2.5 && iel->second == 3) ;
         
-        // operator +=:
+        // operator +:
+        d1 = d2 + 1.5;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[0.5] should be 3 but is : "+ Print(iel,10) , iel->first == 0.5 && iel->second == 3) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2.5] should be 3 but is : "+ Print(iel,10) , iel->first == 2.5 && iel->second == 3) ;
+        // needed for next test
+        d2 = d1;
+        
+        // operator -=:
         d1 -= 1.5;        
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
         
+        // operator -:
+        d1 = d2 - 1.5;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
+        
+    }
+    
+    void Distribution_ExternalOperations()
+    {
+        CDistribution d1, d2;
+        d2.Add(-1,1);
+        d2.Add( 1,2);
+        
+        // operator +:
+        d1 = 2 + d2;        
+        MapDFDFType::const_iterator iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + Print(iel,10) , iel->first == 1 && iel->second == 1) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[3] should be 3 but is : "+ Print(iel,10) , iel->first == 3 && iel->second == 2) ;
+        
+        // operator -:
+        d1 = 2 - d2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 2) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[3] should be 3 but is : "+ Print(iel,10) , iel->first == 3 && iel->second == 1) ;
+        
+        // operator *:
+        d1 = 2 * d2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 1) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 2) ;
+        
+        // operator * negative number:
+        d1 = -2 * d2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 2) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 1) ;
+        
+        // operator /:
+        d1 = 2 / d2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 1) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 2) ;
+        
+        // operator / with negative number:
+        d1 = -2 / d2;        
+        iel = d1.Distribution().begin();
+        CPPUNIT_ASSERT_MESSAGE( "d[-2] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 2) ;
+        iel++;
+        CPPUNIT_ASSERT_MESSAGE( "d[2] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 1) ;
     }
     
     void DistributionFunctionOnVariable()
@@ -112,37 +196,37 @@ public:
         // shifting back
         d1.Shift(-3);
         MapDFDFType::const_iterator iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -4 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -4 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -2 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 3) ;
 
         // shifting foreward
         d1.Shift(3);
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
         
         // scaling: inverting never works !!
         d1.Scale(-1);
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
         
          // scaling: inverting never works but the scale is applied
         d1.Scale(-2);
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -2 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -2 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 2 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 2 && iel->second == 3) ;
  
         // scaling: revert: apply 1/ factor
         d1.Scale(0.5);
         iel = d1.Distribution().begin();
-        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == -1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[-1] should be 3 but is : "+ Print(iel,10) , iel->first == -1 && iel->second == 3) ;
         iel++;
-        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : " + iel->first.RawPrint(30) + "\n" + iel->second.RawPrint(30) , iel->first == 1 && iel->second == 3) ;
+        CPPUNIT_ASSERT_MESSAGE( "d[1] should be 3 but is : "+ Print(iel,10) , iel->first == 1 && iel->second == 3) ;
 
  
     }    

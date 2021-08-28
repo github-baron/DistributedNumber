@@ -129,7 +129,7 @@ public:
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("dfMu = ") + dfMu.RawPrint(10));
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("dfSigma = ") + dfSigma.RawPrint(10));
         
-        pd1.NormalDistribution(dfMu,dfSigma,1000);
+        pd1.NormalDistribution(dfMu,dfSigma,20000);
         
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal","comparing calculated values:");
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_GenerateNormal",string("mean           = ") + pd1.Mean().RawPrint(10));
@@ -264,7 +264,6 @@ public:
             << "d3.Var = " << d3.Variance().RawPrint(10) << endl 
             << "d1.Var = " << d1.Variance().RawPrint(10) << endl
             << "d2.Var = " << d2.Variance().RawPrint(10) << endl
-            << "d1.Covar(d2) = " << d1.Covariance(d2).RawPrint(10) << endl 
             << "d1.var + d2.var - 2*d1.covar(d2) =" << dfTheoreticalValue.RawPrint(10) << endl;
         LOGTRACE("Distribution_Test::ProbabilityDensityDistribution_Operators", oss.str());
         CPPUNIT_ASSERT_MESSAGE( "means should sum: " + d3.Variance().Print(10) + "=" +  dfTheoreticalValue.RawPrint(10), d3.Variance() == dfTheoreticalValue);
@@ -402,8 +401,8 @@ public:
         CProbabilityDensityDistribution d1,d2,d3,d4, dRes;
         // expectation value = 0
         // sigma = 1;
-        int nDistriPoints = 10000;
-        int nIntegrationSteps=10000;
+        int nDistriPoints = 3000;
+        int nIntegrationSteps=3000;
         d1.NormalDistribution(0,1,nDistriPoints );
         d1.IntegrationSteps(nIntegrationSteps);
         d2.NormalDistribution(0,1,nDistriPoints );
@@ -422,6 +421,8 @@ public:
         dfMean = dRes.Mean();
         dfVariance = dRes.Variance();
         dRes.CoverageInterval(95,dfFrom,dfTo);
+        
+        dfFrom.Precision(2); dfTo.Precision(2);
 
         cout << endl;
 
@@ -447,7 +448,7 @@ public:
         // --> sigma is a/sqrt(3)
         // when sigma is one --> a = sqrt(3)
         d1.ConstDistribution(-sqrt(3),sqrt(3));
-        d1.IntegrationSteps(200);
+        d1.IntegrationSteps(2000);
         
 //         dTemp1 = d1 + d2;
 //         dTemp2 = d3 + d4;
@@ -458,6 +459,7 @@ public:
         dfMean = dRes.Mean();
         dfVariance = dRes.Variance();
         dRes.CoverageInterval(95,dfFrom,dfTo);
+        dfFrom.Precision(2); dfTo.Precision(2);
 
         cout << endl;
 
@@ -468,7 +470,7 @@ public:
 
         CPPUNIT_ASSERT_MESSAGE( "expected mean is 0 but is \n left: " + dfMean.Print(2), dfMean == 0);
         CPPUNIT_ASSERT_MESSAGE( "expected variance is 4 but is \n left: " + dfVariance.Print(2), dfVariance == 4);
-        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-3.88 but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfTo == -3.88 && dfFrom == 3.88);
+        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-3.88 but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfFrom == -3.88 && dfTo == 3.88);
 
     }
         
@@ -490,27 +492,30 @@ public:
         // when simga is ten --> a =10*sqrt(3)
         d1.ConstDistribution(-sqrt(3),sqrt(3));
         d2.ConstDistribution(-10*sqrt(3),10*sqrt(3));
-        d1.IntegrationSteps(400);
-        d2.IntegrationSteps(400);
+        d1.IntegrationSteps(2000);
+        d2.IntegrationSteps(2000);
         dRes = d1 + d1 + d1 + d2;
         
         CDigFloat dfMean, dfVariance, dfFrom,dfTo;
         dfMean = dRes.Mean();
         dfVariance = dRes.Variance();
         dRes.CoverageInterval(95,dfFrom,dfTo);
+        dfFrom.Precision(0); dfTo.Precision(0);
+
 
         
         CPPUNIT_ASSERT_MESSAGE( "expected mean is 0 but is : " + dfMean.Print(2), dfMean == 0);
 // //         CPPUNIT_ASSERT_MESSAGE( "expected variance is 103 but is : " + dfVariance.Print(2), dfVariance == 103);
-        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-17. but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfTo == -17 && dfFrom == 17);
+        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-17. but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfFrom == -17 && dfTo == 17);
 
     } 
     void ProbabilityDensityDistribution_GUMMassCalibration_Approximation()
     {
         
-        CProbabilityDensityDistribution MassCalibDelta,MassRefConv,  MassRefConvDelta, MassNominal; 
+        CProbabilityDensityDistribution MassCalibDelta,MassRefConv,  MassRefConvDelta; 
         CProbabilityDensityDistribution DensityAir, DensityMassCalib, DensityMassRef;
         CDigFloat dfDensityAirConv = 1.2; // kg/m³
+        CDigFloat dfMassNominal = 100000;  // mg
         // model:
         // dm = (m_rc+dm_rc)*(1+(r_a-r_a0)*(1/r_w-1/r_r))-m_nom 
         // EXPLANATION:
@@ -544,53 +549,184 @@ public:
         // --> sigma is a/sqrt(3)
         // when sigma is one --> a = sqrt(3)
         // when simga is ten --> a =10*sqrt(3)
-        MassRefConv.NormalDistribution(100,0.00005,200); // g
-        MassRefConvDelta.NormalDistribution(0.001234,0.00002,200); // g
+        unsigned int uiSteps = 4000;
+        MassRefConv.NormalDistribution(100000,0.05,uiSteps); // mg
+        MassRefConvDelta.NormalDistribution(1.234,0.02,uiSteps); // mg
         DensityAir.ConstDistribution(1.2-0.1,1.2+0.1); // kg / m³
         DensityMassCalib.ConstDistribution(8000-1000,8000+1000); // kg / m³
         DensityMassRef.ConstDistribution(8000-50,8000+50); // kg / m³
-        
-        
-        MassRefConv.IntegrationSteps(200);
-        DensityAir.IntegrationSteps(200);
-        DensityMassRef.IntegrationSteps(200);
-        DensityMassCalib.IntegrationSteps(200);
-        cout << "calculating: MassSum " << endl;
-        
-        CProbabilityDensityDistribution MassSum = MassRefConv + MassRefConvDelta;
-        
-        LOGTRACE("Distribution_Test::GUMMassCalibration","MassRefConv lin pars =  \n" + MassRefConv.PrintLinPars());
-        LOGTRACE("Distribution_Test::GUMMassCalibration","MassRefConvDelta lin pars =  \n" + MassRefConvDelta.PrintLinPars());
-        LOGTRACE("Distribution_Test::GUMMassCalibration","MassSum =  \n" + MassSum.Print(10,false));
-        for(auto iel: MassSum.Distribution())        
-          CPPUNIT_ASSERT_MESSAGE( "element is less zero " + iel.first.RawPrint(10) + ", " + iel.second.RawPrint(10), iel.second >= 0);
 
         
         
-//         cout << "calculating: DensityAirDiff " << endl;
-//         CProbabilityDensityDistribution DensityAirDiff = DensityAir; DensityAirDiff.Shift(-dfDensityAirConv);
+        MassRefConv.IntegrationSteps(uiSteps);
+        DensityMassRef.IntegrationSteps(uiSteps);
+        DensityMassCalib.IntegrationSteps(uiSteps);
+        DensityAir.IntegrationSteps(uiSteps);
+        DensityMassCalib.IntegrationSteps(uiSteps);
+        
+//         cout << endl << "calculating: MassSum " << endl;
+//         
+//         CProbabilityDensityDistribution MassSum = MassRefConv + MassRefConvDelta;
+//         
+//         LOGTRACE("Distribution_Test::GUMMassCalibration","MassRefConv lin pars =  \n" + MassRefConv.PrintLinPars());
+//         LOGTRACE("Distribution_Test::GUMMassCalibration","MassRefConvDelta lin pars =  \n" + MassRefConvDelta.PrintLinPars());
+//         LOGTRACE("Distribution_Test::GUMMassCalibration","MassSum =  \n" + MassSum.Print(10,false));
+//         for(auto iel: MassSum.Distribution())        
+//           CPPUNIT_ASSERT_MESSAGE( "element is less zero " + iel.first.RawPrint(10) + ", " + iel.second.RawPrint(10), iel.second >= 0);
+// 
+//         
+//         
+        cout << "calculating: DensityAirDiff " << endl;
+        CProbabilityDensityDistribution DensityAirDiff = DensityAir-dfDensityAirConv;
+        cout << "calculating: inverse DensityMassCalib" << endl;
+        CProbabilityDensityDistribution DensityMassCalibInv = 1./DensityMassCalib;
+        cout << "calculating: inverse DensityMassRef" << endl;
+        CProbabilityDensityDistribution DensityMassRefInv = 1./DensityMassRef;
+        cout << "calculating: inverse DensityMassInvDiff" << endl;
+        CProbabilityDensityDistribution DensityMassInvDiff = DensityMassCalibInv - DensityMassRefInv ;
 //         cout << "calculating: DensityMassDiff " << endl;
 //         CProbabilityDensityDistribution DensityMassDiff = DensityMassRef-DensityMassCalib;
 //         cout << "calculating: DensityMassProd " << endl;
 //         CProbabilityDensityDistribution DensityMassProd = DensityMassCalib*DensityMassRef;
 //         
 //         MassCalibDelta = DensityMassDiff / DensityMassProd;
+//         cout << "multiplying with air density" << endl;
 //         MassCalibDelta *=DensityAirDiff;
+//         cout << "multiplying mass sum" << endl;
 //         MassCalibDelta *=MassSum;
+//         cout << "adding mass sum" << endl;
 //         MassCalibDelta += MassSum;
-//         
-//         CDigFloat dfMean, dfVariance, dfFrom,dfTo;
-//         dfMean = MassCalibDelta.Mean();
-//         dfVariance = MassCalibDelta.Variance();
-//         MassCalibDelta.CoverageInterval(95,dfFrom,dfTo);
-// 
+//         cout << "subtracting reference mass " << endl;
+//         MassCalibDelta -= dfMassNominal;
         
-//         CPPUNIT_ASSERT_MESSAGE( "expected mean is 1.234 but is : " + dfMean.Print(2), dfMean == 1.234);
-//         CPPUNIT_ASSERT_MESSAGE( "expected variance is 103 but is : " + dfVariance.Print(2), dfVariance == 103);
-//         CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is +-17. but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfTo == -17 && dfFrom == 17);
+        
+        MassCalibDelta = DensityAirDiff * DensityMassInvDiff;
+        CProbabilityDensityDistribution MassSum = MassRefConv + MassRefConvDelta;
+        MassCalibDelta *= MassSum;
+        MassCalibDelta += MassSum;
+        MassCalibDelta -= dfMassNominal;
+        
+        CDigFloat dfMean, dfVariance, dfFrom,dfTo;
+        dfMean = MassCalibDelta.Mean(); dfMean.Precision(3);
+        dfVariance = MassCalibDelta.Variance();
+        MassCalibDelta.CoverageInterval(95,dfFrom,dfTo);
+        dfFrom.Precision(4), dfTo.Precision(4);
+        CDigFloat dfSigmaCalc =sqrt(dfVariance);
+        dfSigmaCalc.Precision(4);
+        
+//         cout << endl << "-------------------- MassCalibDelta ----------------------" << endl << MassCalibDelta.Print(10,false) << endl;
+
+        
+        CPPUNIT_ASSERT_MESSAGE( "expected mean is 1.234 mg but is : " + dfMean.Print(2), dfMean == 1.234);
+        CPPUNIT_ASSERT_MESSAGE( "expected variance GUM is 0.0754 but using 0.0763 (mine) but is : " + dfSigmaCalc.Print(3), dfSigmaCalc == 0.0763 /*0.0754 : value from GUM*/);
+        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is [1.0834 / 1.3825] but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfFrom == 1.0834 && dfTo == 1.3825);
 
     } 
         
-
+  void ProbabilityDensityDistribution_GUMMassCalibration_Exact()
+    {
+        
+        CProbabilityDensityDistribution MassCalibDelta,MassRefConv,  MassRefConvDelta; 
+        CProbabilityDensityDistribution DensityAir, DensityMassCalib, DensityMassRef;
+        CDigFloat dfDensityAirConv = 1.2; // kg/m³
+        CDigFloat dfMassNominal = 100000;  // mg
+        // model:
+        // dm = (m_rc+dm_rc)*(1- r_a/r_r)/(1-r_a0/r_r)*(1-r_a0/r_w)/(1-r_a/r_w)-m_nom 
+        // EXPLANATION:
+        // dm:
+        //     the deviation of the calibrated mass (m_w) from the nominal m_nom
+        // m_rc:
+        //     reference conventional mass (with density r_0) put on the other scale pan 
+        //     (Gaussian)
+        // dm_rc:
+        //     weight for fine tuning reference put on the other scale pan
+        //     (Gaussian)
+        // r_a:
+        //     density of air (at actual conditions)
+        // r_a0:
+        //     density of air (at conventional conditions)
+        // r_w:
+        //     density of calibration mass
+        // r_r:
+        //     density of reference mass
+        // m_nom:
+        //     nominal reference mass
+        // summing 3 equal constant distributions with 
+        // <x> =0 and sigma = 1
+        // and one constant distri with:
+        // <x> = 0 and sigma = 10
+        // calculation of width:
+        // expectation value = 0
+        // sigma = 1;
+        // for a constant distri from -a to + a the integral factor is 1 / (2*a)
+        // --> variance is 1/3*a² 
+        // --> sigma is a/sqrt(3)
+        // when sigma is one --> a = sqrt(3)
+        // when simga is ten --> a =10*sqrt(3)
+        unsigned int uiSteps = 500;
+        MassRefConv.NormalDistribution(100000,0.05,uiSteps); // mg
+        MassRefConvDelta.NormalDistribution(1.234,0.02,uiSteps); // mg
+        
+//         DensityAir.ConstDistribution(1.2-0.1,1.2+0.1); // kg / m³
+//         DensityMassCalib.ConstDistribution(8000-1000,8000+1000); // kg / m³
+//         DensityMassRef.ConstDistribution(8000-50,8000+50); // kg / m³        
+        
+         MassRefConv.IntegrationSteps(uiSteps);
+//         MassRefConvDelta .IntegrationSteps(uiSteps);
+//         DensityMassRef.IntegrationSteps(uiSteps);
+//         DensityMassCalib.IntegrationSteps(uiSteps);
+//         DensityAir.IntegrationSteps(uiSteps);
+//         DensityMassCalib.IntegrationSteps(uiSteps);
+        
+        // calculate the mass sum of reference mass and it compensation weight delta reference
+        LOGTRACE("Distribution_Test::GUMMassCalibration", string("calculating MassSum with:"));
+        LOGTRACE("Distribution_Test::GUMMassCalibration", string("integration steps for MassRefConv \n") + MassRefConv.PrintMetaInfo());
+        LOGTRACE("Distribution_Test::GUMMassCalibration", string("integration steps for MassRefConvDelta \n") + MassRefConvDelta.PrintMetaInfo());
+        CProbabilityDensityDistribution MassSum = MassRefConv + MassRefConvDelta;
+    
+       // calculate all the density relations of the form " 1 - r_a0/r_r"
+       LOGTRACE("Distribution_Test::GUMMassCalibration", "calculating DensityRelAirMassRef ");
+       CProbabilityDensityDistribution DensityRelAirMassRef = 1. - (DensityAir / DensityMassRef);
+//         cout << endl << "-------------------- DensityRelAirMassRef ----------------------" << endl << DensityRelAirMassRef.Print(10) << endl;
+//        
+//        LOGTRACE("Distribution_Test::GUMMassCalibration", "calculating DensityRelAirConvMassRef");
+//        CProbabilityDensityDistribution DensityRelAirConvMassRef = 1.- (dfDensityAirConv / DensityMassRef);
+////         cout << endl << "-------------------- DensityRelAirConvMassRef ----------------------" << endl << DensityRelAirConvMassRef.Print(10,false) << endl;
+//        
+//        LOGTRACE("Distribution_Test::GUMMassCalibration", "calculating DensityRelAirMassCalib");
+//        CProbabilityDensityDistribution DensityRelAirMassCalib = 1. - (DensityAir / DensityMassCalib);
+////         cout << endl << "-------------------- DensityRelAirMassCalib ----------------------" << endl << DensityRelAirMassCalib.Print(10,false) << endl;
+//        
+//        LOGTRACE("Distribution_Test::GUMMassCalibration", "calculating DensityRelAirConvMassCalib");
+//        CProbabilityDensityDistribution DensityRelAirConvMassCalib = 1. - (dfDensityAirConv / DensityMassCalib);
+//            
+//        // now calculate the formula         
+//        LOGTRACE("Distribution_Test::GUMMassCalibration", "calculating MassCalibDelta");
+//        MassCalibDelta = MassSum;// * DensityRelAirMassRef / DensityRelAirConvMassRef * DensityRelAirConvMassCalib / DensityRelAirMassCalib - dfMassNominal ;
+////         cout << endl << "-------------------- MassCalibDelta ----------------------" << endl << MassCalibDelta.Print(10) << endl;
+//        MassCalibDelta *= DensityRelAirMassRef;  
+//        cout << endl << "-------------------- MassCalibDelta ----------------------" << endl << MassCalibDelta.Print(10) << endl;
+////         MassCalibDelta /= DensityRelAirConvMassRef; 
+////         MassCalibDelta *= DensityRelAirConvMassCalib; 
+////         MassCalibDelta /= DensityRelAirMassCalib;
+////         MassCalibDelta -= dfMassNominal;
+//                
+//        CDigFloat dfMean, dfVariance, dfFrom,dfTo;
+//        dfMean = MassCalibDelta.Mean(); dfMean.Precision(3);
+//        dfVariance = MassCalibDelta.Variance();
+//        MassCalibDelta.CoverageInterval(95,dfFrom,dfTo);
+//        dfFrom.Precision(4), dfTo.Precision(4);
+//        CDigFloat dfSigmaCalc =sqrt(dfVariance);
+//        dfSigmaCalc.Precision(4);
+//        
+////         cout << endl << "-------------------- MassCalibDelta ----------------------" << endl << MassCalibDelta.Print(10,false) << endl;
+//
+//        
+//        CPPUNIT_ASSERT_MESSAGE( "expected mean is 1.234 mg but is : " + dfMean.Print(2), dfMean == 1.234);
+//        CPPUNIT_ASSERT_MESSAGE( "expected variance GUM is 0.0754 but using 0.0763 (mine) but is : " + dfSigmaCalc.Print(3), dfSigmaCalc == 0.0763 /*0.0754 : value from GUM*/);
+//        CPPUNIT_ASSERT_MESSAGE( "expected coverage interval is [1.0834 / 1.3825] but is: [" + dfFrom.Print(2) + ", " +  dfTo.Print(2) + "]", dfFrom == 1.0834 && dfTo == 1.3825);
+//
+    } 
+  
     
 };

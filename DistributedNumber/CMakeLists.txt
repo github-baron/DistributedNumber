@@ -39,6 +39,3 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/build/CMake/)
 install(TARGETS DistributedNumber DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/DistributedNumber/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include
         FILES_MATCHING PATTERN "*.h")
-
-# finally set build typ
-set(CMAKE_BUILD_TYPE Debug)
