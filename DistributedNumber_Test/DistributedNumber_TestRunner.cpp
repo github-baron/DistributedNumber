@@ -236,9 +236,15 @@ int main( int argc, char* argv[] )
 //                     &ProbabilityDensityDistribution_Test
 //                     )
 //                   );
+//     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
+//                     "ProbabilityDensityDistribution: GUM example mass calibration, calculated exactly:",
+//                     &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMMassCalibration_Exact,
+//                     &ProbabilityDensityDistribution_Test
+//                     )
+//                   );
     runner.addTest( new CppUnit::TestCaller<CProbabilityDensityDistribution_Test> ( 
-                    "ProbabilityDensityDistribution: GUM example mass calibration, calculated exactly:",
-                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMMassCalibration_Exact,
+                    "ProbabilityDensityDistribution: GUM example comparison loss microwave power meter:",
+                    &CProbabilityDensityDistribution_Test::ProbabilityDensityDistribution_GUMMicrowavePowerMeterCalibration,
                     &ProbabilityDensityDistribution_Test
                     )
                   );

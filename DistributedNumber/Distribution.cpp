@@ -51,6 +51,7 @@ CDistribution::~CDistribution()
 CDistribution& CDistribution::operator=(const CDistribution& other)
 {
     mDistribution = other.mDistribution;
+    MaxBinarySearchIterations(other.MaxBinarySearchIterations());
     return *this;
 }
 
@@ -190,11 +191,21 @@ bool CDistribution::Add(const CDigFloat& variable, const CDigFloat value, bool b
     if( value < 0 )
         return false;
     
-    // now add the value
-    if(bWithError)
-        mDistribution[variable] = value;
+    CDigFloat dfVariable = variable;
+    CDigFloat dfAddValue = value;
+    if(!bWithError)
+    {
+        dfAddValue.ResetError();
+        dfVariable.ResetError();
+    }
+    // check if the variable exists
+    bool bExists = mDistribution.find(dfVariable) != mDistribution.end();
+    
+    // now add the value: if exists--> sum up
+    if(bExists)
+        mDistribution[dfVariable] += dfAddValue;
     else
-        mDistribution[variable.RawValue()] = value.RawValue();
+        mDistribution[dfVariable] = value.RawValue();
     
     return true;
 }
@@ -782,7 +793,7 @@ CDigFloat CDistribution::_LinearOffset(MapDFDFType::const_iterator& Left)
     ).RawPrint(20)); 
     
     
-    return (Right->first*Left->second - Left->first*Right->second) / (Right->first - Left->first);
+    return (_Variable(Right)*Left->second - _Variable(Left)*Right->second) / (_Variable(Right) - _Variable(Left));
     
 }
 
@@ -894,6 +905,19 @@ void CDistribution::_Init()
     MaxBinarySearchIterations(MAX_BINARY_SEARCH_ITERATIONS);
 }
 
+CDigFloat const CDistribution::_Variable(MapDFDFType::const_iterator it) const
+{
+    // check element exists
+    UMapDFType::const_iterator itAssert = m_NonLinTrafoVariables.find(it);
+    assert(itAssert != m_NonLinTrafoVariables.end());
+    
+    // for release: more simple check
+    if(m_NonLinTrafoVariables.size() > 0)
+        return m_NonLinTrafoVariables.at(it);
+    else
+        return it->first;
+}
+
 
 /////////////////////////////////////////
 // external functions
@@ -954,6 +978,50 @@ CDistribution operator/(const CDigFloat& dfValue, CDistribution& Distri)
     // hand over result
     return Result;
 }
+
+CDistribution pow(CDistribution pdDistri, const int& nExponent)
+{
+    LOGTRACE(LS_ProbDist+"pow",string("is called with args:"));
+    LOGTRACE(LS_ProbDist+"pow",string("dfValue = ") + dfValue.RawPrint(15));
+    LOGTRACE(LS_ProbDist+"pow",string("distri = \n") + pdDistri.Print(10));
+    LOGTRACE(LS_ProbDist+"pow",string("pos flag = \n") + Bool2String(bUsePos));
+    
+    // hand over original distribution:
+    CDistribution pdResult(pdDistri);
+    
+    // handle non-lin trafo:
+    // check if there is already a non-linear trafo of the copied distri
+    // depending on that the 
+    assert(pdResult.m_NonLinTrafoVariables.size() == pdResult.Distribution().size());
+    CDigFloat dfVariable = pdResult.m_NonLinTrafoVariables[pdResult.Distribution().begin()];
+    for(MapDFDFType::const_iterator iel = pdResult.Distribution().begin(); iel != pdResult.Distribution().end(); iel++)
+            pdResult.m_NonLinTrafoVariables[iel]=pow(pdResult._Variable(iel),nExponent);
+    
+    
+//     CDigFloat dfRelShift = 0;
+//     for(MapDFDFType::const_iterator iel = pdDistri.Distribution().begin(); iel != pdDistri.Distribution().end(); iel++)
+//     {
+//         MapDFDFType::const_iterator ielNext = iel;
+//         ielNext++;
+//         CDigFloat dfVar = pow(iel->first, nExponent);
+//         CDigFloat dfProb = iel->second;
+//         if(ielNext != pdDistri.Distribution().end())
+//         {
+//             dfVar += (ielNext->first - iel->first)*dfRelShift;
+//             dfProb = pdDistri.DistriValue(dfVar);
+//             
+//         }   //endif(ielNext != pdDistri.Distribution().end())
+//         
+//         pdResult.Add(pow(dfVar,nExponent),dfProb);
+//         
+//     }   //endfor(MapDFDFType::const_iterator iel = pdDistri.Distribution().begin(); iel != pdDistri.Distribution().end(); iel++)
+
+    pdResult._SetLinPars();
+    
+    return pdResult;
+ 
+}
+
 
 string Print(const MapDFDFType::const_iterator& it, unsigned int uiPrecision /*=20*/)
 {

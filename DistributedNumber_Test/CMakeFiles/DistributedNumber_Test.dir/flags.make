@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_FLAGS =  
 
-CXX_DEFINES = -DLOG4CPLUS_ENABLED
+CXX_DEFINES = 
 
 CXX_INCLUDES = -I/home/michae/projects/DistributedNumber/DistributedNumber_Test -I/home/michae/projects/DistributedNumber/../FloatingMeasure/build/CMake/include -I/home/michae/projects/DistributedNumber/DistributedNumber_Test/../DistributedNumber 
 

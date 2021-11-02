@@ -26,6 +26,7 @@
 #ifndef CDISTRIBUTION_H
 #define CDISTRIBUTION_H
 
+#include <unordered_map>
 #include "LoggingStrings.h"
 
 // use threads for logging 
@@ -43,6 +44,31 @@ typedef    map<CDigFloat,CDigFloat> MapDFDFType;
 typedef    pair<CDigFloat,CDigFloat> PairDFType;
 
 
+// hasher class for distri map iterator: is needed for unordered_map keeping the linear parameters 
+// of the distribution intervals
+class
+
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+DistriIterHasher
+{
+public:
+    size_t operator() (MapDFDFType::const_iterator const& key) const 
+    {     // the parameter type should be the same as the type of key of unordered_map
+        
+        union
+        {
+            double dValue;
+            unsigned uiValue;
+        };
+        dValue = key->first.RawValue();
+        return uiValue;
+            
+    }
+};
+
+typedef unordered_map<MapDFDFType::const_iterator,CDigFloat, DistriIterHasher> UMapDFType;
 
 
 /**
@@ -54,6 +80,9 @@ typedef    pair<CDigFloat,CDigFloat> PairDFType;
  *    - ... interpolating distribution values for any given variable
  *    - ... calculating any n'th order weighted integral of this distribution
  *    - ... calculating intervals for a given coverage
+ * - supports non linear transformations of the @ref def-distri-variable "variable"
+ *   - pow
+ */
  */
 
 
@@ -68,6 +97,12 @@ _WIN_DLL_API
 #endif
 CDistribution 
 {
+    
+    ///////////////////////////////////
+    // friends
+    ///////////////////////////////////
+    friend CDistribution pow(CDistribution pdDistri, const int& nExponent );
+    
 public:
     
     ///////////////////////////////////
@@ -470,12 +505,26 @@ protected:
      *
      */
     void _Init();
+    
+    ////////////////////////////////////////////////////////
+    // protected getter / setter
+    ////////////////////////////////////////////////////////
+      
+    /**
+     * @brief returns the value the distribution variable or if set the ::m_NonLinTrafoVariables
+     * 
+     * @param[in] it MapDFDFType::const_iterator pointing to the variable
+     * @return the value of the (non-linearily transformed) variable
+     * 
+     */
+    CDigFloat const _Variable(MapDFDFType::const_iterator it) const;
     /////////////////////////////////////////
     // protected member
     //////////////////////////////////////
     
     unsigned int uiMaxBinarySearchIterations;    
     MapDFDFType mDistribution;
+    UMapDFType m_NonLinTrafoVariables;
 };
 
 ////////////////////////////////////////////////////////
@@ -553,5 +602,21 @@ string
 _WIN_DLL_API
 #endif
 Print(const MapDFDFType::const_iterator& it, unsigned int uiPrecision = 20);
+
+
+/**
+  * @brief returns a distri with x(new distri)=x(pdDistri)^nExponent keeping the probability values
+  * 
+  * @param[in] nExponent int as exponent of x-values of new distri
+  * @param[in] pdDistri CDistribution which x-values are non-linearily transformed to x¹ 
+  * @return CDistribution with new x-values = x(pdDistri)^dfValue set and kept in ::m_NonLinTrafoVariables
+  * 
+  */
+CDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+pow(CDistribution pdDistri, const int& nExponent);
+
 
 #endif // CDISTRIBUTION_H

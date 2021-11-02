@@ -64,29 +64,6 @@
 #include <functional>
 #include <thread>
 
-// hasher class for distri map iterator: is needed for unordered_map keeping the linear parameters 
-// of the distribution intervals
-class
-
-#ifdef _WIN32
-_WIN_DLL_API
-#endif
-DistriIterHasher
-{
-public:
-    size_t operator() (MapDFDFType::const_iterator const& key) const 
-    {     // the parameter type should be the same as the type of key of unordered_map
-        
-        union
-        {
-            double dValue;
-            unsigned uiValue;
-        };
-        dValue = key->first.RawValue();
-        return uiValue;
-            
-    }
-};
 // typedef
 typedef pair< PairDFType, PairDFType >SubIntLimitsType;
 typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
@@ -95,7 +72,6 @@ typedef vector< SubIntLimitsType >  VectorSubIntLimitsType;
 // e.g. [1].second[0].second.first: first integration limit of other distribution for the first sub integration step and the second target value
 // no. of target values : PDD_DEFAULT_INTEGRATION_STEPS
 // no. of integration limits for this and other: PDD_DEFAULT_SUBINTEGRATION_STEPS
-typedef vector< pair<CDigFloat, VectorSubIntLimitsType > > ConvolutionPlanType;
 typedef vector< PairDFType >  VectorPairDFType;
 class ConvPlanElement
 {
@@ -106,9 +82,8 @@ public:
     MapDFDFType::const_iterator yDistriIter;
 };
 typedef vector< ConvPlanElement >  VectorConvPlanElementType;
-typedef vector< pair<CDigFloat, VectorConvPlanElementType> > ConvolutionPlanType2;
+typedef vector< pair<CDigFloat, VectorConvPlanElementType> > ConvolutionPlanType;
 
-typedef unordered_map<MapDFDFType::const_iterator,PairDFType, DistriIterHasher> UMapPDFType;
 
 
 
@@ -141,8 +116,15 @@ CProbabilityDensityDistribution : public CDistribution
 
 // needs access to protected members    
 friend class CConvolutionThread;
-friend  CProbabilityDensityDistribution operator/(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
+friend CProbabilityDensityDistribution operator+(const CDigFloat& dfValue, CProbabilityDensityDistribution pdDistri);
 friend CProbabilityDensityDistribution operator-(const CDigFloat& dfValue, CProbabilityDensityDistribution pdDistri);
+friend CProbabilityDensityDistribution operator*(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
+friend CProbabilityDensityDistribution operator/(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
+friend CProbabilityDensityDistribution operator+(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+friend CProbabilityDensityDistribution operator-(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+friend CProbabilityDensityDistribution operator*(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+friend CProbabilityDensityDistribution operator/(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+friend CProbabilityDensityDistribution pow(CProbabilityDensityDistribution pdDistri, const CDigFloat& dfValue);
 
 public:
     
@@ -182,7 +164,7 @@ public:
      * @param other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution& operator=(CProbabilityDensityDistribution& other);
+    CProbabilityDensityDistribution& operator=(const CProbabilityDensityDistribution& other);
 
     /**
      * @brief Assignment operator
@@ -208,7 +190,7 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator+ (CProbabilityDensityDistribution& other);
+//     CProbabilityDensityDistribution operator+ (CProbabilityDensityDistribution& other);
     
     /**
      * @brief subtraction assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values".
@@ -223,7 +205,7 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator- (CProbabilityDensityDistribution& other);
+//     CProbabilityDensityDistribution operator- (CProbabilityDensityDistribution& other);
 
     /**
      * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values".
@@ -238,7 +220,7 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator* (CProbabilityDensityDistribution& other);
+//     CProbabilityDensityDistribution operator* (CProbabilityDensityDistribution& other);
     /**
      * @brief multiplication assignment operator: results in a convolution with the sums of variables as the new \ref def-distri-variable "distribution variable" and the corresponding probability product as the new \ref def-distri-value "distribution values".
      *
@@ -252,7 +234,7 @@ public:
      * @param[in] other CProbabilityDensityDistribution
      * @return CProbabilityDensityDistribution
      */
-    CProbabilityDensityDistribution operator/ (CProbabilityDensityDistribution& other);
+//     CProbabilityDensityDistribution operator/ (CProbabilityDensityDistribution& other);
 
     /**
      * @brief multiplication assingment operator with factor: is applied on \ref def-distri-variable "distribution variables"
@@ -503,22 +485,22 @@ public:
      */
     int SubIntegrationSteps() const { return m_nSubIntegrationSteps;}
     
-    CDigFloat& Offset(MapDFDFType::const_iterator it)
+    CDigFloat& Offset(MapDFDFType::const_iterator it) const
     {
-        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("called with ")+it->first.RawPrint(10));
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("called with ")+::Print(it));
         LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("from ")+ Address2String(this));  
-        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("offset ")+m_LinPars[it].first.RawPrint(10));   
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Offset",string("offset ")+m_LinPars.at(it).first.RawPrint(10));   
         assert(m_LinPars.find(it) != m_LinPars.end()); 
-        return m_LinPars[it].first;
+        return const_cast<CDigFloat&>(m_LinPars.at(it).first);
         
     };
-    CDigFloat& Slope(MapDFDFType::const_iterator it)
+    CDigFloat& Slope(MapDFDFType::const_iterator it) const
     {
-        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("called with ")+it->first.RawPrint(10));  
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("called with ")+::Print(it));  
         LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("from ")+ Address2String(this));  
-        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("Slope ")+m_LinPars[it].second.RawPrint(10));    
+        LOGTRACE("DistributedNumber::CProbabilityDensityDistribution::Slope",string("Slope ")+m_LinPars.at(it).second.RawPrint(10));    
         assert(m_LinPars.find(it) != m_LinPars.end()); 
-        return m_LinPars[it].second;
+        return const_cast<CDigFloat&>(m_LinPars.at(it).second);
         
     };
     
@@ -528,15 +510,17 @@ public:
      * @return string
      * 
      */
-   string PrintLinPars();
+    string PrintLinPars() const;
    
+    virtual string PrintMetaInfo() const override;
     
 protected:     
     /**
      * @brief initializes member
      *
      */
-    void _Init();   
+    void _Init();  
+    void _SetPeripherialMember(const CProbabilityDensityDistribution& Other);
     
     
     /**
@@ -675,7 +659,6 @@ protected:
    CDigFloat _Integral4TargetValue4Multiplication(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
    CDigFloat _Integral4TargetValue4Division(const CDigFloat& dfTargetValue, CProbabilityDensityDistribution& Other, const ConvPlanElement& planEl);
    
-    
    
    ////////////////////////////////////////////////////////
    // member variables
@@ -686,7 +669,6 @@ protected:
     int m_nIntegrationSteps;
     int m_nSubIntegrationSteps;
     ConvolutionPlanType m_ConvolutionPlan;
-    ConvolutionPlanType2 m_ConvolutionPlan2;
     UMapPDFType m_LinPars;
 
 };
@@ -696,13 +678,83 @@ protected:
 // external functions
 ////////////////////////////////////////////////////////
 /**
-    * @brief returns a distri with x(new distri)=dfValue/x(pdDistri) keeping the probability values
-    * 
-    * @param[in] dfValue CDigFloat as numerator of x-values of new distri
-    * @param[in] CProbabilityDensityDistribution distribution which x-values are the denominator of the x-values of the new distri
-    * @return CProbabilityDensityDistribution with new x-values = dfValue / x(pdDistri)
-    * 
-    */
+  * @brief addition operator for CProbabilityDensityDistribution non-reference arguments
+  * 
+  * @param[in] pdOne CProbabilityDensityDistribution as numerator of x-values of new distri
+  * @param[in] pdOther CProbabilityDensityDistributiondistribution which x-values are the denominator of the x-values of the new distri
+  * @return CProbabilityDensityDistribution pdOne / pdOther
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator+(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+
+/**
+  * @brief subtraction operator for CProbabilityDensityDistribution non-reference arguments
+  * 
+  * @param[in] pdOne CProbabilityDensityDistribution as numerator of x-values of new distri
+  * @param[in] pdOther CProbabilityDensityDistributiondistribution which x-values are the denominator of the x-values of the new distri
+  * @return CProbabilityDensityDistribution pdOne / pdOther
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator-(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+
+/**
+  * @brief multiplication operator for CProbabilityDensityDistribution non-reference arguments
+  * 
+  * @param[in] pdOne CProbabilityDensityDistribution as numerator of x-values of new distri
+  * @param[in] pdOther CProbabilityDensityDistributiondistribution which x-values are the denominator of the x-values of the new distri
+  * @return CProbabilityDensityDistribution pdOne / pdOther
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator*(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+
+/**
+  * @brief division operator for CProbabilityDensityDistribution non-reference arguments
+  * 
+  * @param[in] pdOne CProbabilityDensityDistribution as numerator of x-values of new distri
+  * @param[in] pdOther CProbabilityDensityDistributiondistribution which x-values are the denominator of the x-values of the new distri
+  * @return CProbabilityDensityDistribution pdOne / pdOther
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator/(CProbabilityDensityDistribution pdOne, CProbabilityDensityDistribution pdOther);
+
+/**
+  * @brief returns a distri with x(new distri)=dfValue*x(pdDistri) keeping the probability values
+  * 
+  * @param[in] dfValue CDigFloat as factor of the x-values of the new distri
+  * @param[in] CProbabilityDensityDistribution distribution which x-values are scaled by value
+  * @return CProbabilityDensityDistribution with new x-values = dfValue * x(pdDistri)
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator*(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
+
+/**
+  * @brief returns a distri with x(new distri)=dfValue/x(pdDistri) keeping the probability values
+  * 
+  * @param[in] dfValue CDigFloat as numerator of x-values of new distri
+  * @param[in] CProbabilityDensityDistribution distribution which x-values are the denominator of the x-values of the new distri
+  * @return CProbabilityDensityDistribution with new x-values = dfValue / x(pdDistri)
+  * 
+  */
 CProbabilityDensityDistribution
 #ifdef _WIN32
 _WIN_DLL_API
@@ -710,18 +762,46 @@ _WIN_DLL_API
 operator/(const CDigFloat& dfValue, CProbabilityDensityDistribution& pdDistri);
 
 /**
-    * @brief returns a distri with x(new distri)=dfValue-x(pdDistri) keeping the probability values
-    * 
-    * @param[in] dfValue CDigFloat as subtrahend of x-values of new distri
-    * @param[in] CProbabilityDensityDistribution distribution which x-values are the subtractor of the x-values of the new distri
-    * @return CProbabilityDensityDistribution with new x-values = dfValue - x(pdDistri)
-    * 
-    */
+  * @brief returns a distri with x(new distri)=dfValue+x(pdDistri) keeping the probability values
+  * 
+  * @param[in] dfValue CDigFloat as added to x-values of new distri
+  * @param[in] CProbabilityDensityDistribution distribution which x-values are increased by the value
+  * @return CProbabilityDensityDistribution with new x-values = dfValue + x(pdDistri)
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+operator+(const CDigFloat& dfValue, CProbabilityDensityDistribution pdDistri);
+
+/**
+  * @brief returns a distri with x(new distri)=dfValue-x(pdDistri) keeping the probability values
+  * 
+  * @param[in] dfValue CDigFloat as subtrahend of x-values of new distri
+  * @param[in] CProbabilityDensityDistribution distribution which x-values are the subtractor of the x-values of the new distri
+  * @return CProbabilityDensityDistribution with new x-values = dfValue - x(pdDistri)
+  * 
+  */
 CProbabilityDensityDistribution
 #ifdef _WIN32
 _WIN_DLL_API
 #endif
 operator-(const CDigFloat& dfValue, CProbabilityDensityDistribution pdDistri);
+
+/**
+  * @brief returns a distri with x(new distri)=x(pdDistri)^dfValue keeping the probability values
+  * 
+  * @param[in] dfValue CDigFloat as exponent of x-values of new distri
+  * @param[in] CProbabilityDensityDistribution distribution which x-values are the base of the x-values of the new distri
+  * @return CProbabilityDensityDistribution with new x-values = x(pdDistri)^dfValue
+  * 
+  */
+CProbabilityDensityDistribution
+#ifdef _WIN32
+_WIN_DLL_API
+#endif
+pow(CProbabilityDensityDistribution pdDistri, const CDigFloat& dfValue);
 
 /**
   * @brief returns a distri from the operation - of two distribtuions (no reference)

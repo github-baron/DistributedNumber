@@ -196,26 +196,26 @@ public:
      * 
      * @return MapDFDFType:const_iterator
      */
-    inline MapDFDFType::const_iterator front() { return Distribution().begin();}  
+    inline MapDFDFType::const_iterator front() const { return mDistribution.begin();}  
     /**
      * @brief return the last valid iterator of the distribution
      * 
      * @return MapDFDFType:const_iterator
      */
-    inline MapDFDFType::const_iterator back() { return prev(Distribution().end());}
+    inline MapDFDFType::const_iterator back() const { return prev(mDistribution.end());}
     
     /**
      * @brief return the first variable of the distribution
      * 
      * @return CDigFloat
      */
-    inline CDigFloat firstVariable() { return front()->first;}  
+    inline CDigFloat firstVariable() const { return front()->first;}  
     /**
      * @brief return the last  varibale of the distribution
      * 
      * @return CDigFloat
      */
-    inline CDigFloat lastVariable() { return back()->first;}
+    inline CDigFloat lastVariable() const { return back()->first;}
     
     
     
@@ -313,7 +313,7 @@ public:
      *
      * @return map<CDigFloat, CDigFloat> 
      */
-    const MapDFDFType& Distribution(){return mDistribution;}   
+    const MapDFDFType& Distribution() {return mDistribution;}
     
     /**
      * @brief calculates the integral of the absolute value of this distribution
@@ -384,7 +384,7 @@ public:
      * @param nPrecision int
      * @return string
      */
-    string PrintMetaInfo();
+    virtual string  PrintMetaInfo() const;
     
     /**
      * @brief returns string of all element pairs with given precision
@@ -402,7 +402,7 @@ public:
      * 
      * @return unsigned int
      */
-    unsigned int MaxBinarySearchIterations() { return uiMaxBinarySearchIterations;}
+    unsigned int MaxBinarySearchIterations() const { return uiMaxBinarySearchIterations;}
    /**
      * @brief sets the maximal number used for binary search: is used for ::CoverageFromTo
      * @param uiIterations unsigned int maximal number of iterations

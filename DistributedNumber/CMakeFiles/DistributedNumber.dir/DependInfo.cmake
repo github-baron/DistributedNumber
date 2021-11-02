@@ -12,8 +12,7 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_CXX
-  "GIT_BRANCH=822e489ada47ce3d32a8ad6b0a4eb150cee9d285"
-  "LOG4CPLUS_ENABLED"
+  "GIT_BRANCH=059c14bd6237a01a00a1257186b66cf3e5c448fa"
   )
 
 # The include file search paths:
